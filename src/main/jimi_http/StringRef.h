@@ -1,0 +1,102 @@
+
+#ifndef JIMI_HTTP_STRINGREF_H
+#define JIMI_HTTP_STRINGREF_H
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
+
+#include <stdint.h>
+#include <cstddef>
+#include <string>
+
+namespace jimi {
+namespace http {
+
+namespace detail {
+
+    //////////////////////////////////////////
+    // strlen
+    //////////////////////////////////////////
+
+    template <typename CharT>
+    std::size_t strlen(CharT * str) {
+        return 0;
+    }
+
+    template <>
+    std::size_t strlen(const char * str) {
+        return ::strlen(str);
+    }
+
+    template <>
+    std::size_t strlen(const uint16_t * str) {
+        return ::wcslen((const wchar_t *)str);
+    }
+
+    template <>
+    std::size_t strlen(const wchar_t * str) {
+        return ::wcslen(str);
+    }
+
+    //////////////////////////////////////////
+}
+
+template <typename CharT>
+class BasicStringRef {
+public:
+    typedef CharT char_type;
+    typedef std::basic_string<char_type> std_string;
+    typedef std::size_t size_type;
+
+private:
+    const char_type * data_;
+    size_type size_;
+
+public:
+    BasicStringRef() : data_(nullptr), size_(0) {}
+    BasicStringRef(const char_type * data) : data_(data), size_(detail::strlen(data)) {}
+    BasicStringRef(const char_type * data, size_type size) : data_(data), size_(size) {}
+    BasicStringRef(const std_string & src) : data_(src.data()), size_(src.size()) {}
+    template <size_type N>
+    BasicStringRef(char_type (&src)[N]) : data_(src), size_(N) {}
+    ~BasicStringRef() {}
+
+    const char_type * data() const { return data_; }
+    size_type size() const  { return size_; }
+
+    const char_type * c_str() const { return data(); }
+    size_type length() const { return size(); }
+
+    bool is_empty() const { return (size() == 0); }
+
+    void set(const char_type * data) {
+        data_ = data;
+        size_ = ::strlen(data);
+    }
+
+    void set(const char_type * data, size_type size) {
+        data_ = data;
+        size_ = size;
+    }
+
+    void set(const std_string & src) {
+        data_ = src.data();
+        size_ = src.size();
+    }
+
+    template <size_type N>
+    void set(char_type (&src)[N]) {
+        data_ = src;
+        size_ = N;
+    }
+};
+
+typedef BasicStringRef<char>        StringRefA;
+typedef BasicStringRef<wchar_t>     StringRefW;
+typedef BasicStringRef<char>        StringRef;
+
+} // namespace http
+} // namespace jimi
+
+#endif // !JIMI_HTTP_STRINGREF_H

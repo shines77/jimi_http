@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjimi_http", "projects\vc2015\libjimi_http\libjimi_http.vcxproj", "{03B2B339-B5BF-489C-AB9F-0E4A208EA198}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http_parser_test", "projects\vc2015\http_parser_test\http_parser_test.vcxproj", "{7816C016-06E0-4C04-B4A1-0B58814D5C2B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http_parser_unittest", "projects\vc2015\http_parser_unittest\http_parser_unittest.vcxproj", "{C22542E6-AAB2-426A-9A70-D9D7385A0958}"
+	ProjectSection(ProjectDependencies) = postProject
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x64.ActiveCfg = Debug|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x64.Build.0 = Debug|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x86.ActiveCfg = Debug|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x86.Build.0 = Debug|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x64.ActiveCfg = Release|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x64.Build.0 = Release|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x86.ActiveCfg = Release|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x86.Build.0 = Release|Win32
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x64.ActiveCfg = Debug|x64
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x64.Build.0 = Debug|x64
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x86.ActiveCfg = Debug|Win32
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x86.Build.0 = Debug|Win32
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Release|x64.ActiveCfg = Release|x64
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Release|x64.Build.0 = Release|x64
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Release|x86.ActiveCfg = Release|Win32
+		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Release|x86.Build.0 = Release|Win32
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Debug|x64.ActiveCfg = Debug|x64
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Debug|x64.Build.0 = Debug|x64
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Debug|x86.ActiveCfg = Debug|Win32
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Debug|x86.Build.0 = Debug|Win32
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x64.ActiveCfg = Release|x64
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x64.Build.0 = Release|x64
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x86.ActiveCfg = Release|Win32
+		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
