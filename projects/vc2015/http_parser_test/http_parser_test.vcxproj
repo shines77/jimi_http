@@ -160,6 +160,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\test\http_parser_test\main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\stop_watch.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

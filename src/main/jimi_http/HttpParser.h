@@ -56,8 +56,8 @@ private:
 
 public:
     HttpParser() {
-        http_version_ = HttpVersion::HTTP_UNDEFINED;
-        request_method_ = HttpRequest::UNDEFINED;
+        //http_version_ = HttpVersion::HTTP_UNDEFINED;
+        //request_method_ = HttpRequest::UNDEFINED;
     }
 
     ~HttpParser() {}

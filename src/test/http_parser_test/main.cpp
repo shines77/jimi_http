@@ -3,8 +3,51 @@
 #include <stdio.h>
 
 #include "jimi_http/http_all.h"
+#include "stop_watch.h"
 
 using namespace jimi::http;
+
+#ifdef NDEBUG
+static const std::size_t kIterations = 3000000;
+#else
+static const std::size_t kIterations = 100000;
+#endif
+
+void test_http_parser()
+{
+    const char * http_request = "GET /cookies HTTP/1.1\r\n"
+                                "Host: 127.0.0.1:8090\r\n"
+                                "Connection: keep-alive\r\n"
+                                "Cache-Control: max-age=0\r\n"
+                                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+                                "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17\r\n"
+                                "Accept-Encoding: gzip,deflate,sdch\r\n"
+                                "Accept-Language: en-US,en;q=0.8\r\n"
+                                "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\n"
+                                "Cookie: name=wookie\r\n"
+                                "\r\n";
+
+    StdStopWatch sw;
+    int sum = 0;
+    std::size_t request_len = ::strlen(http_request);
+    sw.start();
+    for (int i = 0; i < kIterations; ++i) {
+        HttpParser http_parser;
+        sum += http_parser.parse(http_request, request_len);
+    }
+    sw.stop();
+    if (sw.getElapsedMillisec() != 0.0) {
+        std::cout << "Time spent:        " << sw.getElapsedMillisec() << " ms" << std::endl;
+        std::cout << "Parse speed:       " << (uint64_t)((double)kIterations / sw.getElapsedSecond()) << " Times/Sec" << std::endl;
+        std::cout << "Parse throughput:  " << (double)(kIterations * request_len * 8) / sw.getElapsedSecond() / (1024.0 * 1024.0) << " Mb/Sec" << std::endl;
+    }
+    else {
+        std::cout << "Time spent:        0.0 ms" << std::endl;
+        std::cout << "Parse speed:       0   Times/Sec" << std::endl;
+        std::cout << "Parse throughput:  0.0 Mb/Sec" << std::endl;
+    }
+    std::cout << std::endl;
+}
 
 int main(int argn, char * argv[])
 {
@@ -28,6 +71,9 @@ int main(int argn, char * argv[])
     printf("\n");
     http_parser.diplayEntries();
     printf("\n");
+
+    test_http_parser();
+
 #ifdef _WIN32
     ::system("pause");
 #endif
