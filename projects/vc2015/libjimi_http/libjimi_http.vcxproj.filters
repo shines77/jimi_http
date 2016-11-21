@@ -25,6 +25,9 @@
     <ClInclude Include="..\..\..\src\main\jimi_http\StringRef.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi_http\StringRefList.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main\jimi_http\HttpParser.cpp">

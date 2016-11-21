@@ -94,7 +94,7 @@ public:
 
 typedef BasicStringRef<char>        StringRefA;
 typedef BasicStringRef<wchar_t>     StringRefW;
-typedef BasicStringRef<char>        StringRef;
+typedef StringRefA                  StringRef;
 
 } // namespace http
 } // namespace jimi

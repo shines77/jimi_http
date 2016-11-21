@@ -8,6 +8,7 @@
 
 #include "jimi_http/HttpCommon.h"
 #include "jimi_http/StringRef.h"
+#include "jimi_http/StringRefList.h"
 #include "jimi_http/HttpRequest.h"
 #include "jimi_http/HttpResponse.h"
 #include "jimi_http/HttpParser.h"
