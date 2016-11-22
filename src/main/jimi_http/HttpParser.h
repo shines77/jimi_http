@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "jimi_http/HttpCommon.h"
+#include "jimi_http/InputStream.h"
 #include "jimi_http/StringRef.h"
 #include "jimi_http/StringRefList.h"
 #include "jimi_http/HttpRequest.h"
@@ -100,219 +101,291 @@ public:
     }
 
     template <char delimiter = ' '>
-    const char * skipWhiteSpaces(const char * data) {
-        assert(data != nullptr);
-        while (*data == delimiter || *data == ' ') {
-            data++;
+    void skipWhiteSpaces(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.get() == delimiter || is.get() == ' ') {
+            is.next();
         }
-        return data;
     }
 
     template <char delimiter = ' '>
-    const char * nextAndSkipWhiteSpaces(const char * data) {
-        assert(data != nullptr);
-        data++;
-        return skipWhiteSpaces<delimiter>(data);
-    }
-
-    const char * nextAndSkipWhiteSpaces_CrLf(const char * data) {
-        assert(data != nullptr);
-        data++;
-        while (*data == ' ' || *data == '\r' || *data == '\n') {
-            data++;
+    bool next(InputStream & is) {
+        assert(is.current() != nullptr);
+        if (!is.is_eof()) {
+            is.next();
+            assert(is.current() != nullptr);
+            if (!is.is_eof() && is.get() != '\0')
+                return true;
         }
-        return data;
+        return false;
     }
 
     template <char delimiter = ' '>
-    const char * getToken(const char * data) {
-        const char * cur = data;
-        assert(cur != nullptr);
-        while (*cur != delimiter && *cur != ' ' && *cur != '\0') {
-            cur++;
+    bool nextAndSkipWhiteSpaces(InputStream & is) {
+        assert(is.current() != nullptr);
+        if (!is.is_eof()) {
+            is.next();
+            assert(is.current() != nullptr);
+            if (!is.is_eof() && is.get() != '\0') {
+                skipWhiteSpaces<delimiter>(is);
+                return true;
+            }
         }
-        return cur;
+        return false;
+    }
+
+    bool nextAndSkipWhiteSpaces_CrLf(InputStream & is) {
+        assert(is.current() != nullptr);
+        bool success = next(is);
+        if (success) {
+            while (is.get() == ' ' || is.get() == '\r' || is.get() == '\n') {
+                is.next();
+            }
+        }
+        return success;
     }
 
     template <char delimiter = ' '>
-    const char * getTokenAndHash(const char * data, hash_type & hash) {
+    bool getToken(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.get() != delimiter && is.get() != ' ' && is.get() != '\0') {
+            is.next();
+        }
+        return true;
+    }
+
+    template <char delimiter = ' '>
+    bool getTokenAndHash(InputStream & is, hash_type & hash) {
         static const hash_type kSeed_Time31 = 31U;
         hash = 0;
-        const char * cur = data;
-        assert(cur != nullptr);
-        while (*cur != delimiter && *cur != ' ' && *cur != '\0') {
-            hash += static_cast<hash_type>(*cur) * kSeed_Time31;
-            cur++;
+        assert(is.current() != nullptr);
+        while (is.get() != delimiter && is.get() != ' ' && is.get() != '\0') {
+            hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
+            is.next();
         }
-        return cur;
     }
 
     template <char delimiter = ' '>
-    const char * getToken_CrLf(const char * data) {
-        const char * cur = data;
-        assert(cur != nullptr);
-        while (*cur != '\r' && *cur != '\n' && *cur != delimiter && *cur != ' ' && *cur != '\0') {
-            cur++;
+    bool getToken_CrLf(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.get() != '\r' && is.get() != '\n'
+            && is.get() != delimiter && is.get() != ' '
+            && is.get() != '\0') {
+            is.next();
         }
-        return cur;
+        return true;
     }
 
-    const char * getKeynameToken(const char * data) {
-        const char * cur = data;
-        assert(cur != nullptr);
-        while (*cur != ':' && *cur != ' ' && *cur != '\0') {
-            cur++;
+    bool getKeynameToken(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.get() != ':' && is.get() != ' ' && is.get() != '\0') {
+            is.next();
         }
-        return cur;
+        return true;
     }
 
-    const char * getValueToken(const char * data) {
-        const char * cur = data;
-        assert(cur != nullptr);
-        while (*cur != '\r' && *cur != '\n' && *cur != '\0') {
-            cur++;
+    bool getValueToken(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.get() != '\r' && is.get() != '\n' && is.get() != '\0') {
+            is.next();
         }
-        return cur;
+        return true;
     }
 
-    const char *  checkAndSkipCrLf(const char * data, bool & is_end) {
-        const char * cur = data;
-        assert(cur != nullptr);
+    bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
+        assert(is.current() != nullptr);
         is_end = false;
-        do {
-            if (*cur == '\r') {
-                if (*(cur + 2) != '\r') {
-                    if (*(cur + 1) == '\n') {
-                        return (cur + 2);   // "\r\n", mostly is this case.
-                    }
-                    else {
-                        return (cur + 1);   // "\r" only
-                    }
-                }
-                else {
-                    if (*(cur + 1) == '\n') {
-                        if (*(cur + 3) == '\n') {
-                            is_end = true;      // "\r\n\r\n"
-                            return (cur + 4);
+        if (is.remain() >= (sizeof("\r\n\r\n") - 1)) {
+            // If the remain length is more than or equal 4 bytes, needn't to check the tail.
+            do {
+                if (is.get() == '\r') {
+                    if (is.getNext(2) != '\r') {
+                        if (is.getNext(1) == '\n') {
+                            is.moveToNext(2);   // "\r\n", In most cases, it will be walk to this path.
+                            return true;   
                         }
                         else {
-                            return (cur + 3);   // "\r\n\r"+"XXXXXX", May be is a error format.
+                            is.moveToNext(1);   // "\r" only, Maybe it's a wrong format.
+                            return false;
                         }
                     }
                     else {
-                        return (cur + 1);       // "\r" only
+                        if (is.getNext(1) == '\n') {
+                            if (is.getNext(3) == '\n') {
+                                is.moveToNext(4);   // "\r\n\r\n", It's the end of the http header.
+                                is_end = true;
+                                return true;
+                            }
+                            else {
+                                is.moveToNext(3);   // "\r\n\rX", Maybe it's a wrong format.
+                                return false;
+                            }
+                        }
+                        else {
+                            is.moveToNext(1);       // "\r" only, Maybe it's a wrong format.
+                            return false;
+                        }
                     }
                 }
+                else if (is.get() == '\n') {
+                    is.moveToNext(1);   // "\n" only, Maybe it's a wrong format.
+                    return false;
+                }
+                else if (is.get() == ' ') {
+                    is.next();          // Skip the whitespaces.
+                    continue;
+                }
+                else if (is.get() == '\0') {
+                    is_end = true;
+                    return true;
+                }
+                else {
+                    break;
+                }
+            } while (1);
+            return false;
+        }
+        else {
+            // If the remain length is less than 4 bytes, we need to check the tail.
+            if (is.get() == '\r') {
+                if (is.getNext(2) != '\r') {
+                    //
+                }
             }
-            else if (*cur == '\n') {
-                return (cur + 1);   // "\n" only
-            }
-            else if (*cur == ' ') {
-                cur++;              // skip whitespaces
-                continue;
-            }
-            else if (*cur == '\0') {
-                is_end = true;
-                return cur;
-            }
-            else {
-                break;
-            }
-        } while (1);
-        return cur;
+            return false;
+        }
     }
 
-    const char * parseHttpMethod(const char * data) {
-        const char * cur = getToken<' '>(data);
-        assert(cur != nullptr);
-        assert(cur >= data);
-        http_method_ref_.set(data, cur - data);
-        return cur;
+    bool parseHttpMethod(InputStream & is) {
+        const char * first = is.current();
+        bool is_ok = getToken<' '>(is);
+        if (is_ok) {
+            assert(is.current() != nullptr);
+            assert(is.current() >= first);
+            http_method_ref_.set(first, is.current() - first);
+        }
+        return is_ok;
     }
 
-    const char * parseHttpMethodAndHash(const char * data) {
+    bool parseHttpMethodAndHash(InputStream & is) {
         hash_type hash;
-        const char * cur = getTokenAndHash<' '>(data, hash);
-        assert(cur != nullptr);
-        assert(cur >= data);
-        http_method_ref_.set(data, cur - data);
-        return cur;
+        const char * first = is.current();
+        bool is_ok = getTokenAndHash<' '>(is, hash);
+        if (is_ok) {
+            assert(is.current() != nullptr);
+            assert(is.current() >= first);
+            http_method_ref_.set(first, is.current() - first);
+        }
+        return is_ok;
     }
 
-    const char * parseHttpURI(const char * data) {
-        const char * cur = getToken<' '>(data);
-        assert(cur != nullptr);
-        assert(cur >= data);
-        http_url_ref_.set(data, cur - data);
-        return cur;
+    bool parseHttpURI(InputStream & is) {
+        const char * first = is.current();
+        bool is_ok = getToken<' '>(is);
+        if (is_ok) {
+            assert(is.current() != nullptr);
+            assert(is.current() >= first);
+            http_url_ref_.set(first, is.current() - first);
+        }
+        return is_ok;
     }
 
-    const char * parseHttpVersion(const char * data) {
-        const char * cur = getToken_CrLf<' '>(data);
-        assert(cur != nullptr);
-        assert(cur >= data);
-        http_version_ref_.set(data, cur - data);
-        return cur;
+    bool parseHttpVersion(InputStream & is) {
+        const char * first = is.current();
+        bool is_ok = getToken_CrLf<' '>(is);
+        if (is_ok) {
+            assert(is.current() != nullptr);
+            assert(is.current() >= first);
+            http_version_ref_.set(first, is.current() - first);
+        }
+        return is_ok;
     }
 
-    const char * parseHttpEntryList(const char * data) {
-        const char * last;
-        const char * cur = data;
+    bool parseHttpEntryList(InputStream & is) {
+        const char * first;
+        bool is_ok;
         do {
+#if 0
             // Skip the whitespaces ahead of every entry.
-            //cur = nextAndSkipWhiteSpaces<' '>(cur);
+            is_ok = nextAndSkipWhiteSpaces<' '>(is);
+            if (!is_ok)
+                return false;
+#endif
+            first = is.current();
+            is_ok = getKeynameToken(is);
+            if (!is_ok)
+                return false;
+            const char * key_name = first;
+            std::size_t key_len = is.current() - first;
 
-            last = cur;
-            cur = getKeynameToken(cur);
-            const char * key_name = last;
-            std::size_t key_len = cur - last;
+            is_ok = nextAndSkipWhiteSpaces<':'>(is);
+            if (!is_ok)
+                return false;
+            first = is.current();
 
-            cur = nextAndSkipWhiteSpaces<':'>(cur);
-            last = cur;
+            is_ok = getValueToken(is);
+            if (!is_ok)
+                return false;
 
-            cur = getValueToken(cur);
-            const char * value_name = last;
-            std::size_t value_len = cur - last;
+            const char * value_name = first;
+            std::size_t value_len = is.current() - first;
 
             // Append the key and value pair to StringRefList.
             entries_.append(key_name, key_len, value_name, value_len);
 
-            cur = skipWhiteSpaces<' '>(cur);
+            skipWhiteSpaces<' '>(is);
             bool is_end;
-            cur = checkAndSkipCrLf(cur, is_end);
+            is_ok = checkAndSkipCrLf(is, is_end);
             if (is_end)
-                break;
+                return true;
+            if (!is_ok)
+                return false;
         } while (1);
-        return cur;
+        return is_ok;
     }
 
     // Parse http header
-    int parseHeader(const char * data, size_t len) {
+    int parseHeader(InputStream & is) {
         int ec = 0;
-        const char * cur = data;
+        bool is_ok;
         // Skip the whitespaces ahead of http header.
-        cur = skipWhiteSpaces(cur);
+        skipWhiteSpaces(is);
+
+        const char * start = is.current();
+        std::size_t length = is.remain();
         // Http method characters must be upper case letters.
-        if (*cur >= 'A' && *cur <= 'Z') {
-            //cur = parseHttpMethodAndHash(cur);
-            cur = parseHttpMethod(cur);
-            if (!cur) {
+        if (is.get() >= 'A' && is.get() <= 'Z') {
+            is_ok = parseHttpMethod(is);
+            //is_ok = parseHttpMethodAndHash(is);
+            if (!is_ok) {
                 ec = error_code::kErrorInvalidHttpMethod;
                 goto parse_error;
             }
-            cur = nextAndSkipWhiteSpaces(cur);
+            is_ok = nextAndSkipWhiteSpaces(is);
+            if (!is_ok)
+                return error_code::kErrorHttpParser;
 
-            cur = parseHttpURI(cur);
-            cur = nextAndSkipWhiteSpaces(cur);
+            is_ok = parseHttpURI(is);
+            if (!is_ok)
+                return error_code::kErrorHttpParser;
+            is_ok = nextAndSkipWhiteSpaces(is);
+            if (!is_ok)
+                return error_code::kErrorHttpParser;
 
-            cur = parseHttpVersion(cur);
-            cur = nextAndSkipWhiteSpaces_CrLf(cur);
+            is_ok = parseHttpVersion(is);
+            if (!is_ok)
+                return error_code::kErrorHttpParser;
+            is_ok = nextAndSkipWhiteSpaces_CrLf(is);
+            if (!is_ok)
+                return error_code::kErrorHttpParser;
 
-            assert(cur >= data);
-            assert(len >= (std::size_t)(cur - data));
-            entries_.setRef(cur, len - (cur - data));
+            assert(is.current() >= start);
+            assert(length >= (std::size_t)(is.current() - start));
+            entries_.setRef(is.current(), length - (is.current() - start));
 
-            cur = parseHttpEntryList(cur);
+            is_ok = parseHttpEntryList(is);
+            if (!is_ok)
+                return error_code::kErrorHttpParser;
         }
         else {
             ec = error_code::kErrorInvalidHttpMethod;
@@ -321,17 +394,16 @@ parse_error:
         return ec;
     }
 
-    int parse(const char * data, size_t len) {
-        int ec = 0;
+    // Copy the input http header data.
+    const char * cloneContent(const char * data, size_t len) {
         const char * content;
-        // Copy the input http header data.
-        content_size_ = len;
         if (len < kInitContentSize) {
             ::memcpy((void *)&inner_content_[0], data, len);
             inner_content_[len] = '\0';
             if (content_)
                 content_ = nullptr;
             content = const_cast<const char * >(&inner_content_[0]);
+            content_size_ = len;
         }
         else {
             char * new_content = new char [len + 1];
@@ -339,14 +411,26 @@ parse_error:
                 ::memcpy((void *)new_content, data, len);
                 new_content[len] = '\0';
                 content_ = const_cast<const char *>(new_content);
+                content_size_ = len;
                 content = content_;
             }
             else {
-                return error_code::kErrorHttpParser;
+                return nullptr;
             }
         }
+        return content;
+    }
+
+    int parse(const char * data, size_t len) {
+        int ec = 0;
+        // Copy the input http header data.
+        const char * content = cloneContent(data, len);
+        if (content == nullptr)
+            return error_code::kErrorHttpParser;
+
         // Start parse the http header.
-        ec = parseHeader(content, len);
+        InputStream is(content, len);
+        ec = parseHeader(is);
         return ec;
     }
 

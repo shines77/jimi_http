@@ -7,6 +7,7 @@
 #endif
 
 #include "jimi_http/HttpCommon.h"
+#include "jimi_http/InputStream.h"
 #include "jimi_http/StringRef.h"
 #include "jimi_http/StringRefList.h"
 #include "jimi_http/HttpRequest.h"
@@ -16,7 +17,7 @@
 namespace jimi {
 namespace http {
 
-//
+// TODO: global declare, define or class.
 
 } // namespace http
 } // namespace jimi

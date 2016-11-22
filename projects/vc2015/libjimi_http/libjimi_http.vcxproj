@@ -24,6 +24,7 @@
     <ClInclude Include="..\..\..\src\main\jimi_http\HttpRequest.h" />
     <ClInclude Include="..\..\..\src\main\jimi_http\HttpResponse.h" />
     <ClInclude Include="..\..\..\src\main\jimi_http\http_all.h" />
+    <ClInclude Include="..\..\..\src\main\jimi_http\InputStream.h" />
     <ClInclude Include="..\..\..\src\main\jimi_http\StringRef.h" />
     <ClInclude Include="..\..\..\src\main\jimi_http\StringRefList.h" />
   </ItemGroup>
