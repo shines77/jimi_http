@@ -14,8 +14,11 @@ namespace http {
 struct HttpVersion {
     enum version {
         HTTP_UNDEFINED = 0,
+        HTTP_0_9 = 0x00000009,
         HTTP_1_0 = 0x00010000,
         HTTP_1_1 = 0x00010001,
+        HTTP_2_0 = 0x00020000,
+        HTTP_2_X = 0x00020001,
     };
 
     static uint32_t makeVersion(uint32_t major, uint32_t minor) {

@@ -39,12 +39,18 @@ public:
     ~ParseErrorCode() {}
 };
 
+template <std::size_t InitContentLength = 1024>
 class HttpParser {
 public:
     typedef std::uint32_t hash_type;
 
+    // kInitContentLength minimize value is 256.
+    static const std::size_t kMinimizeContentLength = 256;
+    // kInitContentLength = max(InitContentLength, 256);
+    static const std::size_t kInitContentLength = (InitContentLength > kMinimizeContentLength) ? InitContentLength : kMinimizeContentLength;
+
 private:
-    int http_code_;
+    int status_code_;
     uint32_t http_version_;
     uint32_t request_method_;
 
@@ -52,12 +58,14 @@ private:
     StringRef http_url_ref_;
     StringRef http_version_ref_;
 
-    StringRefList<16> entries_; 
+    StringRefList<16> entries_;
+    std::size_t content_size_ = kInitContentLength;
+    char content_[kInitContentLength];
 
 public:
     HttpParser() {
-        //http_version_ = HttpVersion::HTTP_UNDEFINED;
-        //request_method_ = HttpRequest::UNDEFINED;
+        http_version_ = HttpVersion::HTTP_UNDEFINED;
+        request_method_ = HttpRequest::UNDEFINED;
     }
 
     ~HttpParser() {}
