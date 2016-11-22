@@ -48,7 +48,7 @@ void http_parser_benchmark()
             std::cout << ", ";
 			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
             std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
-            std::cout << ", dummy = ";
+            std::cout << ",  dummy = ";
             std::cout << std::left << std::oct << dummy;
             std::cout << std::endl;
 #else
