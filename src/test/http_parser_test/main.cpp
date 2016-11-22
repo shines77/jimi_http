@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <atomic>
 
 #include "jimi_http/http_all.h"
 #include "stop_watch.h"
@@ -32,16 +34,28 @@ void http_parser_benchmark()
                                "Cookie: name=wookie\r\n"
                                "\r\n";
 	auto request_len = ::strlen(http_header);
-	uint64_t count = 0;
+	int64_t count = 0;
+    int64_t dummy = 0;
 	std::thread counter([&] {
 		auto last_count = count;
 		auto count_ = count;
 		do {
 			count_ = count;
-			std::cout << std::left << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
-            std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec, ";
-            std::cout << std::left << std::setw(10) << std::setfill(' ') << std::oct;
-            std::cout << (count_ - last_count) << std::endl;
+            std::atomic_thread_fence(std::memory_order_acquire);
+#if 1
+            std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
+            std::cout << (count_ - last_count);
+            std::cout << ", ";
+			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
+            std::cout << ", dummy = ";
+            std::cout << std::left << std::oct << dummy;
+            std::cout << std::endl;
+#else
+            printf("%lld, %0.3f MB/Sec, %lld\n", (count_ - last_count), (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0, dummy);
+#endif
+            std::atomic_thread_fence(std::memory_order_release);
+
 			last_count = count_;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		} while (1);
@@ -49,8 +63,11 @@ void http_parser_benchmark()
 
 	do {
         HttpParser<1024> parser;
-		parser.parse(http_header, strlen(http_header));
+		dummy += parser.parse(http_header, ::strlen(http_header));
+        std::atomic_thread_fence(std::memory_order_acquire);
+        dummy += parser.getEntrySize(); 
 		count++;
+        std::atomic_thread_fence(std::memory_order_release);
 	} while (1);
 }
 
@@ -112,7 +129,7 @@ int main(int argn, char * argv[])
     printf("http_parser.getRequestMethod() = %u\n", http_parser.getRequestMethod());
     http_parser.parse(http_header, ::strlen(http_header));
     printf("\n");
-    http_parser.diplayEntries();
+    http_parser.displayEntries();
     printf("\n");
 
 #if 0

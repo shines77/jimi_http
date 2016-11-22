@@ -79,6 +79,10 @@ public:
         }
     }
 
+    std::size_t getEntrySize() const {
+        return entries_.size();
+    }
+
     uint32_t getHttpVersion() const {
         return http_version_;
     }
@@ -346,7 +350,7 @@ parse_error:
         return ec;
     }
 
-    void diplayEntries() {
+    void displayEntries() {
         std::cout << "Http entries: (length = " << entries_.ref.size() << " bytes)" << std::endl << std::endl;
         std::cout << entries_.ref.c_str() << std::endl;
 
