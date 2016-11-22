@@ -1,6 +1,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+
+#include <sstream>
+#include <iostream>
+#include <iomanip>
 
 #include "jimi_http/http_all.h"
 #include "stop_watch.h"
@@ -13,27 +18,62 @@ static const std::size_t kIterations = 5000000;
 static const std::size_t kIterations = 100000;
 #endif
 
-void test_http_parser()
+void http_parser_benchmark()
 {
-    const char * http_request = "GET /cookies HTTP/1.1\r\n"
-                                "Host: 127.0.0.1:8090\r\n"
-                                "Connection: keep-alive\r\n"
-                                "Cache-Control: max-age=0\r\n"
-                                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
-                                "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17\r\n"
-                                "Accept-Encoding: gzip,deflate,sdch\r\n"
-                                "Accept-Language: en-US,en;q=0.8\r\n"
-                                "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\n"
-                                "Cookie: name=wookie\r\n"
-                                "\r\n";
+    const char * http_header = "GET /cookies HTTP/1.1\r\n"
+                               "Host: 127.0.0.1:8090\r\n"
+                               "Connection: keep-alive\r\n"
+                               "Cache-Control: max-age=0\r\n"
+                               "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+                               "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17\r\n"
+                               "Accept-Encoding: gzip,deflate,sdch\r\n"
+                               "Accept-Language: en-US,en;q=0.8\r\n"
+                               "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\n"
+                               "Cookie: name=wookie\r\n"
+                               "\r\n";
+	auto request_len = ::strlen(http_header);
+	uint64_t count = 0;
+	std::thread counter([&] {
+		auto last_count = count;
+		auto count_ = count;
+		do {
+			count_ = count;
+			std::cout << std::left << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec, ";
+            std::cout << std::left << std::setw(10) << std::setfill(' ') << std::oct;
+            std::cout << (count_ - last_count) << std::endl;
+			last_count = count_;
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		} while (1);
+	});
 
+	do {
+        HttpParser<1024> parser;
+		parser.parse(http_header, strlen(http_header));
+		count++;
+	} while (1);
+}
+
+void http_parser_test()
+{
+    const char * http_header = "GET /cookies HTTP/1.1\r\n"
+                               "Host: 127.0.0.1:8090\r\n"
+                               "Connection: keep-alive\r\n"
+                               "Cache-Control: max-age=0\r\n"
+                               "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+                               "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17\r\n"
+                               "Accept-Encoding: gzip,deflate,sdch\r\n"
+                               "Accept-Language: en-US,en;q=0.8\r\n"
+                               "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\n"
+                               "Cookie: name=wookie\r\n"
+                               "\r\n";
     StopWatch sw;
     int sum = 0;
-    std::size_t request_len = ::strlen(http_request);
+    std::size_t request_len = ::strlen(http_header);
     sw.start();
     for (int i = 0; i < kIterations; ++i) {
         HttpParser<1024> http_parser;
-        sum += http_parser.parse(http_request, request_len);
+        sum += http_parser.parse(http_header, request_len);
     }
     sw.stop();
 
@@ -54,28 +94,32 @@ void test_http_parser()
 
 int main(int argn, char * argv[])
 {
-    const char * http_request = "GET /cookies HTTP/1.1\r\n"
-                                "Host: 127.0.0.1:8090\r\n"
-                                "Connection: keep-alive\r\n"
-                                "Cache-Control: max-age=0\r\n"
-                                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
-                                "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17\r\n"
-                                "Accept-Encoding: gzip,deflate,sdch\r\n"
-                                "Accept-Language: en-US,en;q=0.8\r\n"
-                                "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\n"
-                                "Cookie: name=wookie\r\n"
-                                "\r\n";
+    const char * http_header = "GET /cookies HTTP/1.1\r\n"
+                               "Host: 127.0.0.1:8090\r\n"
+                               "Connection: keep-alive\r\n"
+                               "Cache-Control: max-age=0\r\n"
+                               "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+                               "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17\r\n"
+                               "Accept-Encoding: gzip,deflate,sdch\r\n"
+                               "Accept-Language: en-US,en;q=0.8\r\n"
+                               "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3\r\n"
+                               "Cookie: name=wookie\r\n"
+                               "\r\n";
 
     printf("http_parser_test\n\n");
     HttpParser<1024> http_parser;
     printf("http_parser.getHttpVersion() = %u\n", http_parser.getHttpVersion());
     printf("http_parser.getRequestMethod() = %u\n", http_parser.getRequestMethod());
-    http_parser.parse(http_request, ::strlen(http_request));
+    http_parser.parse(http_header, ::strlen(http_header));
     printf("\n");
     http_parser.diplayEntries();
     printf("\n");
 
-    test_http_parser();
+#if 0
+    http_parser_test();
+#else
+    http_parser_benchmark();
+#endif
 
 #ifdef _WIN32
     ::system("pause");

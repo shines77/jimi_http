@@ -97,6 +97,7 @@ public:
 
     template <char delimiter = ' '>
     const char * skipWhiteSpaces(const char * data) {
+        assert(data != nullptr);
         while (*data == delimiter || *data == ' ') {
             data++;
         }
@@ -105,11 +106,13 @@ public:
 
     template <char delimiter = ' '>
     const char * nextAndSkipWhiteSpaces(const char * data) {
+        assert(data != nullptr);
         data++;
         return skipWhiteSpaces<delimiter>(data);
     }
 
     const char * nextAndSkipWhiteSpaces_CrLf(const char * data) {
+        assert(data != nullptr);
         data++;
         while (*data == ' ' || *data == '\r' || *data == '\n') {
             data++;
@@ -120,6 +123,7 @@ public:
     template <char delimiter = ' '>
     const char * getToken(const char * data) {
         const char * cur = data;
+        assert(cur != nullptr);
         while (*cur != delimiter && *cur != ' ' && *cur != '\0') {
             cur++;
         }
@@ -131,6 +135,7 @@ public:
         static const hash_type kSeed_Time31 = 31U;
         hash = 0;
         const char * cur = data;
+        assert(cur != nullptr);
         while (*cur != delimiter && *cur != ' ' && *cur != '\0') {
             hash += static_cast<hash_type>(*cur) * kSeed_Time31;
             cur++;
@@ -141,6 +146,7 @@ public:
     template <char delimiter = ' '>
     const char * getToken_CrLf(const char * data) {
         const char * cur = data;
+        assert(cur != nullptr);
         while (*cur != '\r' && *cur != '\n' && *cur != delimiter && *cur != ' ' && *cur != '\0') {
             cur++;
         }
@@ -149,6 +155,7 @@ public:
 
     const char * getKeynameToken(const char * data) {
         const char * cur = data;
+        assert(cur != nullptr);
         while (*cur != ':' && *cur != ' ' && *cur != '\0') {
             cur++;
         }
@@ -157,6 +164,7 @@ public:
 
     const char * getValueToken(const char * data) {
         const char * cur = data;
+        assert(cur != nullptr);
         while (*cur != '\r' && *cur != '\n' && *cur != '\0') {
             cur++;
         }
@@ -165,6 +173,7 @@ public:
 
     const char *  checkAndSkipCrLf(const char * data, bool & is_end) {
         const char * cur = data;
+        assert(cur != nullptr);
         is_end = false;
         do {
             if (*cur == '\r') {
@@ -226,7 +235,7 @@ public:
         return cur;
     }
 
-    const char * parseHttpUrl(const char * data) {
+    const char * parseHttpURI(const char * data) {
         const char * cur = getToken<' '>(data);
         assert(cur != nullptr);
         assert(cur >= data);
@@ -289,7 +298,7 @@ public:
             }
             cur = nextAndSkipWhiteSpaces(cur);
 
-            cur = parseHttpUrl(cur);
+            cur = parseHttpURI(cur);
             cur = nextAndSkipWhiteSpaces(cur);
 
             cur = parseHttpVersion(cur);
