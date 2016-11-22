@@ -27,15 +27,16 @@ void test_http_parser()
                                 "Cookie: name=wookie\r\n"
                                 "\r\n";
 
-    StdStopWatch sw;
+    StopWatch sw;
     int sum = 0;
     std::size_t request_len = ::strlen(http_request);
     sw.start();
     for (int i = 0; i < kIterations; ++i) {
-        HttpParser http_parser;
+        HttpParser<1024> http_parser;
         sum += http_parser.parse(http_request, request_len);
     }
     sw.stop();
+
     std::cout << "Sum:               " << sum << std::endl;
     std::cout << "Iterations:        " << kIterations << std::endl;
     if (sw.getElapsedMillisec() != 0.0) {
@@ -66,7 +67,7 @@ int main(int argn, char * argv[])
                                 "\r\n";
 
     printf("http_parser_test\n\n");
-    HttpParser http_parser;
+    HttpParser<1024> http_parser;
     printf("http_parser.getHttpVersion() = %u\n", http_parser.getHttpVersion());
     printf("http_parser.getRequestMethod() = %u\n", http_parser.getRequestMethod());
     http_parser.parse(http_request, ::strlen(http_request));

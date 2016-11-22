@@ -39,15 +39,15 @@ public:
     ~ParseErrorCode() {}
 };
 
-template <std::size_t InitContentLength = 1024>
+template <std::size_t InitContentSize = 1024>
 class HttpParser {
 public:
     typedef std::uint32_t hash_type;
 
-    // kInitContentLength minimize value is 256.
-    static const std::size_t kMinimizeContentLength = 256;
-    // kInitContentLength = max(InitContentLength, 256);
-    static const std::size_t kInitContentLength = (InitContentLength > kMinimizeContentLength) ? InitContentLength : kMinimizeContentLength;
+    // kInitContentSize minimize value is 256.
+    static const std::size_t kMinContentSize = 256;
+    // kInitContentSize = max(InitContentSize, 256);
+    static const std::size_t kInitContentSize = (InitContentSize > kMinContentSize) ? InitContentSize : kMinContentSize;
 
 private:
     int status_code_;
@@ -57,18 +57,27 @@ private:
     StringRef http_method_ref_;
     StringRef http_url_ref_;
     StringRef http_version_ref_;
-
+    std::size_t content_length_;
+    std::size_t content_size_;
+    const char * content_;
     StringRefList<16> entries_;
-    std::size_t content_size_ = kInitContentLength;
-    char content_[kInitContentLength];
+    char inner_content_[kInitContentSize];
 
 public:
-    HttpParser() {
-        http_version_ = HttpVersion::HTTP_UNDEFINED;
-        request_method_ = HttpRequest::UNDEFINED;
+    HttpParser() : status_code_(0),
+        http_version_(HttpVersion::HTTP_UNDEFINED),
+        request_method_(HttpRequest::UNDEFINED),
+        content_length_(0),
+        content_size_(0), content_(nullptr) {
+        //
     }
 
-    ~HttpParser() {}
+    ~HttpParser() {
+        if (content_) {
+            delete[] content_;
+            content_ = nullptr;
+        }
+    }
 
     uint32_t getHttpVersion() const {
         return http_version_;
@@ -161,7 +170,7 @@ public:
             if (*cur == '\r') {
                 if (*(cur + 2) != '\r') {
                     if (*(cur + 1) == '\n') {
-                        return (cur + 2);   // "\r\n"
+                        return (cur + 2);   // "\r\n", mostly is this case.
                     }
                     else {
                         return (cur + 1);   // "\r" only
@@ -197,6 +206,14 @@ public:
                 break;
             }
         } while (1);
+        return cur;
+    }
+
+    const char * parseHttpMethod(const char * data) {
+        const char * cur = getToken<' '>(data);
+        assert(cur != nullptr);
+        assert(cur >= data);
+        http_method_ref_.set(data, cur - data);
         return cur;
     }
 
@@ -244,7 +261,9 @@ public:
             const char * value_name = last;
             std::size_t value_len = cur - last;
 
+            // Append the key and value pair to StringRefList.
             entries_.append(key_name, key_len, value_name, value_len);
+
             cur = skipWhiteSpaces<' '>(cur);
             bool is_end;
             cur = checkAndSkipCrLf(cur, is_end);
@@ -262,7 +281,8 @@ public:
         cur = skipWhiteSpaces(cur);
         // Http method characters must be upper case letters.
         if (*cur >= 'A' && *cur <= 'Z') {
-            cur = parseHttpMethodAndHash(cur);
+            //cur = parseHttpMethodAndHash(cur);
+            cur = parseHttpMethod(cur);
             if (!cur) {
                 ec = error_code::kErrorInvalidHttpMethod;
                 goto parse_error;
@@ -290,8 +310,30 @@ parse_error:
 
     int parse(const char * data, size_t len) {
         int ec = 0;
-        const char * cur = data;
-        ec = parseHeader(cur, len);
+        const char * content;
+        // Copy the input http header data.
+        content_size_ = len;
+        if (len < kInitContentSize) {
+            ::memcpy((void *)&inner_content_[0], data, len);
+            inner_content_[len] = '\0';
+            if (content_)
+                content_ = nullptr;
+            content = const_cast<const char * >(&inner_content_[0]);
+        }
+        else {
+            char * new_content = new char [len + 1];
+            if (new_content != nullptr) {
+                ::memcpy((void *)new_content, data, len);
+                new_content[len] = '\0';
+                content_ = const_cast<const char *>(new_content);
+                content = content_;
+            }
+            else {
+                return error_code::kErrorHttpParser;
+            }
+        }
+        // Start parse the http header.
+        ec = parseHeader(content, len);
         return ec;
     }
 
