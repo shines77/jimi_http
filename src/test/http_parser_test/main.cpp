@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iomanip>
 #include <atomic>
+#include <thread>
 
 #include "jimi_http/http_all.h"
 #include "stop_watch.h"
@@ -89,7 +90,7 @@ void http_parser_test()
     int sum = 0;
     std::size_t request_len = ::strlen(http_header);
     sw.start();
-    for (int i = 0; i < kIterations; ++i) {
+    for (std::size_t i = 0; i < kIterations; ++i) {
         HttpParser<1024> http_parser;
         sum += http_parser.parse(http_header, request_len);
     }

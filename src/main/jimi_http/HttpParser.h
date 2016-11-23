@@ -205,7 +205,7 @@ public:
     bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
         assert(is.current() != nullptr);
         is_end = false;
-        if (is.remain() >= (sizeof("\r\n\r\n") - 1)) {
+        if (is.remain() >= 4) {
             // If the remain length is more than or equal 4 bytes, needn't to check the tail.
             do {
                 if (is.get() == '\r') {

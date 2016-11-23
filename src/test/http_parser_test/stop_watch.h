@@ -248,7 +248,7 @@ typedef StopWatchBase<timeGetTimeStopWatchImpl<double>> timeGetTimeStopWatch;
 
 #else
 
-typedef StdStopWatch timeGetTimeStopWatch;
+typedef StopWatchBase<StdStopWatchImpl<double>> timeGetTimeStopWatch;
 
 #endif // _WIN32
 
