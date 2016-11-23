@@ -513,7 +513,7 @@ scan_start:
         if (is_ok) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
-            static const std::size_t lenHTTPVersion = sizeof("HTTP/1.1") - 1;
+            static const std::ptrdiff_t lenHTTPVersion = sizeof("HTTP/1.1") - 1;
             std::ptrdiff_t len = is.current() - mark;
             if (len < lenHTTPVersion)
                 return false;
@@ -528,12 +528,11 @@ scan_start:
         const char * mark;
         bool is_ok;
         do {
-#if 0
             // Skip the whitespaces ahead of every entry.
             is_ok = nextAndSkipWhiteSpaces<' '>(is);
             if (!is_ok)
                 return false;
-#endif
+
             mark = is.current();
             is_ok = getKeynameToken(is);
             if (!is_ok)
