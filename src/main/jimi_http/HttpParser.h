@@ -118,6 +118,7 @@ public:
         }
     }
 
+#if 0
     template <char delimiter = ' '>
     bool next(InputStream & is) {
         assert(is.current() != nullptr);
@@ -173,6 +174,7 @@ public:
             hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
             is.next();
         }
+        return true;
     }
 
     template <char delimiter = ' '>
@@ -301,16 +303,171 @@ public:
             return false;
         }
     }
+#else
+    template <char delimiter = ' '>
+    bool next(InputStream & is) {
+        is.next();
+        assert(is.current() != nullptr);
+        if (is.hasNext() && is.get() != '\0')
+            return true;
+        else
+            return false;
+    }
+
+    template <char delimiter = ' '>
+    bool nextAndSkipWhiteSpaces(InputStream & is) {
+        is.next();
+        assert(is.current() != nullptr);
+        if (is.hasNext() && is.get() != '\0') {
+            skipWhiteSpaces<delimiter>(is);
+            return true;
+        }
+        return false;
+    }
+
+    bool nextAndSkipWhiteSpaces_CrLf(InputStream & is) {
+        assert(is.current() != nullptr);
+        bool is_ok = next(is);
+        if (is_ok) {
+            while (is.get() == ' ' || is.get() == '\r' || is.get() == '\n') {
+                is.next();
+                if (!is.hasNext())
+                    return false;
+            }
+        }
+        return is_ok;
+    }
+
+    template <char delimiter = ' '>
+    bool getToken(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
+            is.next();
+        }
+        return true;
+    }
+
+    template <char delimiter = ' '>
+    bool getTokenAndHash(InputStream & is, hash_type & hash) {
+        static const hash_type kSeed_Time31 = 31U;
+        hash = 0;
+        assert(is.current() != nullptr);
+        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
+            hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
+            is.next();
+        }
+        return true;
+    }
+
+    template <char delimiter = ' '>
+    bool getToken_CrLf(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n'
+            && is.get() != delimiter && is.get() != ' '
+            && is.get() != '\0')) {
+            is.next();
+        }
+        return true;
+    }
+
+    bool getKeynameToken(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.hasNext() && (is.get() != ':' && is.get() != ' ' && is.get() != '\0')) {
+            is.next();
+        }
+        return true;
+    }
+
+    bool getValueToken(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n' && is.get() != '\0')) {
+            is.next();
+        }
+        return true;
+    }
+
+    bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
+        assert(is.current() != nullptr);
+        is_end = false;
+scan_start:
+        if (is.remain() >= 4) {
+            // If the remain length is more than or equal 4 bytes, needn't to check the tail.
+            do {
+                if (is.get() == '\r') {
+                    if (is.peek(2) != '\r') {
+                        if (is.peek(1) == '\n') {
+                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                            return true;
+                        }
+                        return false;
+                    }
+                    else {
+                        if (is.peek(1) == '\n') {
+                            if (is.peek(3) == '\n') {
+                                is.moveTo(4);   // "\r\n\r\n", It's the end of the http header.
+                                is_end = true;
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                }
+                else if (is.get() == ' ') {
+                    is.next();          // Skip the whitespaces.
+                    goto scan_start;
+                }
+                else if (is.get() == '\0') {
+                    is_end = true;
+                    return true;
+                }
+                else {
+                    break;
+                }
+            } while (1);
+        }
+        else {
+            do {
+                // If the remain length is less than 4 bytes, we need to check the tail.
+                if (!is.hasNext())
+                    return false;
+                if (is.get() == '\r') {
+                    if (is.hasNext(2) && is.peek(2) != '\r') {
+                        if (is.peek(1) == '\n') {
+                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                else if (is.get() == ' ') {
+                    is.next();          // Skip the whitespaces.
+                    continue;
+                }
+                else if (is.get() == '\0') {
+                    is_end = true;
+                    return true;
+                }
+                else {
+                    break;
+                }
+            } while (1);
+        }
+        return false;
+    }
+#endif
 
     bool parseHttpMethod(InputStream & is) {
         if (!http_method_ref_.is_empty())
             return false;
-        const char * first = is.current();
+        const char * mark = is.current();
         bool is_ok = getToken<' '>(is);
         if (is_ok) {
             assert(is.current() != nullptr);
-            assert(is.current() >= first);
-            http_method_ref_.set(first, is.current() - first);
+            assert(is.current() >= mark);
+            std::ptrdiff_t len = is.current() - mark;
+            http_method_ref_.set(mark, len);
+            if (len <= 0)
+                return false;
         }
         return is_ok;
     }
@@ -319,12 +476,15 @@ public:
         if (!http_method_ref_.is_empty())
             return false;
         hash_type hash;
-        const char * first = is.current();
+        const char * mark = is.current();
         bool is_ok = getTokenAndHash<' '>(is, hash);
         if (is_ok) {
             assert(is.current() != nullptr);
-            assert(is.current() >= first);
-            http_method_ref_.set(first, is.current() - first);
+            assert(is.current() >= mark);
+            std::ptrdiff_t len = is.current() - mark;
+            http_method_ref_.set(mark, len);
+            if (len <= 0)
+                return false;
         }
         return is_ok;
     }
@@ -332,12 +492,15 @@ public:
     bool parseHttpURI(InputStream & is) {
         if (!http_url_ref_.is_empty())
             return false;
-        const char * first = is.current();
+        const char * mark = is.current();
         bool is_ok = getToken<' '>(is);
         if (is_ok) {
             assert(is.current() != nullptr);
-            assert(is.current() >= first);
-            http_url_ref_.set(first, is.current() - first);
+            assert(is.current() >= mark);
+            std::ptrdiff_t len = is.current() - mark;
+            http_url_ref_.set(mark, len);
+            if (len <= 0)
+                return false;
         }
         return is_ok;
     }
@@ -345,18 +508,24 @@ public:
     bool parseHttpVersion(InputStream & is) {
         if (!http_version_ref_.is_empty())
             return false;
-        const char * first = is.current();
+        const char * mark = is.current();
         bool is_ok = getToken_CrLf<' '>(is);
         if (is_ok) {
             assert(is.current() != nullptr);
-            assert(is.current() >= first);
-            http_version_ref_.set(first, is.current() - first);
+            assert(is.current() >= mark);
+            static const std::size_t lenHTTPVersion = sizeof("HTTP/1.1") - 1;
+            std::ptrdiff_t len = is.current() - mark;
+            if (len < lenHTTPVersion)
+                return false;
+            http_version_ref_.set(mark, len);
+            if (len <= 0)
+                return false;
         }
         return is_ok;
     }
 
     bool parseHttpEntryList(InputStream & is) {
-        const char * first;
+        const char * mark;
         bool is_ok;
         do {
 #if 0
@@ -365,24 +534,24 @@ public:
             if (!is_ok)
                 return false;
 #endif
-            first = is.current();
+            mark = is.current();
             is_ok = getKeynameToken(is);
             if (!is_ok)
                 return false;
-            const char * key_name = first;
-            std::size_t key_len = is.current() - first;
+            const char * key_name = mark;
+            std::size_t key_len = is.current() - mark;
 
             is_ok = nextAndSkipWhiteSpaces<':'>(is);
             if (!is_ok)
                 return false;
-            first = is.current();
+            mark = is.current();
 
             is_ok = getValueToken(is);
             if (!is_ok)
                 return false;
 
-            const char * value_name = first;
-            std::size_t value_len = is.current() - first;
+            const char * value_name = mark;
+            std::size_t value_len = is.current() - mark;
 
             // Append the key and value pair to StringRefList.
             entries_.append(key_name, key_len, value_name, value_len);
