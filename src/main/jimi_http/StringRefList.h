@@ -22,8 +22,9 @@ template <typename CharT, std::size_t InitCapacity>
 class BasicStringRefList {
 public:
     typedef CharT char_type;
-    typedef std::basic_string<char_type> std_string;
     typedef std::size_t size_type;
+    typedef std::basic_string<char_type> std_string;
+    typedef BasicStringRef<char_type> string_ref;
 
     static const std::size_t kInitCapacity = InitCapacity;
 
@@ -44,7 +45,9 @@ private:
         std::size_t size;
         EntryPair * entries;
 
-        EntryChunk(std::size_t _capacity) : next(nullptr), capacity(_capacity), size(0), entries(nullptr) {}
+        EntryChunk(std::size_t _capacity)
+            : next(nullptr), capacity(_capacity), size(0), entries(nullptr) {
+        }
         ~EntryChunk() {
             next = nullptr;
             if (entries) {
@@ -73,23 +76,35 @@ public:
         : ref(data),  capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
     BasicStringRefList(const char_type * data, size_type size)
         : ref(data, size), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
-    BasicStringRefList(const std_string & src)
-        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
     template <size_type N>
     BasicStringRefList(char_type (&src)[N])
         : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+    BasicStringRefList(const std_string & src)
+        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+    BasicStringRefList(const string_ref & src)
+        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+
     ~BasicStringRefList() {
         freeEntryChunks();
     }
 
     const char_type * data() const { return ref.data(); }
-    size_type capacity() const  { return capacity_; }
-    size_type size() const  { return size_; }
+    size_type capacity() const { return capacity_; }
+    size_type size() const { return size_; }
 
     const char_type * c_str() const { return data(); }
     size_type length() const { return size(); }
 
     bool is_empty() const { return (size() == 0); }
+
+    void reset() {
+        ref.reset();
+        capacity_ = kInitCapacity;
+        size_ = 0;
+        head_ = nullptr;
+        tail_ = nullptr;
+        freeEntryChunks();
+    }
 
     void setRef(const char_type * data) {
         ref.set(data);
@@ -109,6 +124,7 @@ public:
     }
 
     void initList() {
+#ifndef NDEBUG
 #if 1
         items[0].key.offset = 0;
         items[0].key.length = 0;
@@ -117,6 +133,7 @@ public:
 #else
         ::memset((void *)&items, 0, sizeof(items));
 #endif
+#endif // !NDEBUG
     }
 
     void freeEntryChunks() {
@@ -170,7 +187,7 @@ public:
             items[size_].value.length = static_cast<uint16_t>(value_len);
         }
         else {
-            // TODO:
+            // TODO: If the item count more than fixed kInitCapacity size.
         }
         size_++;
     }

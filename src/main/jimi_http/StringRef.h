@@ -16,7 +16,7 @@ namespace http {
 namespace detail {
 
     //////////////////////////////////////////
-    // strlen
+    // function strlen<T>()
     //////////////////////////////////////////
 
     template <typename CharT>
@@ -46,8 +46,8 @@ template <typename CharT>
 class BasicStringRef {
 public:
     typedef CharT char_type;
-    typedef std::basic_string<char_type> std_string;
     typedef std::size_t size_type;
+    typedef std::basic_string<char_type> std_string;
 
 private:
     const char_type * data_;
@@ -57,9 +57,24 @@ public:
     BasicStringRef() : data_(nullptr), size_(0) {}
     BasicStringRef(const char_type * data) : data_(data), size_(detail::strlen(data)) {}
     BasicStringRef(const char_type * data, size_type size) : data_(data), size_(size) {}
-    BasicStringRef(const std_string & src) : data_(src.data()), size_(src.size()) {}
     template <size_type N>
     BasicStringRef(char_type (&src)[N]) : data_(src), size_(N) {}
+    BasicStringRef(const std_string & src) : data_(src.data()), size_(src.size()) {}
+    BasicStringRef(std_string && src) : data_(src.data()), size_(src.size()) {}
+    BasicStringRef & operator = (const std_string & rhs) {
+        this->data_ = rhs.data();
+        this->size_ = rhs.size();
+        return *this;
+    }
+    BasicStringRef(const BasicStringRef & src) : data_(src.data()), size_(src.size()) {}
+    BasicStringRef(BasicStringRef && src) : data_(src.data()), size_(src.size()) {
+        src.reset();
+    }
+    BasicStringRef & operator = (const BasicStringRef & rhs) {
+        this->data_ = rhs.data();
+        this->size_ = rhs.size();
+        return *this;
+    }
     ~BasicStringRef() {}
 
     const char_type * data() const { return data_; }
@@ -69,6 +84,11 @@ public:
     size_type length() const { return size(); }
 
     bool is_empty() const { return (size() == 0); }
+
+    void reset() {
+        data_ = nullptr;
+        size_ = 0;
+    }
 
     void set(const char_type * data) {
         data_ = data;

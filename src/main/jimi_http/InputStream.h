@@ -66,12 +66,28 @@ public:
         return (get() == '\0');
     }
 
+    bool is_nullchar(int offset) const {
+        return (peek(offset) == '\0');
+    }
+
     bool is_empty() const {
         return (size() == 0);
     }
 
     bool hasNext() const {
-        return (!is_eof() && !is_nullchar());
+        return (!is_overflow());
+    }
+
+    bool hasNext(int offset) const {
+        return ((current_ + offset) >= end_);
+    }
+
+    bool hasNextChar() const {
+        return (hasNext() && !is_nullchar());
+    }
+
+    bool hasNextChar(int offset) const {
+        return (hasNext(offset) && !is_nullchar(offset));
     }
 
     char_type * current() const {
@@ -99,7 +115,7 @@ public:
         return *current_;
     }
 
-    char_type getNext(int offset) const {
+    char_type peek(int offset) const {
         assert((current_ + offset) != nullptr);
         return *(current_ + offset);
     }
@@ -109,7 +125,7 @@ public:
         *current_ = ch;
     }
 
-    void putNext(char_type ch, int offset) {
+    void put(char_type ch, int offset) {
         assert((current_ + offset) != nullptr);
         *(current_ + offset) = ch;
     }
@@ -118,7 +134,7 @@ public:
         current_++;
     }
 
-    void moveToNext(int offset) {
+    void moveTo(int offset) {
         current_ += offset;
     }
 

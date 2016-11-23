@@ -26,6 +26,7 @@ namespace http {
 struct error_code {
     enum error_code_t {
         kNoErrors,
+        kSuccess,
         kErrorInvalidHttpMethod,
         kErrorHttpParser,
     };
@@ -80,6 +81,15 @@ public:
         }
     }
 
+    void reset() {
+        http_method_ref_.reset();
+        http_url_ref_.reset();
+        http_version_ref_.reset();
+        content_size_ = 0;
+        content_ = nullptr;
+        entries_.reset();
+    }
+
     std::size_t getEntrySize() const {
         return entries_.size();
     }
@@ -103,7 +113,7 @@ public:
     template <char delimiter = ' '>
     void skipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.get() == delimiter || is.get() == ' ') {
+        while (is.hasNext() && (is.get() == delimiter || is.get() == ' ')) {
             is.next();
         }
     }
@@ -111,10 +121,10 @@ public:
     template <char delimiter = ' '>
     bool next(InputStream & is) {
         assert(is.current() != nullptr);
-        if (!is.is_eof()) {
+        if (is.hasNext()) {
             is.next();
             assert(is.current() != nullptr);
-            if (!is.is_eof() && is.get() != '\0')
+            if (is.hasNext() && is.get() != '\0')
                 return true;
         }
         return false;
@@ -123,10 +133,10 @@ public:
     template <char delimiter = ' '>
     bool nextAndSkipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
-        if (!is.is_eof()) {
+        if (is.hasNext()) {
             is.next();
             assert(is.current() != nullptr);
-            if (!is.is_eof() && is.get() != '\0') {
+            if (is.hasNext() && is.get() != '\0') {
                 skipWhiteSpaces<delimiter>(is);
                 return true;
             }
@@ -136,19 +146,19 @@ public:
 
     bool nextAndSkipWhiteSpaces_CrLf(InputStream & is) {
         assert(is.current() != nullptr);
-        bool success = next(is);
-        if (success) {
-            while (is.get() == ' ' || is.get() == '\r' || is.get() == '\n') {
+        bool is_ok = next(is);
+        if (is_ok) {
+            while (is.hasNext() && (is.get() == ' ' || is.get() == '\r' || is.get() == '\n')) {
                 is.next();
             }
         }
-        return success;
+        return is_ok;
     }
 
     template <char delimiter = ' '>
     bool getToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.get() != delimiter && is.get() != ' ' && is.get() != '\0') {
+        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
             is.next();
         }
         return true;
@@ -159,7 +169,7 @@ public:
         static const hash_type kSeed_Time31 = 31U;
         hash = 0;
         assert(is.current() != nullptr);
-        while (is.get() != delimiter && is.get() != ' ' && is.get() != '\0') {
+        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
             hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
             is.next();
         }
@@ -168,9 +178,9 @@ public:
     template <char delimiter = ' '>
     bool getToken_CrLf(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.get() != '\r' && is.get() != '\n'
+        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n'
             && is.get() != delimiter && is.get() != ' '
-            && is.get() != '\0') {
+            && is.get() != '\0')) {
             is.next();
         }
         return true;
@@ -178,7 +188,7 @@ public:
 
     bool getKeynameToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.get() != ':' && is.get() != ' ' && is.get() != '\0') {
+        while (is.hasNext() && (is.get() != ':' && is.get() != ' ' && is.get() != '\0')) {
             is.next();
         }
         return true;
@@ -186,7 +196,7 @@ public:
 
     bool getValueToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.get() != '\r' && is.get() != '\n' && is.get() != '\0') {
+        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n' && is.get() != '\0')) {
             is.next();
         }
         return true;
@@ -199,36 +209,36 @@ public:
             // If the remain length is more than or equal 4 bytes, needn't to check the tail.
             do {
                 if (is.get() == '\r') {
-                    if (is.getNext(2) != '\r') {
-                        if (is.getNext(1) == '\n') {
-                            is.moveToNext(2);   // "\r\n", In most cases, it will be walk to this path.
-                            return true;   
+                    if (is.peek(2) != '\r') {
+                        if (is.peek(1) == '\n') {
+                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                            return true;
                         }
                         else {
-                            is.moveToNext(1);   // "\r" only, Maybe it's a wrong format.
+                            is.moveTo(1);       // "\rXX", Maybe it's a wrong format.
                             return false;
                         }
                     }
                     else {
-                        if (is.getNext(1) == '\n') {
-                            if (is.getNext(3) == '\n') {
-                                is.moveToNext(4);   // "\r\n\r\n", It's the end of the http header.
+                        if (is.peek(1) == '\n') {
+                            if (is.peek(3) == '\n') {
+                                is.moveTo(4);   // "\r\n\r\n", It's the end of the http header.
                                 is_end = true;
                                 return true;
                             }
                             else {
-                                is.moveToNext(3);   // "\r\n\rX", Maybe it's a wrong format.
+                                is.moveTo(3);   // "\r\n\rX", Maybe it's a wrong format.
                                 return false;
                             }
                         }
                         else {
-                            is.moveToNext(1);       // "\r" only, Maybe it's a wrong format.
+                            is.moveTo(1);       // "\rX\rX", Maybe it's a wrong format.
                             return false;
                         }
                     }
                 }
                 else if (is.get() == '\n') {
-                    is.moveToNext(1);   // "\n" only, Maybe it's a wrong format.
+                    is.moveTo(1);       // "\n" only, Maybe it's a wrong format.
                     return false;
                 }
                 else if (is.get() == ' ') {
@@ -246,17 +256,55 @@ public:
             return false;
         }
         else {
-            // If the remain length is less than 4 bytes, we need to check the tail.
-            if (is.get() == '\r') {
-                if (is.getNext(2) != '\r') {
-                    //
+            do {
+                // If the remain length is less than 4 bytes, we need to check the tail.
+                if (!is.hasNext())
+                    return false;
+                if (is.get() == '\r') {
+                    if (is.hasNext(2) && is.peek(2) != '\r') {
+                        if (is.peek(1) == '\n') {
+                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                            return true;
+                        }
+                        else {
+                            is.moveTo(1);       // "\rXX", Maybe it's a wrong format.
+                            return false;
+                        }
+                    }
+                    else {
+                        if (is.hasNext(1) && is.peek(1) == '\n') {
+                            is.moveTo(3);       // "\r\n\r\0", Maybe it's a wrong format.
+                            return false;
+                        }
+                        else {
+                            is.moveTo(1);       // "\rX\r\0", Maybe it's a wrong format.
+                            return false;
+                        }
+                    }
                 }
-            }
+                else if (is.get() == '\n') {
+                    is.moveTo(1);       // "\n" only, Maybe it's a wrong format.
+                    return false;
+                }
+                else if (is.get() == ' ') {
+                    is.next();          // Skip the whitespaces.
+                    continue;
+                }
+                else if (is.get() == '\0') {
+                    is_end = true;
+                    return true;
+                }
+                else {
+                    break;
+                }
+            } while (1);
             return false;
         }
     }
 
     bool parseHttpMethod(InputStream & is) {
+        if (!http_method_ref_.is_empty())
+            return false;
         const char * first = is.current();
         bool is_ok = getToken<' '>(is);
         if (is_ok) {
@@ -268,6 +316,8 @@ public:
     }
 
     bool parseHttpMethodAndHash(InputStream & is) {
+        if (!http_method_ref_.is_empty())
+            return false;
         hash_type hash;
         const char * first = is.current();
         bool is_ok = getTokenAndHash<' '>(is, hash);
@@ -280,6 +330,8 @@ public:
     }
 
     bool parseHttpURI(InputStream & is) {
+        if (!http_url_ref_.is_empty())
+            return false;
         const char * first = is.current();
         bool is_ok = getToken<' '>(is);
         if (is_ok) {
@@ -291,6 +343,8 @@ public:
     }
 
     bool parseHttpVersion(InputStream & is) {
+        if (!http_version_ref_.is_empty())
+            return false;
         const char * first = is.current();
         bool is_ok = getToken_CrLf<' '>(is);
         if (is_ok) {
@@ -396,6 +450,7 @@ parse_error:
 
     // Copy the input http header data.
     const char * cloneContent(const char * data, size_t len) {
+        assert(data != nullptr);
         const char * content;
         if (len < kInitContentSize) {
             ::memcpy((void *)&inner_content_[0], data, len);
@@ -423,6 +478,10 @@ parse_error:
 
     int parse(const char * data, size_t len) {
         int ec = 0;
+        assert(data != nullptr);
+        if (len == 0 || data == nullptr)
+            return error_code::kSuccess;
+
         // Copy the input http header data.
         const char * content = cloneContent(data, len);
         if (content == nullptr)
