@@ -82,6 +82,9 @@ Icon?
 # Ignore folders create by Visual Studio 2015
 /.vs/
 
+# Ignore intellisense files by Visual Studio 2015 Update 3
+*.VC.db
+
 # *.vcxproj.user
 # *_i.c
 # *_p.c
