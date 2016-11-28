@@ -80,7 +80,7 @@ public:
     const char_type * data() const { return data_; }
     size_type size() const  { return size_; }
 
-    const char_type * c_str() const { return data(); }
+    const char_type * c_str() const { return (data() != nullptr) ? data() : ""; }
     size_type length() const { return size(); }
 
     bool is_empty() const { return (size() == 0); }

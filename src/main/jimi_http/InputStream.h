@@ -79,7 +79,7 @@ public:
     }
 
     bool hasNext(int offset) const {
-        return ((current_ + offset) >= end_);
+        return ((current_ + offset) < end_);
     }
 
     bool hasNextChar() const {
@@ -89,6 +89,24 @@ public:
     bool hasNextChar(int offset) const {
         return (hasNext(offset) && !is_nullchar(offset));
     }
+
+#if 1
+    bool isNullChar() const {
+        return false;
+    }
+
+    bool isNullChar(int offset) const {
+        return false;
+    }
+#else
+    bool isNullChar() const {
+        return is_nullchar();
+    }
+
+    bool isNullChar(int offset) const {
+        return is_nullchar(offset);
+    }
+#endif
 
     char_type * current() const {
         return current_;

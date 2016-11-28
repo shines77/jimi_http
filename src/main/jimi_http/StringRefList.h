@@ -88,6 +88,17 @@ public:
         freeEntryChunks();
     }
 
+private:
+    void append_item(std::size_t index, const char * key, std::size_t key_len,
+                     const char * value, std::size_t value_len) {
+        EntryPair & item = items[index];
+        item.key.offset = static_cast<uint16_t>(key - ref.data());
+        item.key.length = static_cast<uint16_t>(key_len);
+        item.value.offset = static_cast<uint16_t>(value - ref.data());
+        item.value.length = static_cast<uint16_t>(value_len);
+    }
+
+public:
     const char_type * data() const { return ref.data(); }
     size_type capacity() const { return capacity_; }
     size_type size() const { return size_; }
@@ -125,14 +136,7 @@ public:
 
     void initList() {
 #ifndef NDEBUG
-#if 1
-        items[0].key.offset = 0;
-        items[0].key.length = 0;
-        items[0].value.offset = 0;
-        items[0].value.length = 0;
-#else
         ::memset((void *)&items, 0, sizeof(items));
-#endif
 #endif // !NDEBUG
     }
 
@@ -162,34 +166,36 @@ public:
                 const char * value, std::size_t value_len) {
         assert(key != nullptr);
         assert(value != nullptr);
-        if (size_ > capacity_) {
-            // Add a new enttries chunk
-            static const std::size_t kChunkSize = 32;
-            EntryChunk * newChunk = new EntryChunk(kChunkSize);
-            if (newChunk != nullptr) {
-                if (head_ == nullptr)
-                    head_ = newChunk;
-                if (tail_ == nullptr) {
-                    tail_ = newChunk;
-                }
-                else {
-                    tail_->next = newChunk;
-                    tail_ = newChunk;
-                }
-            }
-            capacity_ += kChunkSize;
-        }
-        assert(size_ <= capacity_);
         if (size_ < kInitCapacity) {
-            items[size_].key.offset = static_cast<uint16_t>(key - ref.data());
-            items[size_].key.length = static_cast<uint16_t>(key_len);
-            items[size_].value.offset = static_cast<uint16_t>(value - ref.data());
-            items[size_].value.length = static_cast<uint16_t>(value_len);
+            assert(size_ < capacity_);
+            append_item(size_, key, key_len, value, value_len);
+            size_++;
         }
         else {
-            // TODO: If the item count more than fixed kInitCapacity size.
+            if (size_ >= capacity_) {
+                // Add a new enttries chunk
+                static const std::size_t kChunkSize = 32;
+                EntryChunk * newChunk = new EntryChunk(kChunkSize);
+                if (newChunk != nullptr) {
+                    if (head_ == nullptr)
+                        head_ = newChunk;
+                    if (tail_ == nullptr) {
+                        tail_ = newChunk;
+                    }
+                    else {
+                        tail_->next = newChunk;
+                        tail_ = newChunk;
+                    }
+                }
+                capacity_ += kChunkSize;
+            }
+            assert(size_ < capacity_);
+            // TODO: If the item count more than fixed kInitCapacity size,
+            // append to the last position of last chunk.
+            //
+            append_item(size_, key, key_len, value, value_len);
+            size_++;
         }
-        size_++;
     }
 };
 

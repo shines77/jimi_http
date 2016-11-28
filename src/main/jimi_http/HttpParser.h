@@ -63,7 +63,7 @@ private:
     std::size_t content_length_;
     std::size_t content_size_;
     const char * content_;
-    StringRefList<16> entries_;
+    StringRefList<16> fields_;
     char inner_content_[kInitContentSize];
 
 public:
@@ -72,7 +72,6 @@ public:
         request_method_(HttpRequest::UNDEFINED),
         content_length_(0),
         content_size_(0), content_(nullptr) {
-        //
     }
 
     ~HttpParser() {
@@ -88,11 +87,11 @@ public:
         http_version_ref_.reset();
         content_size_ = 0;
         content_ = nullptr;
-        entries_.reset();
+        fields_.reset();
     }
 
     std::size_t getEntrySize() const {
-        return entries_.size();
+        return fields_.size();
     }
 
     uint32_t getHttpVersion() const {
@@ -111,101 +110,187 @@ public:
         request_method_ = request_method;
     }
 
-    template <char delimiter = ' '>
+    void next(InputStream & is) {
+        is.next();
+    }
+
+    void moveTo(InputStream & is, int offset) {
+        is.moveTo(offset);
+    }
+
+    bool hasNextChar(InputStream & is) {
+        return is.hasNextChar();
+    }
+
+#if 1
     void skipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() == delimiter || is.get() == ' ')) {
+        while (is.hasNext() && (is.get() == ' ')) {
             is.next();
         }
     }
-
-#if 0
-    template <char delimiter = ' '>
-    bool next(InputStream & is) {
+#else
+    void skipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
-        if (is.hasNext()) {
+        while (is.hasNext() && (is.get() == ' ' || is.get() == '\t')) {
             is.next();
-            assert(is.current() != nullptr);
-            if (is.hasNext() && is.get() != '\0')
-                return true;
         }
-        return false;
+    }
+#endif
+
+    void nextAndSkipWhiteSpaces(InputStream & is) {
+        is.next();
+        skipWhiteSpaces(is);
     }
 
-    template <char delimiter = ' '>
-    bool nextAndSkipWhiteSpaces(InputStream & is) {
+    bool skipCrLf(InputStream & is) {
         assert(is.current() != nullptr);
-        if (is.hasNext()) {
-            is.next();
-            assert(is.current() != nullptr);
-            if (is.hasNext() && is.get() != '\0') {
-                skipWhiteSpaces<delimiter>(is);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool nextAndSkipWhiteSpaces_CrLf(InputStream & is) {
-        assert(is.current() != nullptr);
-        bool is_ok = next(is);
-        if (is_ok) {
-            while (is.hasNext() && (is.get() == ' ' || is.get() == '\r' || is.get() == '\n')) {
+        while (is.hasNext()) {
+            if (is.get() == '\r' || is.get() == '\n')
                 is.next();
-            }
+            else
+                break;
         }
-        return is_ok;
+        return is.hasNext();
     }
 
-    template <char delimiter = ' '>
-    bool getToken(InputStream & is) {
+    void nextAndSkipCrLf(InputStream & is) {
+        if (is.remain() > 2) {
+            moveTo(is, 2);
+            //skipCrLf(is);
+        }
+    }
+
+    bool skipCrLfAndWhiteSpaces(InputStream & is) {
+        while (is.hasNext()) {
+            if (is.get() == '\r' || is.get() == ' ' || is.get() == '\n' || is.get() == '\t')
+                is.next();
+            else
+                break;
+        }
+        return is.hasNext();
+    }
+
+    template <char delimiter>
+    bool findToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
+        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && !is.isNullChar())) {
             is.next();
         }
-        return true;
+        return is.hasNext();
     }
 
-    template <char delimiter = ' '>
-    bool getTokenAndHash(InputStream & is, hash_type & hash) {
+    template <char delimiter>
+    bool findTokenAndHash(InputStream & is, hash_type & hash) {
         static const hash_type kSeed_Time31 = 31U;
         hash = 0;
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
+        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && !is.isNullChar())) {
             hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
             is.next();
         }
-        return true;
+        return is.hasNext();
     }
 
-    template <char delimiter = ' '>
-    bool getToken_CrLf(InputStream & is) {
+    bool findCrLfToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n'
-            && is.get() != delimiter && is.get() != ' '
-            && is.get() != '\0')) {
-            is.next();
+        while (is.hasNext()) {
+            if (is.get() == '\r') {
+                if (is.hasNext(1) && is.peek(1) == '\n')
+                    return true;
+            }
+            if (!is.isNullChar())
+                is.next();
         }
-        return true;
+        return is.hasNext();
     }
 
-    bool getKeynameToken(InputStream & is) {
+    bool findFieldName(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != ':' && is.get() != ' ' && is.get() != '\0')) {
+        while (is.hasNext() && (is.get() != ':' && is.get() != ' ' && !is.isNullChar())) {
             is.next();
         }
-        return true;
+        return is.hasNext();
     }
 
-    bool getValueToken(InputStream & is) {
+    bool findFieldValue(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n' && is.get() != '\0')) {
+        while (is.hasNext() && (is.get() != '\r' && !is.isNullChar())) {
             is.next();
         }
-        return true;
+        return is.hasNext();
     }
 
     bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
+        assert(is.current() != nullptr);
+        is_end = false;
+scan_restart:
+        if (is.remain() >= 4) {
+            // If the remain length is more than or equal 4 bytes, needn't to check the tail.
+            do {
+                if (is.get() == '\r') {
+                    if (is.peek(2) != '\r') {
+                        if (is.peek(1) == '\n') {
+                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                            return true;
+                        }
+                        return false;
+                    }
+                    else {
+                        if (is.peek(1) == '\n') {
+                            if (is.peek(3) == '\n') {
+                                is.moveTo(4);   // "\r\n\r\n", It's the end of the http header.
+                                is_end = true;
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                }
+                else if (is.get() == ' ') {
+                    is.next();          // Skip the whitespaces.
+                    goto scan_restart;
+                }
+                else if (is.get() == '\0') {
+                    is_end = true;
+                    return true;
+                }
+                else {
+                    break;
+                }
+            } while (1);
+        }
+        else {
+            do {
+                // If the remain length is less than 4 bytes, we need to check the tail.
+                if (!is.hasNext())
+                    return false;
+                if (is.get() == '\r') {
+                    if (is.hasNext(2) && is.peek(2) != '\r') {
+                        if (is.peek(1) == '\n') {
+                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                else if (is.get() == ' ') {
+                    is.next();          // Skip the whitespaces.
+                    continue;
+                }
+                else if (is.get() == '\0') {
+                    is_end = true;
+                    return true;
+                }
+                else {
+                    break;
+                }
+            } while (1);
+        }
+        return false;
+    }
+
+    bool checkAndSkipCrLf_Heavy(InputStream & is, bool & is_end) {
         assert(is.current() != nullptr);
         is_end = false;
         if (is.remain() >= 4) {
@@ -304,164 +389,12 @@ public:
             return false;
         }
     }
-#else
-    template <char delimiter = ' '>
-    bool next(InputStream & is) {
-        is.next();
-        assert(is.current() != nullptr);
-        if (is.hasNext() && is.get() != '\0')
-            return true;
-        else
-            return false;
-    }
-
-    template <char delimiter = ' '>
-    bool nextAndSkipWhiteSpaces(InputStream & is) {
-        is.next();
-        assert(is.current() != nullptr);
-        if (is.hasNext() && is.get() != '\0') {
-            skipWhiteSpaces<delimiter>(is);
-            return true;
-        }
-        return false;
-    }
-
-    bool nextAndSkipWhiteSpaces_CrLf(InputStream & is) {
-        assert(is.current() != nullptr);
-        bool is_ok = next(is);
-        if (is_ok) {
-            while (is.get() == ' ' || is.get() == '\r' || is.get() == '\n') {
-                is.next();
-                if (!is.hasNext())
-                    return false;
-            }
-        }
-        return is_ok;
-    }
-
-    template <char delimiter = ' '>
-    bool getToken(InputStream & is) {
-        assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
-            is.next();
-        }
-        return true;
-    }
-
-    template <char delimiter = ' '>
-    bool getTokenAndHash(InputStream & is, hash_type & hash) {
-        static const hash_type kSeed_Time31 = 31U;
-        hash = 0;
-        assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && is.get() != '\0')) {
-            hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
-            is.next();
-        }
-        return true;
-    }
-
-    template <char delimiter = ' '>
-    bool getToken_CrLf(InputStream & is) {
-        assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n'
-            && is.get() != delimiter && is.get() != ' '
-            && is.get() != '\0')) {
-            is.next();
-        }
-        return true;
-    }
-
-    bool getKeynameToken(InputStream & is) {
-        assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != ':' && is.get() != ' ' && is.get() != '\0')) {
-            is.next();
-        }
-        return true;
-    }
-
-    bool getValueToken(InputStream & is) {
-        assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != '\r' && is.get() != '\n' && is.get() != '\0')) {
-            is.next();
-        }
-        return true;
-    }
-
-    bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
-        assert(is.current() != nullptr);
-        is_end = false;
-scan_start:
-        if (is.remain() >= 4) {
-            // If the remain length is more than or equal 4 bytes, needn't to check the tail.
-            do {
-                if (is.get() == '\r') {
-                    if (is.peek(2) != '\r') {
-                        if (is.peek(1) == '\n') {
-                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
-                            return true;
-                        }
-                        return false;
-                    }
-                    else {
-                        if (is.peek(1) == '\n') {
-                            if (is.peek(3) == '\n') {
-                                is.moveTo(4);   // "\r\n\r\n", It's the end of the http header.
-                                is_end = true;
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                }
-                else if (is.get() == ' ') {
-                    is.next();          // Skip the whitespaces.
-                    goto scan_start;
-                }
-                else if (is.get() == '\0') {
-                    is_end = true;
-                    return true;
-                }
-                else {
-                    break;
-                }
-            } while (1);
-        }
-        else {
-            do {
-                // If the remain length is less than 4 bytes, we need to check the tail.
-                if (!is.hasNext())
-                    return false;
-                if (is.get() == '\r') {
-                    if (is.hasNext(2) && is.peek(2) != '\r') {
-                        if (is.peek(1) == '\n') {
-                            is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-                else if (is.get() == ' ') {
-                    is.next();          // Skip the whitespaces.
-                    continue;
-                }
-                else if (is.get() == '\0') {
-                    is_end = true;
-                    return true;
-                }
-                else {
-                    break;
-                }
-            } while (1);
-        }
-        return false;
-    }
-#endif
 
     bool parseHttpMethod(InputStream & is) {
         if (!http_method_ref_.is_empty())
             return false;
         const char * mark = is.current();
-        bool is_ok = getToken<' '>(is);
+        bool is_ok = findToken<' '>(is);
         if (is_ok) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
@@ -478,7 +411,7 @@ scan_start:
             return false;
         hash_type hash;
         const char * mark = is.current();
-        bool is_ok = getTokenAndHash<' '>(is, hash);
+        bool is_ok = findTokenAndHash<' '>(is, hash);
         if (is_ok) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
@@ -494,7 +427,7 @@ scan_start:
         if (!http_url_ref_.is_empty())
             return false;
         const char * mark = is.current();
-        bool is_ok = getToken<' '>(is);
+        bool is_ok = findToken<' '>(is);
         if (is_ok) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
@@ -510,53 +443,50 @@ scan_start:
         if (!http_version_ref_.is_empty())
             return false;
         const char * mark = is.current();
-        bool is_ok = getToken_CrLf<' '>(is);
+        bool is_ok = findCrLfToken(is);
         if (is_ok) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
-            static const std::ptrdiff_t lenHTTPVersion = sizeof("HTTP/1.1") - 1;
+            static const std::ptrdiff_t kLenHTTPVersion = sizeof("HTTP/1.1") - 1;
             std::ptrdiff_t len = is.current() - mark;
-            if (len < lenHTTPVersion)
-                return false;
-            http_version_ref_.set(mark, len);
-            if (len <= 0)
+            if (len >= kLenHTTPVersion) {
+                http_version_ref_.set(mark, len);
+                return true;
+            }
+            else
                 return false;
         }
         return is_ok;
     }
 
-    bool parseHttpEntryList(InputStream & is) {
-        const char * mark;
+    bool parseHttpFields(InputStream & is) {
         bool is_ok;
         do {
             // Skip the whitespaces ahead of every entry.
-            is_ok = nextAndSkipWhiteSpaces<' '>(is);
-            if (!is_ok)
+            skipWhiteSpaces(is);
+
+            const char * field_name = is.current();
+            is_ok = findFieldName(is);
+
+            std::ptrdiff_t name_len = is.current() - field_name;
+            if (!is_ok || (name_len <= 0))
                 return false;
 
-            mark = is.current();
-            is_ok = getKeynameToken(is);
-            if (!is_ok)
-                return false;
-            const char * key_name = mark;
-            std::size_t key_len = is.current() - mark;
+            next(is);
+            skipWhiteSpaces(is);
 
-            is_ok = nextAndSkipWhiteSpaces<':'>(is);
-            if (!is_ok)
-                return false;
-            mark = is.current();
+            const char * field_value = is.current();
+            is_ok = findFieldValue(is);
 
-            is_ok = getValueToken(is);
-            if (!is_ok)
+            std::ptrdiff_t value_len = is.current() - field_value;
+            if (!is_ok || (value_len <= 0))
                 return false;
 
-            const char * value_name = mark;
-            std::size_t value_len = is.current() - mark;
+            // Append the field-name and field-value pair to StringRefList.
+            fields_.append(field_name, name_len, field_value, value_len);
 
-            // Append the key and value pair to StringRefList.
-            entries_.append(key_name, key_len, value_name, value_len);
+            skipWhiteSpaces(is);
 
-            skipWhiteSpaces<' '>(is);
             bool is_end;
             is_ok = checkAndSkipCrLf(is, is_end);
             if (is_end)
@@ -567,11 +497,11 @@ scan_start:
         return is_ok;
     }
 
-    // Parse http header
-    int parseHeader(InputStream & is) {
+    // Parse request http header
+    int parseRequestHeader(InputStream & is) {
         int ec = 0;
         bool is_ok;
-        // Skip the whitespaces ahead of http header.
+        // Skip the whitespaces ahead of request http header.
         skipWhiteSpaces(is);
 
         const char * start = is.current();
@@ -580,40 +510,34 @@ scan_start:
         if (is.get() >= 'A' && is.get() <= 'Z') {
             is_ok = parseHttpMethod(is);
             //is_ok = parseHttpMethodAndHash(is);
-            if (!is_ok) {
-                ec = error_code::InvalidHttpMethod;
-                goto parse_error;
-            }
-            is_ok = nextAndSkipWhiteSpaces(is);
             if (!is_ok)
-                return error_code::HttpParserError;
+                return error_code::InvalidHttpMethod;
+
+            nextAndSkipWhiteSpaces(is);
 
             is_ok = parseHttpURI(is);
             if (!is_ok)
                 return error_code::HttpParserError;
-            is_ok = nextAndSkipWhiteSpaces(is);
-            if (!is_ok)
-                return error_code::HttpParserError;
+
+            nextAndSkipWhiteSpaces(is);
 
             is_ok = parseHttpVersion(is);
             if (!is_ok)
                 return error_code::HttpParserError;
-            is_ok = nextAndSkipWhiteSpaces_CrLf(is);
-            if (!is_ok)
-                return error_code::HttpParserError;
 
+            nextAndSkipCrLf(is);
+ 
             assert(is.current() >= start);
             assert(length >= (std::size_t)(is.current() - start));
-            entries_.setRef(is.current(), length - (is.current() - start));
+            fields_.setRef(is.current(), length - (is.current() - start));
 
-            is_ok = parseHttpEntryList(is);
+            is_ok = parseHttpFields(is);
             if (!is_ok)
                 return error_code::HttpParserError;
         }
         else {
             ec = error_code::InvalidHttpMethod;
         }
-parse_error:
         return ec;
     }
 
@@ -645,7 +569,7 @@ parse_error:
         return content;
     }
 
-    int parse(const char * data, size_t len) {
+    int parseRequest(const char * data, size_t len) {
         int ec = 0;
         assert(data != nullptr);
         if (len == 0 || data == nullptr)
@@ -656,25 +580,25 @@ parse_error:
         if (content == nullptr)
             return error_code::HttpParserError;
 
-        // Start parse the http header.
+        // Start parse the request http header.
         InputStream is(content, len);
-        ec = parseHeader(is);
+        ec = parseRequestHeader(is);
         return ec;
     }
 
-    void displayEntries() {
-        std::cout << "Http entries: (length = " << entries_.ref.size() << " bytes)" << std::endl << std::endl;
-        std::cout << entries_.ref.c_str() << std::endl;
+    void displayFields() {
+        std::cout << "Http entries: (length = " << fields_.ref.size() << " bytes)" << std::endl << std::endl;
+        std::cout << fields_.ref.c_str() << std::endl;
 
-        std::cout << "Http entries size: " << entries_.size() << std::endl << std::endl;
-        std::size_t data_len = entries_.ref.size();
-        for (std::size_t i = 0; i < entries_.size(); ++i) {
-            if ((entries_.items[i].key.offset <= data_len)
-                && ((entries_.items[i].key.offset + entries_.items[i].key.length) < data_len)
-                && (entries_.items[i].value.offset <= data_len)
-                && ((entries_.items[i].value.offset + entries_.items[i].value.length) < data_len)) {
-                std::string key(entries_.ref.data() + entries_.items[i].key.offset, entries_.items[i].key.length);
-                std::string value(entries_.ref.data() + entries_.items[i].value.offset, entries_.items[i].value.length);
+        std::cout << "Http entries size: " << fields_.size() << std::endl << std::endl;
+        std::size_t data_len = fields_.ref.size();
+        for (std::size_t i = 0; i < fields_.size(); ++i) {
+            if ((fields_.items[i].key.offset <= data_len)
+                && ((fields_.items[i].key.offset + fields_.items[i].key.length) < data_len)
+                && (fields_.items[i].value.offset <= data_len)
+                && ((fields_.items[i].value.offset + fields_.items[i].value.length) < data_len)) {
+                std::string key(fields_.ref.data() + fields_.items[i].key.offset, fields_.items[i].key.length);
+                std::string value(fields_.ref.data() + fields_.items[i].value.offset, fields_.items[i].value.length);
                 std::cout << "key = " << key.c_str() << ", value = " << value.c_str() << std::endl;
             }
             else {

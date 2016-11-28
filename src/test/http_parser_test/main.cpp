@@ -65,7 +65,8 @@ void http_parser_benchmark()
     HttpParser<1024> parser;
 	do {
         std::atomic_thread_fence(std::memory_order_acquire);
-		dummy += parser.parse(http_header, ::strlen(http_header));
+		//dummy += parser.parse(http_header, ::strlen(http_header));
+        dummy += parser.parseRequest(http_header, request_len);
         std::atomic_thread_fence(std::memory_order_acquire);
         //dummy += parser.getEntrySize();
         parser.reset();
@@ -93,7 +94,7 @@ void http_parser_test()
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
         HttpParser<1024> http_parser;
-        sum += http_parser.parse(http_header, request_len);
+        sum += http_parser.parseRequest(http_header, request_len);
     }
     sw.stop();
 
@@ -130,9 +131,9 @@ int main(int argn, char * argv[])
     HttpParser<1024> http_parser;
     printf("http_parser.getHttpVersion() = %u\n", http_parser.getHttpVersion());
     printf("http_parser.getRequestMethod() = %u\n", http_parser.getRequestMethod());
-    http_parser.parse(http_header, ::strlen(http_header));
+    http_parser.parseRequest(http_header, ::strlen(http_header));
     printf("\n");
-    http_parser.displayEntries();
+    http_parser.displayFields();
     printf("\n");
 
 #if 0
