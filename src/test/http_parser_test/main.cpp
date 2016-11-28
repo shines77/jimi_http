@@ -35,8 +35,8 @@ void http_parser_benchmark()
                                "Cookie: name=wookie\r\n"
                                "\r\n";
 	auto request_len = ::strlen(http_header);
-	int64_t count = 0;
-    int64_t dummy = 0;
+	volatile int64_t count = 0;
+    volatile int64_t dummy = 0;
 	std::thread counter([&] {
 		auto last_count = count;
 		auto count_ = count;

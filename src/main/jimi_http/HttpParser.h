@@ -25,11 +25,12 @@ namespace http {
 
 struct error_code {
     enum error_code_t {
-        kNoErrors,
-        kSuccess,
-        kErrorInvalidHttpMethod,
-        kErrorHttpParser,
+        Succeed,
+        NoErrors,
+        InvalidHttpMethod,
+        HttpParserError,
     };
+    int code;
 };
 
 class ParseErrorCode {
@@ -580,26 +581,26 @@ scan_start:
             is_ok = parseHttpMethod(is);
             //is_ok = parseHttpMethodAndHash(is);
             if (!is_ok) {
-                ec = error_code::kErrorInvalidHttpMethod;
+                ec = error_code::InvalidHttpMethod;
                 goto parse_error;
             }
             is_ok = nextAndSkipWhiteSpaces(is);
             if (!is_ok)
-                return error_code::kErrorHttpParser;
+                return error_code::HttpParserError;
 
             is_ok = parseHttpURI(is);
             if (!is_ok)
-                return error_code::kErrorHttpParser;
+                return error_code::HttpParserError;
             is_ok = nextAndSkipWhiteSpaces(is);
             if (!is_ok)
-                return error_code::kErrorHttpParser;
+                return error_code::HttpParserError;
 
             is_ok = parseHttpVersion(is);
             if (!is_ok)
-                return error_code::kErrorHttpParser;
+                return error_code::HttpParserError;
             is_ok = nextAndSkipWhiteSpaces_CrLf(is);
             if (!is_ok)
-                return error_code::kErrorHttpParser;
+                return error_code::HttpParserError;
 
             assert(is.current() >= start);
             assert(length >= (std::size_t)(is.current() - start));
@@ -607,10 +608,10 @@ scan_start:
 
             is_ok = parseHttpEntryList(is);
             if (!is_ok)
-                return error_code::kErrorHttpParser;
+                return error_code::HttpParserError;
         }
         else {
-            ec = error_code::kErrorInvalidHttpMethod;
+            ec = error_code::InvalidHttpMethod;
         }
 parse_error:
         return ec;
@@ -648,12 +649,12 @@ parse_error:
         int ec = 0;
         assert(data != nullptr);
         if (len == 0 || data == nullptr)
-            return error_code::kSuccess;
+            return error_code::Succeed;
 
         // Copy the input http header data.
         const char * content = cloneContent(data, len);
         if (content == nullptr)
-            return error_code::kErrorHttpParser;
+            return error_code::HttpParserError;
 
         // Start parse the http header.
         InputStream is(content, len);
