@@ -542,7 +542,7 @@ scan_restart:
     }
 
     // Copy the input http header data.
-    const char * cloneContent(const char * data, size_t len) {
+    const char * copyContent(const char * data, size_t len) {
         assert(data != nullptr);
         const char * content;
         if (len < kInitContentSize) {
@@ -576,7 +576,7 @@ scan_restart:
             return error_code::Succeed;
 
         // Copy the input http header data.
-        const char * content = cloneContent(data, len);
+        const char * content = copyContent(data, len);
         if (content == nullptr)
             return error_code::HttpParserError;
 
