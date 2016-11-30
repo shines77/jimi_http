@@ -521,7 +521,7 @@ void p2p_mode_request_response_queue_demo()
     }
 }
 
-// 点对点模式－－1:1请求应答模式：生成者示例代码
+// 点对点模式－－1:1请求应答模式：生产者示例代码
 void p2p_mode_request_response_producer_demo()
 {
     timax::producer_config config;
@@ -620,7 +620,7 @@ void p2p_mode_push_pull_queue_demo()
     }
 }
 
-// 点对点模式－－1:1管道push-pull模式：生成者示例代码
+// 点对点模式－－1:1管道push-pull模式：生产者示例代码
 void p2p_mode_push_pull_producer_demo()
 {
     timax::producer_config config;
@@ -708,6 +708,7 @@ void pub_sub_mode_standard_queue_demo()
     }
 }
 
+// 发布－订阅模式－－标准模式：发布者示例代码
 void pub_sub_mode_standard_publisher_demo()
 {
     timax::publisher_config config;
@@ -742,23 +743,21 @@ void pub_sub_mode_standard_publisher_demo()
 void on_standard_subsciber_receive(const timax::subscriber<std::string> & subscriber,
                                    const timax::topic & topic,
                                    const timax::message<std::string> & msg,
-                                   const timax::status & result)
-{
+                                   const timax::status & result) {
     if (result == timax::status::succeed) {
         // 接收成功
         std::cout << "subsciber receive succeed." << std::endl;
-        std::cout << "topic: " << topic.to_string() << std::endl;
-        std::cout << "message: " << msg.to_string() << std::endl;
     }
     else {
         // 接收失败
         std::cout << "subsciber receive failed." << std::endl;
-        std::cout << "topic: " << topic.to_string() << std::endl;
-        std::cout << "message: " << msg.to_string() << std::endl;
     }
+
+    std::cout << "topic: " << topic.to_string() << std::endl;
+    std::cout << "message: " << msg.to_string() << std::endl;
 }
 
-// 发布－订阅模式－－标准模式：发布者示例代码
+// 发布－订阅模式－－标准模式：订阅者示例代码
 void pub_sub_mode_standard_subsciber_demo()
 {
     timax::subscriber_config config;
@@ -773,7 +772,7 @@ void pub_sub_mode_standard_subsciber_demo()
 
     using namespace std::placeholders;
     timax::subscriber<std::string>::receive_callback_type on_receive =
-        std::bind(&on_standard_subsciber_receive, subscriber, topic, _3, _4);
+        std::bind(&on_standard_subsciber_receive, subscriber, _2, _3, _4);
     subscriber.set_on_receive(on_receive);
 
     // 为 subscriber 绑定IP和端口
