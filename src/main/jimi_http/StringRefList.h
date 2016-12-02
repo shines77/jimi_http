@@ -109,7 +109,7 @@ public:
     bool is_empty() const { return (size() == 0); }
 
     void reset() {
-        ref.reset();
+        ref.clear();
         capacity_ = kInitCapacity;
         size_ = 0;
         head_ = nullptr;
@@ -117,21 +117,25 @@ public:
         freeEntryChunks();
     }
 
+    void clear() {
+        reset();
+    }
+
     void setRef(const char_type * data) {
-        ref.set(data);
+        ref.assign(data);
     }
 
     void setRef(const char_type * data, size_type size) {
-        ref.set(data, size);
+        ref.assign(data, size);
     }
 
     void setRef(const std_string & src) {
-        ref.set(src);
+        ref.assign(src);
     }
 
     template <size_type N>
     void setRef(char_type (&src)[N]) {
-        ref.set(src);
+        ref.assign(src);
     }
 
     void initList() {

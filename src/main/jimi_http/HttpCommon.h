@@ -11,7 +11,8 @@
 namespace jimi {
 namespace http {
 
-struct HttpVersion {
+class HttpVersion {
+public:
     enum version {
         HTTP_UNDEFINED = 0,
         HTTP_0_9 = 0x00000009,
@@ -21,16 +22,99 @@ struct HttpVersion {
         HTTP_2_X = 0x00020001,
     };
 
+    union http_version_t {
+        struct {
+            uint16_t major;
+            uint16_t minor;
+        };
+        uint32_t value;
+
+        http_version_t() {}
+        http_version_t(uint32_t version) : value(version) {}
+        http_version_t(uint16_t _major, uint16_t _minor) : major(_major), minor(_minor) {}
+    };
+
+private:
+    http_version_t version_;
+
+public:
+    HttpVersion() : version_(0) {}
+    HttpVersion(uint32_t version) : version_(version) {}
+    HttpVersion(uint16_t major, uint16_t minor) : version_(major, minor) {}
+    HttpVersion(const HttpVersion & src) : version_(src.getVersion()) {}
+    ~HttpVersion() {}
+
+    HttpVersion & operator = (uint32_t version) {
+        version_.value = version;
+        return (*this);
+    }
+
+    HttpVersion & operator = (const HttpVersion & rhs) {
+        version_.value = rhs.getVersion();
+        return (*this);
+    }
+
     static uint32_t makeVersion(uint32_t major, uint32_t minor) {
-        return ((major << 4) | (minor & 0xFFFFul));
+        http_version_t version(major, minor);
+        return version.value;
     }
 
-    static uint32_t getMajor(uint32_t http_version) {
-        return (http_version >> 4);
+    static uint16_t calcMajor(uint32_t http_version) {
+        http_version_t version(http_version);
+        return version.major;
     }
 
-    static uint32_t getMinor(uint32_t http_version) {
-        return (http_version & 0xFFFFul);
+    static uint16_t calcMinor(uint32_t http_version) {
+        http_version_t version(http_version);
+        return version.minor;
+    }
+
+    uint16_t getMajor() const {
+        return version_.major;
+    }
+
+    uint16_t getMinor() const {
+        return version_.minor;
+    }
+
+    uint32_t getVersion() const {
+        return version_.value;
+    }
+
+    void setMajor(uint16_t major) {
+        version_.major = major;
+    }
+
+    void setMinor(uint16_t minor) {
+        version_.minor = minor;
+    }
+
+    void setVersion(uint32_t version) {
+        version_.value = version;
+    }
+
+    bool operator == (const HttpVersion & rhs) {
+        return (version_.value == rhs.getVersion());
+    }
+
+    bool operator != (const HttpVersion & rhs) {
+        return (version_.value != rhs.getVersion());
+    }
+
+    bool operator > (const HttpVersion & rhs) {
+        return (version_.value > rhs.getVersion());
+    }
+
+    bool operator >= (const HttpVersion & rhs) {
+        return (version_.value >= rhs.getVersion());
+    }
+
+    bool operator < (const HttpVersion & rhs) {
+        return (version_.value < rhs.getVersion());
+    }
+
+    bool operator <= (const HttpVersion & rhs) {
+        return (version_.value <= rhs.getVersion());
     }
 };
 

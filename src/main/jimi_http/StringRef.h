@@ -83,32 +83,41 @@ public:
     const char_type * c_str() const { return (data() != nullptr) ? data() : ""; }
     size_type length() const { return size(); }
 
-    bool is_empty() const { return (size() == 0); }
+    bool empty() const { return (size() == 0); }
 
     void reset() {
         data_ = nullptr;
         size_ = 0;
     }
 
-    void set(const char_type * data) {
+    void clear() {
+        data_ = "";
+        size_ = 0;
+    }
+
+    void assign(const char_type * data) {
         data_ = data;
         size_ = ::strlen(data);
     }
 
-    void set(const char_type * data, size_type size) {
+    void assign(const char_type * data, size_type size) {
         data_ = data;
         size_ = size;
     }
 
-    void set(const std_string & src) {
+    void assign(const std_string & src) {
         data_ = src.data();
         size_ = src.size();
     }
 
     template <size_type N>
-    void set(char_type (&src)[N]) {
+    void assign(char_type (&src)[N]) {
         data_ = src;
         size_ = N;
+    }
+
+    std::string toString() const {
+        return std::string(data_, size_);
     }
 };
 

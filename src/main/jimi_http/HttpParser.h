@@ -42,10 +42,11 @@ public:
     ~ParseErrorCode() {}
 };
 
-template <std::size_t InitContentSize = 1024>
-class HttpParser {
+template <typename StringType = std::string, std::size_t InitContentSize = 1024>
+class BasicHttpParser {
 public:
-    typedef std::uint32_t hash_type;
+    typedef StringType      string_type;
+    typedef std::uint32_t   hash_type;
 
     // kInitContentSize minimize value is 256.
     static const std::size_t kMinContentSize = 256;
@@ -53,28 +54,29 @@ public:
     static const std::size_t kInitContentSize = (InitContentSize > kMinContentSize) ? InitContentSize : kMinContentSize;
 
 private:
-    int status_code_;
-    uint32_t http_version_;
-    uint32_t request_method_;
+    int32_t status_code_;
+    uint32_t method_;
+    HttpVersion version_;
 
-    StringRef http_method_ref_;
-    StringRef http_url_ref_;
-    StringRef http_version_ref_;
+    string_type request_method_;
+    string_type http_uri_;
+    string_type http_version_;
+
     std::size_t content_length_;
     std::size_t content_size_;
     const char * content_;
-    StringRefList<16> fields_;
+    StringRefList<16> header_fields_;
     char inner_content_[kInitContentSize];
 
 public:
-    HttpParser() : status_code_(0),
-        http_version_(HttpVersion::HTTP_UNDEFINED),
-        request_method_(HttpRequest::UNDEFINED),
+    BasicHttpParser() : status_code_(0),
+        version_(HttpVersion::HTTP_UNDEFINED),
+        method_(HttpRequest::UNDEFINED),
         content_length_(0),
         content_size_(0), content_(nullptr) {
     }
 
-    ~HttpParser() {
+    ~BasicHttpParser() {
         if (content_) {
             delete[] content_;
             content_ = nullptr;
@@ -82,32 +84,32 @@ public:
     }
 
     void reset() {
-        http_method_ref_.reset();
-        http_url_ref_.reset();
-        http_version_ref_.reset();
+        request_method_.clear();
+        http_uri_.clear();
+        http_version_.clear();
         content_size_ = 0;
         content_ = nullptr;
-        fields_.reset();
+        header_fields_.clear();
     }
 
     std::size_t getEntrySize() const {
-        return fields_.size();
+        return header_fields_.size();
     }
 
     uint32_t getHttpVersion() const {
-        return http_version_;
+        return version_.getVersion();
     }
 
     void setHttpVersion(uint32_t http_version) {
-        http_version_ = http_version;
+        version_.setVersion(http_version);
     }
 
     uint32_t getRequestMethod() const {
-        return request_method_;
+        return method_;
     }
 
     void setRequestMethod(uint32_t request_method) {
-        request_method_ = request_method;
+        method_ = request_method;
     }
 
     void next(InputStream & is) {
@@ -391,7 +393,7 @@ scan_restart:
     }
 
     bool parseHttpMethod(InputStream & is) {
-        if (!http_method_ref_.is_empty())
+        if (!request_method_.empty())
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
@@ -399,7 +401,7 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
-            http_method_ref_.set(mark, len);
+            request_method_.assign(mark, len);
             if (len <= 0)
                 return false;
         }
@@ -407,7 +409,7 @@ scan_restart:
     }
 
     bool parseHttpMethodAndHash(InputStream & is) {
-        if (!http_method_ref_.is_empty())
+        if (!request_method_.empty())
             return false;
         hash_type hash;
         const char * mark = is.current();
@@ -416,7 +418,7 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
-            http_method_ref_.set(mark, len);
+            request_method_.assign(mark, len);
             if (len <= 0)
                 return false;
         }
@@ -424,7 +426,7 @@ scan_restart:
     }
 
     bool parseHttpURI(InputStream & is) {
-        if (!http_url_ref_.is_empty())
+        if (!http_uri_.empty())
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
@@ -432,7 +434,7 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
-            http_url_ref_.set(mark, len);
+            http_uri_.assign(mark, len);
             if (len <= 0)
                 return false;
         }
@@ -440,7 +442,7 @@ scan_restart:
     }
 
     bool parseHttpVersion(InputStream & is) {
-        if (!http_version_ref_.is_empty())
+        if (!http_version_.empty())
             return false;
         const char * mark = is.current();
         bool is_ok = findCrLfToken(is);
@@ -450,7 +452,7 @@ scan_restart:
             static const std::ptrdiff_t kLenHTTPVersion = sizeof("HTTP/1.1") - 1;
             std::ptrdiff_t len = is.current() - mark;
             if (len >= kLenHTTPVersion) {
-                http_version_ref_.set(mark, len);
+                http_version_.assign(mark, len);
                 return true;
             }
             else
@@ -483,7 +485,7 @@ scan_restart:
                 return false;
 
             // Append the field-name and field-value pair to StringRefList.
-            fields_.append(field_name, name_len, field_value, value_len);
+            header_fields_.append(field_name, name_len, field_value, value_len);
 
             skipWhiteSpaces(is);
 
@@ -529,7 +531,7 @@ scan_restart:
  
             assert(is.current() >= start);
             assert(length >= (std::size_t)(is.current() - start));
-            fields_.setRef(is.current(), length - (is.current() - start));
+            header_fields_.setRef(is.current(), length - (is.current() - start));
 
             is_ok = parseHttpFields(is);
             if (!is_ok)
@@ -587,18 +589,18 @@ scan_restart:
     }
 
     void displayFields() {
-        std::cout << "Http entries: (length = " << fields_.ref.size() << " bytes)" << std::endl << std::endl;
-        std::cout << fields_.ref.c_str() << std::endl;
+        std::cout << "Http entries: (length = " << header_fields_.ref.size() << " bytes)" << std::endl << std::endl;
+        std::cout << header_fields_.ref.c_str() << std::endl;
 
-        std::cout << "Http entries size: " << fields_.size() << std::endl << std::endl;
-        std::size_t data_len = fields_.ref.size();
-        for (std::size_t i = 0; i < fields_.size(); ++i) {
-            if ((fields_.items[i].key.offset <= data_len)
-                && ((fields_.items[i].key.offset + fields_.items[i].key.length) < data_len)
-                && (fields_.items[i].value.offset <= data_len)
-                && ((fields_.items[i].value.offset + fields_.items[i].value.length) < data_len)) {
-                std::string key(fields_.ref.data() + fields_.items[i].key.offset, fields_.items[i].key.length);
-                std::string value(fields_.ref.data() + fields_.items[i].value.offset, fields_.items[i].value.length);
+        std::cout << "Http entries size: " << header_fields_.size() << std::endl << std::endl;
+        std::size_t data_len = header_fields_.ref.size();
+        for (std::size_t i = 0; i < header_fields_.size(); ++i) {
+            if ((header_fields_.items[i].key.offset <= data_len)
+                && ((header_fields_.items[i].key.offset + header_fields_.items[i].key.length) < data_len)
+                && (header_fields_.items[i].value.offset <= data_len)
+                && ((header_fields_.items[i].value.offset + header_fields_.items[i].value.length) < data_len)) {
+                std::string key(header_fields_.ref.data() + header_fields_.items[i].key.offset, header_fields_.items[i].key.length);
+                std::string value(header_fields_.ref.data() + header_fields_.items[i].value.offset, header_fields_.items[i].value.length);
                 std::cout << "key = " << key.c_str() << ", value = " << value.c_str() << std::endl;
             }
             else {
@@ -608,6 +610,12 @@ scan_restart:
         std::cout << std::endl;
     }
 };
+
+template <std::size_t InitContentSize = 1024>
+using HttpParser = BasicHttpParser<std::string>;
+
+template <std::size_t InitContentSize = 1024>
+using HttpParserRef = BasicHttpParser<StringRef>;
 
 } // namespace http
 } // namespace jimi

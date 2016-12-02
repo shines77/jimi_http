@@ -689,7 +689,7 @@ void pub_sub_mode_standard_queue_demo()
     timax::message_queue_cluster cluster;
 
     // 把 queue 添加到 cluster 里, 作为其一个子节点
-    cluster.add_node_list("192.168.3.180:6000|192.168.3.181:6000|192.168.3.181:6000");
+    cluster.add_node_list("192.168.3.180:6000|192.168.3.181:6000|192.168.3.182:6000");
 
     // 绑定cluster的IP和端口
     result = cluster.bind("192.168.3.180:5000");

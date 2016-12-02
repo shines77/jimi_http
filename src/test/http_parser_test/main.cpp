@@ -120,13 +120,43 @@ void http_parser_test()
     end_point = StopWatch::timepoint_now();
 
     std::cout << "Sum:               " << sum << std::endl;
-    std::cout << "Iterations:        " << kIterations << std::endl;
     std::cout << "Length:            " << ::strlen(http_header) << std::endl;
+    std::cout << "Iterations:        " << kIterations << std::endl;
     if (sw.getElapsedMillisec() != 0.0) {
         std::cout << "Time spent:        " << sw.getElapsedMillisec() << " ms" << std::endl;
         std::cout << "Time spent(*):     " << StopWatch::duration(end_time, start_time).millisecs() << " ms" << std::endl;
         std::cout << "Time spent(**):    " << StopWatch::duration(end_point, start_point).millisecs() << " ms" << std::endl;
         std::cout << "Time spent(Tick):  " << swTickCount.getElapsedMillisec() << " ms" << std::endl;
+        std::cout << "Parse speed:       " << (uint64_t)((double)kIterations / sw.getElapsedSecond()) << " Parse/Sec" << std::endl;
+        std::cout << "Parse throughput:  " << (double)(kIterations * request_len) / sw.getElapsedSecond() / (1024.0 * 1024.0) << " MB/Sec" << std::endl;
+    }
+    else {
+        std::cout << "Time spent:        0.0 ms" << std::endl;
+        std::cout << "Parse speed:       0   Parse/Sec" << std::endl;
+        std::cout << "Parse throughput:  0.0 MB/Sec" << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void http_parser_ref_test()
+{
+    StopWatch sw;
+    getTickCountStopWatch swTickCount;
+    int sum = 0;
+    std::size_t request_len = ::strlen(http_header);
+
+    sw.start();
+    for (std::size_t i = 0; i < kIterations; ++i) {
+        HttpParserRef<1024> http_parser;
+        sum += http_parser.parseRequest(http_header, ::strlen(http_header));
+    }
+    sw.stop();
+
+    std::cout << "Sum:               " << sum << std::endl;
+    std::cout << "Length:            " << ::strlen(http_header) << std::endl;
+    std::cout << "Iterations:        " << kIterations << std::endl;
+    if (sw.getElapsedMillisec() != 0.0) {
+        std::cout << "Time spent:        " << sw.getElapsedMillisec() << " ms" << std::endl;
         std::cout << "Parse speed:       " << (uint64_t)((double)kIterations / sw.getElapsedSecond()) << " Parse/Sec" << std::endl;
         std::cout << "Parse throughput:  " << (double)(kIterations * request_len) / sw.getElapsedSecond() / (1024.0 * 1024.0) << " MB/Sec" << std::endl;
     }
@@ -151,6 +181,7 @@ int main(int argn, char * argv[])
 
 #if 1
     http_parser_test();
+    http_parser_ref_test();
 #endif
 
     http_parser_benchmark();
