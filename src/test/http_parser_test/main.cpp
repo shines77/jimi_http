@@ -85,7 +85,7 @@ void http_parser_benchmark()
 		} while (1);
 	});
 
-    HttpParser<1024> parser;
+    HttpParserRef<1024> parser;
 	do {
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += parser.parseRequest(http_header, ::strlen(http_header));
