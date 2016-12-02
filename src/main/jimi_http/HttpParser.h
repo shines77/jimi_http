@@ -58,9 +58,9 @@ private:
     uint32_t method_;
     HttpVersion version_;
 
-    string_type request_method_;
-    string_type http_uri_;
-    string_type http_version_;
+    string_type method_str_;
+    string_type uri_str_;
+    string_type version_str_;
 
     std::size_t content_length_;
     std::size_t content_size_;
@@ -84,9 +84,9 @@ public:
     }
 
     void reset() {
-        request_method_.clear();
-        http_uri_.clear();
-        http_version_.clear();
+        method_str_.clear();
+        uri_str_.clear();
+        version_str_.clear();
         content_size_ = 0;
         content_ = nullptr;
         header_fields_.clear();
@@ -392,8 +392,8 @@ scan_restart:
         }
     }
 
-    bool parseHttpMethod(InputStream & is) {
-        if (!request_method_.empty())
+    bool parseMethod(InputStream & is) {
+        if (!method_str_.empty())
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
@@ -401,15 +401,15 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
-            request_method_.assign(mark, len);
+            method_str_.assign(mark, len);
             if (len <= 0)
                 return false;
         }
         return is_ok;
     }
 
-    bool parseHttpMethodAndHash(InputStream & is) {
-        if (!request_method_.empty())
+    bool parseMethodAndHash(InputStream & is) {
+        if (!method_str_.empty())
             return false;
         hash_type hash;
         const char * mark = is.current();
@@ -418,15 +418,15 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
-            request_method_.assign(mark, len);
+            method_str_.assign(mark, len);
             if (len <= 0)
                 return false;
         }
         return is_ok;
     }
 
-    bool parseHttpURI(InputStream & is) {
-        if (!http_uri_.empty())
+    bool parseURI(InputStream & is) {
+        if (!uri_str_.empty())
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
@@ -434,15 +434,15 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
-            http_uri_.assign(mark, len);
+            uri_str_.assign(mark, len);
             if (len <= 0)
                 return false;
         }
         return is_ok;
     }
 
-    bool parseHttpVersion(InputStream & is) {
-        if (!http_version_.empty())
+    bool parseVersion(InputStream & is) {
+        if (!version_str_.empty())
             return false;
         const char * mark = is.current();
         bool is_ok = findCrLfToken(is);
@@ -452,7 +452,7 @@ scan_restart:
             static const std::ptrdiff_t kLenHTTPVersion = sizeof("HTTP/1.1") - 1;
             std::ptrdiff_t len = is.current() - mark;
             if (len >= kLenHTTPVersion) {
-                http_version_.assign(mark, len);
+                version_str_.assign(mark, len);
                 return true;
             }
             else
@@ -461,7 +461,7 @@ scan_restart:
         return is_ok;
     }
 
-    bool parseHttpFields(InputStream & is) {
+    bool parseHeaderFields(InputStream & is) {
         bool is_ok;
         do {
             // Skip the whitespaces ahead of every entry.
@@ -510,20 +510,20 @@ scan_restart:
         std::size_t length = is.remain();
         // Http method characters must be upper case letters.
         if (is.get() >= 'A' && is.get() <= 'Z') {
-            is_ok = parseHttpMethod(is);
+            is_ok = parseMethod(is);
             //is_ok = parseHttpMethodAndHash(is);
             if (!is_ok)
                 return error_code::InvalidHttpMethod;
 
             nextAndSkipWhiteSpaces(is);
 
-            is_ok = parseHttpURI(is);
+            is_ok = parseURI(is);
             if (!is_ok)
                 return error_code::HttpParserError;
 
             nextAndSkipWhiteSpaces(is);
 
-            is_ok = parseHttpVersion(is);
+            is_ok = parseVersion(is);
             if (!is_ok)
                 return error_code::HttpParserError;
 
@@ -533,7 +533,7 @@ scan_restart:
             assert(length >= (std::size_t)(is.current() - start));
             header_fields_.setRef(is.current(), length - (is.current() - start));
 
-            is_ok = parseHttpFields(is);
+            is_ok = parseHeaderFields(is);
             if (!is_ok)
                 return error_code::HttpParserError;
         }
@@ -586,6 +586,10 @@ scan_restart:
         InputStream is(content, len);
         ec = parseRequestHeader(is);
         return ec;
+    }
+
+    int parseRequest(const std::string & data) {
+        return parseRequest(data.data(), data.size());
     }
 
     void displayFields() {
