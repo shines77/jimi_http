@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-project(jimi_httpparser)
+project(jimi_http_parser)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
@@ -65,5 +65,5 @@ add_custom_target(release
     COMMENT "Switch CMAKE_BUILD_TYPE to Release"
 )
 
-add_executable(jimi_httpparser ${SOURCE_FILES})
-target_link_libraries(jimi_httpparser ${EXTRA_LIBS})
+add_executable(jimi_http_parser ${SOURCE_FILES})
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
