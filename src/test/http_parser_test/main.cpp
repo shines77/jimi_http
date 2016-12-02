@@ -13,6 +13,7 @@
 #include "jimi_http/http_all.h"
 #include "stop_watch.h"
 
+using namespace jimi;
 using namespace jimi::http;
 
 #ifdef NDEBUG
@@ -102,6 +103,11 @@ void http_parser_test()
     getTickCountStopWatch swTickCount;
     int sum = 0;
     std::size_t request_len = ::strlen(http_header);
+
+    StopWatch::time_stamp_t start_time, end_time;
+    StopWatch::time_point_t start_point, end_point;
+    start_point = StopWatch::timepoint_now();
+    start_time = StopWatch::now();
     sw.start();
     swTickCount.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
@@ -110,13 +116,17 @@ void http_parser_test()
     }
     swTickCount.stop();
     sw.stop();
+    end_time = StopWatch::now();
+    end_point = StopWatch::timepoint_now();
 
     std::cout << "Sum:               " << sum << std::endl;
     std::cout << "Iterations:        " << kIterations << std::endl;
     std::cout << "Length:            " << ::strlen(http_header) << std::endl;
     if (sw.getElapsedMillisec() != 0.0) {
         std::cout << "Time spent:        " << sw.getElapsedMillisec() << " ms" << std::endl;
-        std::cout << "Time spent:        " << swTickCount.getElapsedMillisec() << " ms" << std::endl;
+        std::cout << "Time spent(*):     " << StopWatch::duration(end_time, start_time).millisecs() << " ms" << std::endl;
+        std::cout << "Time spent(**):    " << StopWatch::duration(end_point, start_point).millisecs() << " ms" << std::endl;
+        std::cout << "Time spent(Tick):  " << swTickCount.getElapsedMillisec() << " ms" << std::endl;
         std::cout << "Parse speed:       " << (uint64_t)((double)kIterations / sw.getElapsedSecond()) << " Parse/Sec" << std::endl;
         std::cout << "Parse throughput:  " << (double)(kIterations * request_len) / sw.getElapsedSecond() / (1024.0 * 1024.0) << " MB/Sec" << std::endl;
     }
