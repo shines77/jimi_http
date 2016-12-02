@@ -13,8 +13,7 @@ namespace http {
 
 class HttpVersion {
 public:
-    enum version
-    {
+    enum version {
         HTTP_UNDEFINED = 0,
         HTTP_0_9 = 0x00000009,
         HTTP_1_0 = 0x00010000,
@@ -23,20 +22,16 @@ public:
         HTTP_2_X = 0x00020001,
     };
 
-    union http_version_t
-    {
-        struct info_t
-        {
+    union http_version_t {
+        struct {
             uint16_t major_;
             uint16_t minor_;
-
-            info_t(uint16_t _major, uint16_t _minor) : major_(_major), minor_(_minor) {}
-        } v;
+        };
         uint32_t value;
 
         http_version_t() {}
         http_version_t(uint32_t version) : value(version) {}
-        http_version_t(uint16_t _major, uint16_t _minor) : v(_major, _minor) {}
+        http_version_t(uint16_t major, uint16_t minor) : major_(major), minor_(minor) {}
     };
 
 private:
@@ -66,20 +61,20 @@ public:
 
     static uint16_t calcMajor(uint32_t http_version) {
         http_version_t version(http_version);
-        return version.v.major_;
+        return version.major_;
     }
 
     static uint16_t calcMinor(uint32_t http_version) {
         http_version_t version(http_version);
-        return version.v.minor_;
+        return version.minor_;
     }
 
     uint16_t getMajor() const {
-        return version_.v.major_;
+        return version_.major_;
     }
 
     uint16_t getMinor() const {
-        return version_.v.minor_;
+        return version_.minor_;
     }
 
     uint32_t getVersion() const {
@@ -87,11 +82,11 @@ public:
     }
 
     void setMajor(uint16_t major) {
-        version_.v.major_ = major;
+        version_.major_ = major;
     }
 
     void setMinor(uint16_t minor) {
-        version_.v.minor_ = minor;
+        version_.minor_ = minor;
     }
 
     void setVersion(uint32_t version) {

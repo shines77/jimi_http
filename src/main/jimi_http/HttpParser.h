@@ -70,8 +70,8 @@ private:
 
 public:
     BasicHttpParser() : status_code_(0),
-        version_(HttpVersion::HTTP_UNDEFINED),
         method_(HttpRequest::UNDEFINED),
+        version_(HttpVersion::HTTP_UNDEFINED),
         content_length_(0),
         content_size_(0), content_(nullptr) {
     }
