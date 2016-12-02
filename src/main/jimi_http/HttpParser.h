@@ -504,7 +504,7 @@ scan_restart:
         int ec = 0;
         bool is_ok;
         // Skip the whitespaces ahead of request http header.
-        skipWhiteSpaces(is);
+        //skipWhiteSpaces(is);
 
         const char * start = is.current();
         std::size_t length = is.remain();
@@ -515,19 +515,25 @@ scan_restart:
             if (!is_ok)
                 return error_code::InvalidHttpMethod;
 
-            nextAndSkipWhiteSpaces(is);
+            next(is);
+            skipWhiteSpaces(is);
 
             is_ok = parseURI(is);
             if (!is_ok)
                 return error_code::HttpParserError;
 
-            nextAndSkipWhiteSpaces(is);
+            next(is);
+            skipWhiteSpaces(is);
 
             is_ok = parseVersion(is);
             if (!is_ok)
                 return error_code::HttpParserError;
 
-            nextAndSkipCrLf(is);
+            // Skip the CrLf
+            if (is.remain() > 2)
+                moveTo(is, 2);
+            else
+                return error_code::HttpParserError;
  
             assert(is.current() >= start);
             assert(length >= (std::size_t)(is.current() - start));
