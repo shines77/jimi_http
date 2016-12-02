@@ -198,7 +198,7 @@ public:
         assert(is.current() != nullptr);
         while (is.hasNext()) {
             if (is.get() == '\r') {
-                if (is.hasNext(1) && is.peek(1) == '\n')
+                if (is.peek(1) == '\n' && is.hasNext(1))
                     return true;
             }
             if (!is.isNullChar())
@@ -529,11 +529,9 @@ scan_restart:
             if (!is_ok)
                 return error_code::HttpParserError;
 
-            // Skip the CrLf
-            if (is.remain() > 2)
-                moveTo(is, 2);
-            else
-                return error_code::HttpParserError;
+            // Skip the CrLf, move the cursor 2 bytes.
+            assert(is.remain() >= 2);
+            moveTo(is, 2);
  
             assert(is.current() >= start);
             assert(length >= (std::size_t)(is.current() - start));
