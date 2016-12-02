@@ -128,41 +128,41 @@ public:
     typedef BasicStringRef<char_type> string_ref;
 
 private:
-    string_ref & str_;
+    string_ref str_;
+    bool truncated_;
     char_type save_char_;
-    bool truncate_;
 
 public:
-    BasicStringRefHelper() : str_(string_ref("")), save_char_('\0'), truncate_(false) {}
+    BasicStringRefHelper() : truncated_(false) {}
     ~BasicStringRefHelper() {}
 
     bool attach(const string_ref & str) {
         // If the string reference don't recover the truncated char,
         // don't accept the new attach.
-        if (!truncate_) {
+        if (!truncated_) {
             str_ = str;
         }
-        return (!truncate_);
+        return (!truncated_);
     }
 
     void truncate() {
-        if (!truncate_) {
+        if (!truncated_) {
             char_type * first = (char_type *)str_.data();
             char_type * last = first + str_.size();
             assert(last != nullptr);
             save_char_ = *last;
             *last = static_cast<char_type>('\0');
-            truncate_ = true;
+            truncated_ = true;
         }
     }
 
     void recover() {
-        if (truncate_) {
+        if (truncated_) {
             char_type * first = (char_type *)str_.data();
             char_type * last = first + str_.size();
             assert(last != nullptr);
             *last = save_char_;
-            truncate_ = false;
+            truncated_ = false;
         }
     }
 };
