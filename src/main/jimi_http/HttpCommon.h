@@ -27,10 +27,10 @@ public:
     {
         struct info_t
         {
-            uint16_t major;
-            uint16_t minor;
+            uint16_t major_;
+            uint16_t minor_;
 
-            info_t(uint16_t _major, uint16_t _minor) : major(_major), minor(_minor) {}
+            info_t(uint16_t _major, uint16_t _minor) : major_(_major), minor_(_minor) {}
         } v;
         uint32_t value;
 
@@ -66,20 +66,20 @@ public:
 
     static uint16_t calcMajor(uint32_t http_version) {
         http_version_t version(http_version);
-        return version.v.major;
+        return version.v.major_;
     }
 
     static uint16_t calcMinor(uint32_t http_version) {
         http_version_t version(http_version);
-        return version.v.minor;
+        return version.v.minor_;
     }
 
     uint16_t getMajor() const {
-        return version_.v.major;
+        return version_.v.major_;
     }
 
     uint16_t getMinor() const {
-        return version_.v.minor;
+        return version_.v.minor_;
     }
 
     uint32_t getVersion() const {
@@ -87,11 +87,11 @@ public:
     }
 
     void setMajor(uint16_t major) {
-        version_.v.major = major;
+        version_.v.major_ = major;
     }
 
     void setMinor(uint16_t minor) {
-        version_.v.minor = minor;
+        version_.v.minor_ = minor;
     }
 
     void setVersion(uint32_t version) {
