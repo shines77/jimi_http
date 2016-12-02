@@ -256,8 +256,8 @@ public:
         return std::chrono::high_resolution_clock::now();
     }
 
-    static time_float_t get_interval_time(time_float_t now_time, time_float_t old_time) {
-        return (now_time - old_time);
+    static time_float_t get_interval_time(time_stamp_t now_time, time_stamp_t old_time) {
+        return static_cast<time_float_t>(now_time - old_time);
     }
 
     static time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) {
@@ -288,10 +288,6 @@ public:
 
     static time_point_t get_timepoint_now() {
         return ::timeGetTime();
-    }
-
-    static time_float_t get_interval_time(time_float_t now_time, time_float_t old_time) {
-        return (now_time - old_time);
     }
 
     static time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) {
@@ -328,10 +324,6 @@ public:
 
     static time_point_t get_timepoint_now() {
         return ::GetTickCount();
-    }
-
-    static time_float_t get_interval_time(time_float_t now_time, time_float_t old_time) {
-        return (now_time - old_time);
     }
 
     static time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) {
