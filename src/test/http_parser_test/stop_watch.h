@@ -42,12 +42,15 @@ private:
     time_float_t total_elapsed_time_;
     bool         running_;
 
+    // Implement Type
+    impl_type    impl_;
+
     static time_point_t base_time_;
 
 public:
     StopWatchBase() : elapsed_time_(kTimeZero),
         total_elapsed_time_(kTimeZero), running_(false) {
-        start_time_ = impl_type::get_now();
+        start_time_ = impl_.get_timepoint_now();
     };
     ~StopWatchBase() {};
 
@@ -55,7 +58,7 @@ public:
         __COMPILER_BARRIER();
         elapsed_time_ = kTimeZero;
         total_elapsed_time_ = kTimeZero;
-        start_time_ = impl_type::get_now();
+        start_time_ = impl_.get_timepoint_now();
         running_ = false;
         __COMPILER_BARRIER();
 	}
@@ -65,7 +68,7 @@ public:
         running_ = false;
         elapsed_time_ = kTimeZero;
         total_elapsed_time_ = kTimeZero;
-        start_time_ = impl_type::get_now();
+        start_time_ = impl_.get_timepoint_now();
         running_ = true;
         __COMPILER_BARRIER();
     }
@@ -73,7 +76,7 @@ public:
     void start() {
         if (!running_) {
             elapsed_time_ = kTimeZero;
-            start_time_ = impl_type::get_now();
+            start_time_ = impl_.get_timepoint_now();
             running_ = true;
         }
         __COMPILER_BARRIER();
@@ -82,7 +85,7 @@ public:
     void stop() {
 		__COMPILER_BARRIER();
         if (running_) {
-            stop_time_ = impl_type::get_now();
+            stop_time_ = impl_.get_timepoint_now();
             running_ = false;
             __COMPILER_BARRIER();
             elapsed_time_ = this->getIntervalTime();
@@ -90,14 +93,14 @@ public:
     }
 
     void mark_start() {
-        start_time_ = impl_type::get_now();
+        start_time_ = impl_.get_timepoint_now();
         running_ = true;
         __COMPILER_BARRIER();
     }
 
     void mark_stop() {
         __COMPILER_BARRIER();
-        stop_time_ = impl_type::get_now();
+        stop_time_ = impl_.get_timepoint_now();
         running_ = false;
     }
 
@@ -108,7 +111,7 @@ public:
 	void pause() {
         __COMPILER_BARRIER();
         if (running_) {
-            stop_time_ = impl_type::get_now();
+            stop_time_ = impl_.get_timepoint_now();
             running_ = false;
             __COMPILER_BARRIER();
             elapsed_time_ = this->getIntervalTime();
@@ -129,14 +132,14 @@ public:
 
     static time_stamp_t now() {
         __COMPILER_BARRIER();
-        time_stamp_t _now = impl_type::now(impl_type::get_now(), base_time_);
+        time_stamp_t _now = impl_.get_timestamp(impl_.get_timepoint_now(), base_time_);
         __COMPILER_BARRIER();
         return _now;
     }
 
     time_float_t getIntervalTime() const {
         __COMPILER_BARRIER();
-        return impl_type::get_interval_time(stop_time_, start_time_);
+        return impl_.get_interval_time(stop_time_, start_time_);
     }
 
     time_float_t getIntervalSecond() {
@@ -153,7 +156,7 @@ public:
 
     time_float_t peekElapsedSecond() const {
         __COMPILER_BARRIER();
-        time_float_t elapsed_time = impl_type::get_interval_time(impl_type::get_now(), start_time_);
+        time_float_t elapsed_time = impl_.get_interval_time(impl_.get_timepoint_now(), start_time_);
         __COMPILER_BARRIER();
         return elapsed_time;
     }
@@ -185,7 +188,7 @@ public:
 };
 
 template <typename T>
-typename StopWatchBase<T>::time_point_t StopWatchBase<T>::base_time_ = StopWatchBase<T>::impl_type::get_now();
+typename StopWatchBase<T>::time_point_t StopWatchBase<T>::base_time_ = StopWatchBase<T>::impl_.get_timepoint_now();
 
 template <typename TimeFloatType>
 class StdStopWatchImpl {
@@ -199,18 +202,17 @@ public:
     StdStopWatchImpl() {}
     ~StdStopWatchImpl() {}
 
-    static time_point_t get_now() {
+    time_point_t get_timepoint_now() const {
         return std::chrono::high_resolution_clock::now();
     }
 
-    static time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) {
+    time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) const {
         duration_type interval_time = std::chrono::duration_cast<duration_type>(now_time - old_time);
         return interval_time.count();
     }
 
-    static time_stamp_t now(time_point_t now_time, time_point_t base_time) {
-        duration_type interval_time = std::chrono::duration_cast<duration_type>(now_time - base_time);
-        return static_cast<time_stamp_t>(interval_time.count());
+    time_stamp_t get_timestamp(time_point_t now_time, time_point_t base_time) const {
+        return static_cast<time_stamp_t>(get_interval_time(now_time, base_time));
     }
 };
 
@@ -230,16 +232,16 @@ public:
     timeGetTimeStopWatchImpl() {}
     ~timeGetTimeStopWatchImpl() {}
 
-    static time_point_t get_now() {
+    time_point_t get_timepoint_now() const {
         return ::timeGetTime();
     }
 
-    static time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) {
+    time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) const {
         time_point_t interval_time = now_time - old_time;
         return (static_cast<time_float_t>(interval_time) / static_cast<time_float_t>(1000));
     }
 
-    static time_stamp_t now(time_point_t now_time, time_point_t base_time) {
+    time_stamp_t get_timestamp(time_point_t now_time, time_point_t base_time) const {
         return now_time;
     }
 };
@@ -249,6 +251,42 @@ typedef StopWatchBase<timeGetTimeStopWatchImpl<double>> timeGetTimeStopWatch;
 #else
 
 typedef StopWatchBase<StdStopWatchImpl<double>> timeGetTimeStopWatch;
+
+#endif // _WIN32
+
+#if defined(_WIN32) || defined(WIN32) || defined(OS_WINDOWS) || defined(__WINDOWS__)
+
+template <typename TimeFloatType>
+class getTickCountStopWatchImpl {
+public:
+    typedef TimeFloatType   time_float_t;
+    typedef DWORD           time_stamp_t;
+    typedef DWORD           time_point_t;
+    typedef time_float_t    duration_type;
+
+public:
+    getTickCountStopWatchImpl() {}
+    ~getTickCountStopWatchImpl() {}
+
+    time_point_t get_timepoint_now() const {
+        return ::GetTickCount();
+    }
+
+    time_float_t get_interval_time(time_point_t now_time, time_point_t old_time) const {
+        time_point_t interval_time = now_time - old_time;
+        return (static_cast<time_float_t>(interval_time) / static_cast<time_float_t>(1000));
+    }
+
+    time_stamp_t get_timestamp(time_point_t now_time, time_point_t base_time) const {
+        return now_time;
+    }
+};
+
+typedef StopWatchBase<getTickCountStopWatchImpl<double>> getTickCountStopWatch;
+
+#else
+
+typedef StopWatchBase<StdStopWatchImpl<double>> getTickCountStopWatch;
 
 #endif // _WIN32
 

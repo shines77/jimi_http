@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjimi_http", "projects\vc2015\libjimi_http\libjimi_http.vcxproj", "{03B2B339-B5BF-489C-AB9F-0E4A208EA198}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http_parser_test", "projects\vc2015\http_parser_test\http_parser_test.vcxproj", "{7816C016-06E0-4C04-B4A1-0B58814D5C2B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
@@ -14,6 +12,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http_parser_unittest", "pro
 	ProjectSection(ProjectDependencies) = postProject
 		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjimi_http", "projects\vc2015\libjimi_http\libjimi_http.vcxproj", "{03B2B339-B5BF-489C-AB9F-0E4A208EA198}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
