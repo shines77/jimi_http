@@ -96,20 +96,44 @@ public:
         return header_fields_.size();
     }
 
-    uint32_t getHttpVersion() const {
-        return version_.getVersion();
-    }
-
-    void setHttpVersion(uint32_t http_version) {
-        version_.setVersion(http_version);
-    }
-
-    uint32_t getRequestMethod() const {
+    uint32_t getMethod() const {
         return method_;
     }
 
-    void setRequestMethod(uint32_t request_method) {
-        method_ = request_method;
+    void setMethod(uint32_t method) {
+        method_ = method;
+    }
+
+    string_type getMethodStr() const {
+        return method_str_;
+    }
+
+    void setMethodStr(string_type method) {
+        method_str_ = method;
+    }
+
+    uint32_t getVersion() const {
+        return version_.getVersion();
+    }
+
+    void setVersion(uint32_t http_version) {
+        version_.setVersion(http_version);
+    }
+
+    string_type getVersiontr() const {
+        return version_str_;
+    }
+
+    void setVersionStr(string_type version) {
+        version_str_ = version;
+    }
+
+    string_type getURI() const {
+        return uri_str_;
+    }
+
+    void setURI(string_type uri) {
+        uri_str_ = uri;
     }
 
     void next(InputStream & is) {
