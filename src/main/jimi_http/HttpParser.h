@@ -164,11 +164,6 @@ public:
     }
 #endif
 
-    void nextAndSkipWhiteSpaces(InputStream & is) {
-        is.next();
-        skipWhiteSpaces(is);
-    }
-
     bool skipCrLf(InputStream & is) {
         assert(is.current() != nullptr);
         while (is.hasNext()) {

@@ -84,6 +84,7 @@ Icon?
 
 # Ignore intellisense files by Visual Studio 2015 Update 3
 *.VC.db
+*.VC.opendb
 
 # *.vcxproj.user
 # *_i.c

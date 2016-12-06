@@ -102,7 +102,7 @@ void stop_watch_test()
 {
     StopWatch sw;
     getTickCountStopWatch swTickCount;
-    static const std::size_t kSleepIterations = 2000;
+    static const std::size_t kSleepIterations = 20;
 
     StopWatch::time_stamp_t start_time, end_time;
     StopWatch::time_point_t start_point, end_point;
@@ -111,7 +111,7 @@ void stop_watch_test()
     sw.start();
     swTickCount.start();
     for (std::size_t i = 0; i < kSleepIterations; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     swTickCount.stop();
     sw.stop();

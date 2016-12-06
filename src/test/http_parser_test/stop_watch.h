@@ -238,7 +238,8 @@ public:
 };
 
 template <typename T>
-typename StopWatchBase<T>::time_point_t StopWatchBase<T>::base_time_ = StopWatchBase<T>::implement_type::get_timepoint_now();
+typename StopWatchBase<T>::time_point_t
+StopWatchBase<T>::base_time_ = StopWatchBase<T>::implement_type::get_timepoint_now();
 
 template <typename TimeFloatType>
 class StdStopWatchImpl {
