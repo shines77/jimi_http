@@ -49,7 +49,7 @@ include_directories(src/main)
 include_directories(src/test)
 include_directories(src/unittest)
 
-set(SOURCE_FILES 
+set(SOURCE_FILES
     src/test/http_parser_test/main.cpp
     )
 

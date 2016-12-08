@@ -129,12 +129,12 @@ public:
     typedef BasicStringRef<char_type> string_ref;
 
 private:
-    string_ref str_;
     bool truncated_;
+    string_ref str_;
     char_type save_char_;
 
 public:
-    BasicStringRefHelper() : truncated_(false) {}
+    BasicStringRefHelper() : truncated_(false) { (void)save_char_; }
     ~BasicStringRefHelper() { detach(); }
 
     bool attach(const string_ref & str) {

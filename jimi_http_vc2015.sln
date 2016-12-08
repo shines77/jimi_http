@@ -3,6 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "main", "main", "{41CAFBA5-C9E4-4CDF-9D03-095FEC30C0A8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{50FE3DC2-3BA3-42A0-9389-B555799CBF32}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "unittest", "unittest", "{BB7D26F7-C603-467A-A00A-6A8C7D2D84F6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jimi_http_serv", "projects\vc2015\jimi_http_serv\jimi_http_serv.vcxproj", "{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}"
+	ProjectSection(ProjectDependencies) = postProject
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjimi_http", "projects\vc2015\libjimi_http\libjimi_http.vcxproj", "{03B2B339-B5BF-489C-AB9F-0E4A208EA198}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http_parser_test", "projects\vc2015\http_parser_test\http_parser_test.vcxproj", "{7816C016-06E0-4C04-B4A1-0B58814D5C2B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
@@ -13,14 +26,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http_parser_unittest", "pro
 		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {03B2B339-B5BF-489C-AB9F-0E4A208EA198}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjimi_http", "projects\vc2015\libjimi_http\libjimi_http.vcxproj", "{03B2B339-B5BF-489C-AB9F-0E4A208EA198}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "main", "main", "{41CAFBA5-C9E4-4CDF-9D03-095FEC30C0A8}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{50FE3DC2-3BA3-42A0-9389-B555799CBF32}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "unittest", "unittest", "{BB7D26F7-C603-467A-A00A-6A8C7D2D84F6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -29,6 +34,22 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Debug|x64.ActiveCfg = Debug|x64
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Debug|x64.Build.0 = Debug|x64
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Debug|x86.ActiveCfg = Debug|Win32
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Debug|x86.Build.0 = Debug|Win32
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Release|x64.ActiveCfg = Release|x64
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Release|x64.Build.0 = Release|x64
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Release|x86.ActiveCfg = Release|Win32
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36}.Release|x86.Build.0 = Release|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x64.ActiveCfg = Debug|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x64.Build.0 = Debug|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x86.ActiveCfg = Debug|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x86.Build.0 = Debug|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x64.ActiveCfg = Release|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x64.Build.0 = Release|x64
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x86.ActiveCfg = Release|Win32
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x86.Build.0 = Release|Win32
 		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x64.ActiveCfg = Debug|x64
 		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x64.Build.0 = Debug|x64
 		{7816C016-06E0-4C04-B4A1-0B58814D5C2B}.Debug|x86.ActiveCfg = Debug|Win32
@@ -45,21 +66,14 @@ Global
 		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x64.Build.0 = Release|x64
 		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x86.ActiveCfg = Release|Win32
 		{C22542E6-AAB2-426A-9A70-D9D7385A0958}.Release|x86.Build.0 = Release|Win32
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x64.ActiveCfg = Debug|x64
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x64.Build.0 = Debug|x64
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x86.ActiveCfg = Debug|Win32
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Debug|x86.Build.0 = Debug|Win32
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x64.ActiveCfg = Release|x64
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x64.Build.0 = Release|x64
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x86.ActiveCfg = Release|Win32
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{6E859B51-9CFB-4CEF-845A-BB632C0FAB36} = {41CAFBA5-C9E4-4CDF-9D03-095FEC30C0A8}
+		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {41CAFBA5-C9E4-4CDF-9D03-095FEC30C0A8}
 		{7816C016-06E0-4C04-B4A1-0B58814D5C2B} = {50FE3DC2-3BA3-42A0-9389-B555799CBF32}
 		{C22542E6-AAB2-426A-9A70-D9D7385A0958} = {BB7D26F7-C603-467A-A00A-6A8C7D2D84F6}
-		{03B2B339-B5BF-489C-AB9F-0E4A208EA198} = {41CAFBA5-C9E4-4CDF-9D03-095FEC30C0A8}
 	EndGlobalSection
 EndGlobal

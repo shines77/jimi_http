@@ -246,6 +246,47 @@ public:
 
     bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
         assert(is.current() != nullptr);
+        
+        if (likely(is.remain() >= 4)) {
+            // If the remain length is more than or equal 4 bytes, needn't to check if is hasNext().
+            if (likely(is.get() == '\r')) {
+                if (likely(is.peek(2) != '\r')) {
+                    if (likely(is.peek(1) == '\n')) {
+                        is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                        is_end = false;
+                        return true;
+                    }
+                    is_end = false;
+                    return false;
+                }
+                else {
+                    if (likely(is.peek(1) == '\n') && likely(is.peek(3) == '\n')) {
+                        is.moveTo(4);       // "\r\n\r\n", It's the end of the http header.
+                        is_end = true;
+                        return true;
+                    }
+                }
+            }
+            is_end = false;
+            return false;
+        }
+        else {
+            is_end = false;
+            // If the remain length is less than 4 bytes, we need to check if is hasNext().
+            //if (unlikely(!is.hasNext()))
+            //    return false;
+            if (likely(is.get() == '\r')) {
+                if (likely(is.hasNext(1)) && likely(is.peek(1) == '\n')) {
+                    is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool checkAndSkipCrLf_Midium(InputStream & is, bool & is_end) {
+        assert(is.current() != nullptr);
         is_end = false;
 scan_restart:
         if (likely(is.remain() >= 4)) {
@@ -483,13 +524,12 @@ scan_restart:
     }
 
     bool parseHeaderFields(InputStream & is) {
-        bool is_ok;
         do {
             // Skip the whitespaces ahead of every entry.
             skipWhiteSpaces(is);
 
             const char * field_name = is.current();
-            is_ok = findFieldName(is);
+            bool is_ok = findFieldName(is);
 
             std::ptrdiff_t name_len = is.current() - field_name;
             if (unlikely(!is_ok || (name_len <= 0)))
@@ -502,22 +542,22 @@ scan_restart:
             is_ok = findFieldValue(is);
 
             std::ptrdiff_t value_len = is.current() - field_value;
-            if (unlikely(!is_ok || (value_len <= 0)))
+            if (unlikely(!is_ok) || unlikely(value_len <= 0))
                 return false;
 
             // Append the field-name and field-value pair to StringRefList.
             header_fields_.append(field_name, name_len, field_value, value_len);
 
-            skipWhiteSpaces(is);
+            //skipWhiteSpaces(is);
 
             bool is_end;
             is_ok = checkAndSkipCrLf(is, is_end);
-            if (unlikely(is_end))
-                return true;
             if (unlikely(!is_ok))
                 return false;
+            if (unlikely(is_end))
+                return true;
         } while (1);
-        return is_ok;
+        return false;
     }
 
     // Parse request http header
