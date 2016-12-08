@@ -53,52 +53,6 @@ static const std::size_t kIterations = 10000;
         "\r\n";
 #endif
 
-void http_parser_benchmark()
-{
-	auto request_len = ::strlen(http_header);
-	volatile int64_t count = 0;
-    volatile int64_t dummy = 0;
-	std::thread counter([&] {
-		auto last_count = count;
-		auto count_ = count;
-		do {
-			count_ = count;
-            std::atomic_thread_fence(std::memory_order_acquire);
-#if 1
-            std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
-            std::cout << (count_ - last_count);
-            std::cout << ", ";
-			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
-            std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
-            std::cout << ",  ";
-            std::cout << std::left << std::dec << ::strlen(http_header);
-            std::cout << " bytes,  dummy = ";
-            std::cout << std::left << std::dec << dummy;
-            std::cout << std::endl;
-#else
-            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count), (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
-                ::strlen(http_header), dummy);
-#endif
-            std::atomic_thread_fence(std::memory_order_release);
-
-			last_count = count_;
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		} while (1);
-	});
-
-    http::ParserRef<1024> http_parser;
-    http::Parser<1024> p;
-	do {
-        std::atomic_thread_fence(std::memory_order_acquire);
-        dummy += http_parser.parseRequest(http_header, ::strlen(http_header));
-        std::atomic_thread_fence(std::memory_order_acquire);
-        //dummy += parser.getEntrySize();
-        http_parser.reset();
-		count++;
-        std::atomic_thread_fence(std::memory_order_release);
-	} while (1);
-}
-
 void stop_watch_test()
 {
     StopWatch sw;
@@ -201,6 +155,52 @@ void http_parser_ref_test()
         std::cout << "Parse throughput:  0.0 MB/Sec" << std::endl;
     }
     std::cout << std::endl;
+}
+
+void http_parser_benchmark()
+{
+	auto request_len = ::strlen(http_header);
+	volatile int64_t count = 0;
+    volatile int64_t dummy = 0;
+	std::thread counter([&] {
+		auto last_count = count;
+		auto count_ = count;
+		do {
+			count_ = count;
+            std::atomic_thread_fence(std::memory_order_acquire);
+#if 1
+            std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
+            std::cout << (count_ - last_count);
+            std::cout << ", ";
+			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
+            std::cout << ",  ";
+            std::cout << std::left << std::dec << ::strlen(http_header);
+            std::cout << " bytes,  dummy = ";
+            std::cout << std::left << std::dec << dummy;
+            std::cout << std::endl;
+#else
+            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count), (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
+                ::strlen(http_header), dummy);
+#endif
+            std::atomic_thread_fence(std::memory_order_release);
+
+			last_count = count_;
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		} while (1);
+	});
+
+    http::ParserRef<1024> http_parser;
+    http::Parser<1024> p;
+	do {
+        std::atomic_thread_fence(std::memory_order_acquire);
+        dummy += http_parser.parseRequest(http_header, ::strlen(http_header));
+        std::atomic_thread_fence(std::memory_order_acquire);
+        //dummy += parser.getEntrySize();
+        http_parser.reset();
+		count++;
+        std::atomic_thread_fence(std::memory_order_release);
+	} while (1);
 }
 
 int main(int argn, char * argv[])

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\stddef.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpCommon.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpParser.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpRequest.h" />

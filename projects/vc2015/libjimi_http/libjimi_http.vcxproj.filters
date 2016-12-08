@@ -8,6 +8,9 @@
     <Filter Include="src\http">
       <UniqueIdentifier>{7dcdfd9d-ac39-4dc9-9f6e-5dd45bcb024d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\basic">
+      <UniqueIdentifier>{193d882a-c04a-4e17-a309-972eae1517df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\main\jimi\http\Common.h">
@@ -45,6 +48,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\main\jimi\HttpCommon.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\stddef.h">
+      <Filter>src\basic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
