@@ -523,7 +523,7 @@ scan_restart:
     bool parseHeaderFields(InputStream & is) {
         do {
             // Skip the whitespaces ahead of every entry.
-            skipWhiteSpaces(is);
+            //skipWhiteSpaces(is);
 
             const char * field_name = is.current();
             bool is_ok = findFieldName(is);
@@ -549,9 +549,9 @@ scan_restart:
 
             bool is_end;
             is_ok = checkAndSkipCrLf(is, is_end);
-            if (likely(is_end))
+            if (unlikely(is_end))
                 return true;
-            if (likely(!is_ok))
+            if (unlikely(!is_ok))
                 return false;
         } while (1);
         return false;
