@@ -247,16 +247,15 @@ public:
     bool checkAndSkipCrLf(InputStream & is, bool & is_end) {
         assert(is.current() != nullptr);
         
+        is_end = false;
         if (likely(is.remain() >= 4)) {
             // If the remain length is more than or equal 4 bytes, needn't to check if is hasNext().
             if (likely(is.get() == '\r')) {
                 if (likely(is.peek(2) != '\r')) {
                     if (likely(is.peek(1) == '\n')) {
                         is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
-                        is_end = false;
                         return true;
                     }
-                    is_end = false;
                     return false;
                 }
                 else {
@@ -267,11 +266,9 @@ public:
                     }
                 }
             }
-            is_end = false;
             return false;
         }
         else {
-            is_end = false;
             // If the remain length is less than 4 bytes, we need to check if is hasNext().
             //if (unlikely(!is.hasNext()))
             //    return false;

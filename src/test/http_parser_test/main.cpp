@@ -129,7 +129,7 @@ void http_parser_ref_test()
     for (std::size_t i = 0; i < kIterations; ++i) {
         http::ParserRef<1024> http_parser;
         sum += http_parser.parseRequest(http_header, ::strlen(http_header));
-        if (mark < 3) {
+        if (mark < 2) {
             if (helper.attach(http_parser.getMethodStr())) {
                 helper.truncate();
                 std::cout << "method = " << http_parser.getMethodStr().c_str() << std::endl;
@@ -215,7 +215,7 @@ int main(int argn, char * argv[])
     printf("\n");
 
 #if 1
-    stop_watch_test();
+    //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
 #endif
