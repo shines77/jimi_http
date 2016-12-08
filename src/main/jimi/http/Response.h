@@ -9,15 +9,15 @@
 namespace jimi {
 namespace http {
 
-class HttpResponse {
+class Response {
 public:
     //
 private:
     int error_code_;
 
 public:
-    HttpResponse() {}
-    ~HttpResponse() {}
+    Response() {}
+    ~Response() {}
 };
 
 } // namespace http

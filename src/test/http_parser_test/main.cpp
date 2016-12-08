@@ -10,7 +10,7 @@
 #include <atomic>
 #include <thread>
 
-#include "jimi_http/http_all.h"
+#include "jimi/http_all.h"
 #include "stop_watch.h"
 
 using namespace jimi;
@@ -86,7 +86,8 @@ void http_parser_benchmark()
 		} while (1);
 	});
 
-    HttpParserRef<1024> http_parser;
+    http::ParserRef<1024> http_parser;
+    http::Parser<1024> p;
 	do {
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += http_parser.parseRequest(http_header, ::strlen(http_header));
@@ -140,7 +141,7 @@ void http_parser_test()
 
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
-        HttpParser<1024> http_parser;
+        http::Parser<1024> http_parser;
         sum += http_parser.parseRequest(http_header, ::strlen(http_header));
     }
     sw.stop();
@@ -172,7 +173,7 @@ void http_parser_ref_test()
 
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
-        HttpParserRef<1024> http_parser;
+        http::ParserRef<1024> http_parser;
         sum += http_parser.parseRequest(http_header, ::strlen(http_header));
         if (mark < 3) {
             if (helper.attach(http_parser.getMethodStr())) {
@@ -205,7 +206,7 @@ void http_parser_ref_test()
 int main(int argn, char * argv[])
 {
     printf("http_parser_test\n\n");
-    HttpParser<1024> http_parser;
+    http::Parser<1024> http_parser;
     printf("http_parser.getVersion() = %u\n", http_parser.getVersion());
     printf("http_parser.getMethod() = %u\n", http_parser.getMethod());
     http_parser.parseRequest(http_header, ::strlen(http_header));

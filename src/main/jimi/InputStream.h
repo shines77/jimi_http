@@ -13,7 +13,6 @@
 #include <cstddef>
 
 namespace jimi {
-namespace http {
 
 template <typename CharT>
 class BasicInputStream {
@@ -169,9 +168,8 @@ public:
 
 typedef BasicInputStream<char>      InputStreamA;
 typedef BasicInputStream<wchar_t>   InputStreamW;
-typedef InputStreamA                InputStream;
+typedef BasicInputStream<char>      InputStream;
 
-} // namespace http
 } // namespace jimi
 
 #endif // !JIMI_HTTP_INPUTSTREAM_H

@@ -11,12 +11,12 @@
 #include <cstddef>
 #include <iostream>
 
-#include "jimi_http/HttpCommon.h"
-#include "jimi_http/InputStream.h"
-#include "jimi_http/StringRef.h"
-#include "jimi_http/StringRefList.h"
-#include "jimi_http/HttpRequest.h"
-#include "jimi_http/HttpResponse.h"
+#include "jimi/InputStream.h"
+#include "jimi/StringRef.h"
+#include "jimi/StringRefList.h"
+#include "jimi/http/Common.h"
+#include "jimi/http/Request.h"
+#include "jimi/http/Response.h"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ public:
 };
 
 template <typename StringType = std::string, std::size_t InitContentSize = 1024>
-class BasicHttpParser {
+class BasicParser {
 public:
     typedef StringType      string_type;
     typedef std::uint32_t   hash_type;
@@ -56,7 +56,7 @@ public:
 private:
     int32_t status_code_;
     uint32_t method_;
-    HttpVersion version_;
+    Version version_;
 
     string_type method_str_;
     string_type uri_str_;
@@ -69,14 +69,14 @@ private:
     char inner_content_[kInitContentSize];
 
 public:
-    BasicHttpParser() : status_code_(0),
-        method_(HttpRequest::UNDEFINED),
-        version_(HttpVersion::HTTP_UNDEFINED),
+    BasicParser() : status_code_(0),
+        method_(Request::UNDEFINED),
+        version_(Version::HTTP_UNDEFINED),
         content_length_(0),
         content_size_(0), content_(nullptr) {
     }
 
-    ~BasicHttpParser() {
+    ~BasicParser() {
         if (content_) {
             delete[] content_;
             content_ = nullptr;
@@ -639,10 +639,10 @@ scan_restart:
 };
 
 template <std::size_t InitContentSize = 1024>
-using HttpParser = BasicHttpParser<std::string>;
+using Parser = BasicParser<std::string>;
 
 template <std::size_t InitContentSize = 1024>
-using HttpParserRef = BasicHttpParser<StringRef>;
+using ParserRef = BasicParser<StringRef>;
 
 } // namespace http
 } // namespace jimi

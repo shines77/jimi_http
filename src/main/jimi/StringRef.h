@@ -11,8 +11,6 @@
 #include <string>
 
 namespace jimi {
-namespace http {
-
 namespace detail {
 
     //////////////////////////////////////////
@@ -40,7 +38,8 @@ namespace detail {
     }
 
     //////////////////////////////////////////
-}
+
+} // namespace detail
 
 template <typename CharType>
 class BasicStringRef {
@@ -134,7 +133,7 @@ private:
 
 public:
     BasicStringRefHelper() : truncated_(false) {}
-    ~BasicStringRefHelper() {}
+    ~BasicStringRefHelper() { detach(); }
 
     bool attach(const string_ref & str) {
         // If the string reference don't recover the truncated char,
@@ -143,6 +142,15 @@ public:
             str_ = str;
         }
         return (!truncated_);
+    }
+
+    void detach() {
+        // If have be truncated, recover the saved terminator char first,
+        // and then clear the string reference.
+        if (truncated_) {
+            recover();
+            str_.clear();
+        }
     }
 
     void truncate() {
@@ -167,15 +175,14 @@ public:
     }
 };
 
-typedef BasicStringRef<char>        StringRefA;
-typedef BasicStringRef<wchar_t>     StringRefW;
-typedef BasicStringRef<char>        StringRef;
+typedef BasicStringRef<char>            StringRefA;
+typedef BasicStringRef<wchar_t>         StringRefW;
+typedef BasicStringRef<char>            StringRef;
 
 typedef BasicStringRefHelper<char>      StringRefHelperA;
 typedef BasicStringRefHelper<wchar_t>   StringRefHelperW;
 typedef BasicStringRefHelper<char>      StringRefHelper;
 
-} // namespace http
 } // namespace jimi
 
 #endif // !JIMI_HTTP_STRINGREF_H

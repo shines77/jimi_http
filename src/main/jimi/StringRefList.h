@@ -13,10 +13,9 @@
 #include <cstddef>
 #include <string>
 
-#include "jimi_http/StringRef.h"
+#include "jimi/StringRef.h"
 
 namespace jimi {
-namespace http {
 
 template <typename CharT, std::size_t InitCapacity>
 class BasicStringRefList {
@@ -30,8 +29,8 @@ public:
 
 private:
     struct Entry {
-        uint16_t offset;
-        uint16_t length;
+        uint32_t offset;
+        uint32_t length;
     };
 
     struct EntryPair {
@@ -212,7 +211,6 @@ using StringRefListW = BasicStringRefList<wchar_t, InitCapacity>;
 template <std::size_t InitCapacity>
 using StringRefList  = StringRefListA<InitCapacity>;
 
-} // namespace http
 } // namespace jimi
 
 #endif // !JIMI_HTTP_STRINGREFLIST_H

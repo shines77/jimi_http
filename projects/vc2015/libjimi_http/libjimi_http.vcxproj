@@ -19,17 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpCommon.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpParser.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpRequest.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpResponse.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\http_all.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\InputStream.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\StringRef.h" />
-    <ClInclude Include="..\..\..\src\main\jimi_http\StringRefList.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\src\main\jimi_http\HttpParser.cpp" />
+    <ClInclude Include="..\..\..\src\main\jimi\HttpCommon.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\HttpParser.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\HttpRequest.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\HttpResponse.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\http\Common.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\http\Parser.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\http\Request.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\http\Response.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\http_all.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\InputStream.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\StringRef.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\StringRefList.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{03B2B339-B5BF-489C-AB9F-0E4A208EA198}</ProjectGuid>

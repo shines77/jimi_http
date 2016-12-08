@@ -5,36 +5,46 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd;cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="src\http">
+      <UniqueIdentifier>{7dcdfd9d-ac39-4dc9-9f6e-5dd45bcb024d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpParser.h">
+    <ClInclude Include="..\..\..\src\main\jimi\http\Common.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\http\Parser.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\http\Request.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\http\Response.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\http_all.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\http_all.h">
+    <ClInclude Include="..\..\..\src\main\jimi\HttpResponse.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpRequest.h">
+    <ClInclude Include="..\..\..\src\main\jimi\InputStream.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpResponse.h">
+    <ClInclude Include="..\..\..\src\main\jimi\StringRef.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\HttpCommon.h">
+    <ClInclude Include="..\..\..\src\main\jimi\StringRefList.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\StringRef.h">
+    <ClInclude Include="..\..\..\src\main\jimi\HttpParser.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\StringRefList.h">
+    <ClInclude Include="..\..\..\src\main\jimi\HttpRequest.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http\InputStream.h">
+    <ClInclude Include="..\..\..\src\main\jimi\HttpCommon.h">
       <Filter>src</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\src\main\jimi_http\HttpParser.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

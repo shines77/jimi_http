@@ -11,11 +11,11 @@
 #include <cstddef>
 #include <iostream>
 
-#include "jimi_http/HttpCommon.h"
-#include "jimi_http/StringRef.h"
-#include "jimi_http/StringRefList.h"
-#include "jimi_http/HttpRequest.h"
-#include "jimi_http/HttpResponse.h"
+#include "jimi/http/Common.h"
+#include "jimi/http/StringRef.h"
+#include "jimi/http/StringRefList.h"
+#include "jimi/http/Request.h"
+#include "jimi/http/Response.h"
 
 using namespace std;
 

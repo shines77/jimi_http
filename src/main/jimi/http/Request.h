@@ -9,7 +9,7 @@
 namespace jimi {
 namespace http {
 
-class HttpRequest {
+class Request {
 public:
     /************************************************************************
      *
@@ -34,8 +34,8 @@ private:
     int error_code_;
 
 public:
-    HttpRequest() {}
-    ~HttpRequest() {}
+    Request() {}
+    ~Request() {}
 };
 
 } // namespace http

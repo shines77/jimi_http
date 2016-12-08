@@ -9,7 +9,7 @@
 #include <vector>
 #include <functional>
 
-#include "jimi_http/http_all.h"
+#include "jimi/http_all.h"
 
 namespace timax {
 namespace rpc {
