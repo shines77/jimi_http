@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <string>
 
+#include "jimi/basic/stddef.h"
 #include "jimi/StringRef.h"
 
 namespace jimi {
@@ -169,13 +170,13 @@ public:
                 const char * value, std::size_t value_len) {
         assert(key != nullptr);
         assert(value != nullptr);
-        if (size_ < kInitCapacity) {
+        if (likely(size_ < kInitCapacity)) {
             assert(size_ < capacity_);
             append_item(size_, key, key_len, value, value_len);
             size_++;
         }
         else {
-            if (size_ >= capacity_) {
+            if (unlikely(size_ >= capacity_)) {
                 // Add a new enttries chunk
                 static const std::size_t kChunkSize = 32;
                 EntryChunk * newChunk = new EntryChunk(kChunkSize);

@@ -179,7 +179,6 @@ public:
     void nextAndSkipCrLf(InputStream & is) {
         if (is.remain() > 2) {
             moveTo(is, 2);
-            //skipCrLf(is);
         }
     }
 
@@ -204,11 +203,11 @@ public:
 
     template <char delimiter>
     bool findTokenAndHash(InputStream & is, hash_type & hash) {
-        static const hash_type kSeed_Time31 = 31U;
+        static const hash_type kSeedTime31 = 31U;
         hash = 0;
         assert(is.current() != nullptr);
         while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && !is.isNullChar())) {
-            hash += static_cast<hash_type>(is.get()) * kSeed_Time31;
+            hash += static_cast<hash_type>(is.get()) * kSeedTime31;
             is.next();
         }
         return is.hasNext();
@@ -216,13 +215,15 @@ public:
 
     bool findCrLfToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext()) {
-            if (is.get() == '\r') {
-                if (is.peek(1) == '\n' && is.hasNext(1))
+        while (likely(is.hasNext())) {
+            if (unlikely(is.get() == '\r')) {
+                if (likely(is.peek(1) == '\n') && likely(is.hasNext(1)))
                     return true;
             }
-            if (!is.isNullChar())
+            if (likely(!is.isNullChar()))
                 is.next();
+            else
+                break;
         }
         return is.hasNext();
     }
@@ -275,7 +276,7 @@ scan_restart:
                 }
                 else if (is.get() == '\0') {
                     is_end = true;
-                    return true;
+                    return false;
                 }
                 else {
                     break;
@@ -302,7 +303,7 @@ scan_restart:
                 }
                 else if (is.get() == '\0') {
                     is_end = true;
-                    return true;
+                    return false;
                 }
                 else {
                     break;
@@ -357,7 +358,7 @@ scan_restart:
                 }
                 else if (is.get() == '\0') {
                     is_end = true;
-                    return true;
+                    return false;
                 }
                 else {
                     break;
@@ -402,7 +403,7 @@ scan_restart:
                 }
                 else if (is.get() == '\0') {
                     is_end = true;
-                    return true;
+                    return false;
                 }
                 else {
                     break;
