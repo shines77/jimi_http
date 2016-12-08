@@ -549,10 +549,10 @@ scan_restart:
 
             bool is_end;
             is_ok = checkAndSkipCrLf(is, is_end);
-            if (unlikely(!is_ok))
-                return false;
             if (unlikely(is_end))
                 return true;
+            if (unlikely(!is_ok))
+                return false;
         } while (1);
         return false;
     }
