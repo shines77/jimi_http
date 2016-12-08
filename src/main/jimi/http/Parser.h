@@ -78,7 +78,7 @@ public:
     }
 
     ~BasicParser() {
-        if unlikely(content_) {
+        if (unlikely(content_)) {
             delete[] content_;
             content_ = nullptr;
         }
@@ -247,7 +247,7 @@ public:
         assert(is.current() != nullptr);
         is_end = false;
 scan_restart:
-        if likely(is.remain() >= 4) {
+        if (likely(is.remain() >= 4)) {
             // If the remain length is more than or equal 4 bytes, needn't to check the tail.
             do {
                 if (is.get() == '\r') {
@@ -315,7 +315,7 @@ scan_restart:
     bool checkAndSkipCrLf_Heavy(InputStream & is, bool & is_end) {
         assert(is.current() != nullptr);
         is_end = false;
-        if likely(is.remain() >= 4) {
+        if (likely(is.remain() >= 4)) {
             // If the remain length is more than or equal 4 bytes, needn't to check the tail.
             do {
                 if (is.get() == '\r') {
@@ -417,12 +417,12 @@ scan_restart:
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
-        if likely(is_ok) {
+        if (likely(is_ok)) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
             method_str_.assign(mark, len);
-            if unlikely(len <= 0)
+            if (unlikely(len <= 0))
                 return false;
         }
         return is_ok;
@@ -434,12 +434,12 @@ scan_restart:
         hash_type hash;
         const char * mark = is.current();
         bool is_ok = findTokenAndHash<' '>(is, hash);
-        if likely(is_ok) {
+        if (likely(is_ok)) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
             method_str_.assign(mark, len);
-            if unlikely(len <= 0)
+            if (unlikely(len <= 0))
                 return false;
         }
         return is_ok;
@@ -450,12 +450,12 @@ scan_restart:
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
-        if likely(is_ok) {
+        if (likely(is_ok)) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
             uri_str_.assign(mark, len);
-            if unlikely(len <= 0)
+            if (unlikely(len <= 0))
                 return false;
         }
         return is_ok;
@@ -466,12 +466,12 @@ scan_restart:
             return false;
         const char * mark = is.current();
         bool is_ok = findCrLfToken(is);
-        if likely(is_ok) {
+        if (likely(is_ok)) {
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             static const std::ptrdiff_t kLenHTTPVersion = sizeof("HTTP/1.1") - 1;
             std::ptrdiff_t len = is.current() - mark;
-            if likely(len >= kLenHTTPVersion) {
+            if (likely(len >= kLenHTTPVersion)) {
                 version_str_.assign(mark, len);
                 return true;
             }
@@ -491,7 +491,7 @@ scan_restart:
             is_ok = findFieldName(is);
 
             std::ptrdiff_t name_len = is.current() - field_name;
-            if unlikely(!is_ok || (name_len <= 0))
+            if (unlikely(!is_ok || (name_len <= 0)))
                 return false;
 
             next(is);
@@ -501,7 +501,7 @@ scan_restart:
             is_ok = findFieldValue(is);
 
             std::ptrdiff_t value_len = is.current() - field_value;
-            if unlikely(!is_ok || (value_len <= 0))
+            if (unlikely(!is_ok || (value_len <= 0)))
                 return false;
 
             // Append the field-name and field-value pair to StringRefList.
@@ -511,9 +511,9 @@ scan_restart:
 
             bool is_end;
             is_ok = checkAndSkipCrLf(is, is_end);
-            if unlikely(is_end)
+            if (unlikely(is_end))
                 return true;
-            if unlikely(!is_ok)
+            if (unlikely(!is_ok))
                 return false;
         } while (1);
         return is_ok;
@@ -529,24 +529,24 @@ scan_restart:
         const char * start = is.current();
         std::size_t length = is.remain();
         // Http method characters must be upper case letters.
-        if likely(is.get() >= 'A' && is.get() <= 'Z') {
+        if (likely(is.get() >= 'A' && is.get() <= 'Z')) {
             is_ok = parseMethod(is);
             //is_ok = parseHttpMethodAndHash(is);
-            if unlikely(!is_ok)
+            if (unlikely(!is_ok))
                 return error_code::InvalidHttpMethod;
 
             next(is);
             skipWhiteSpaces(is);
 
             is_ok = parseURI(is);
-            if unlikely(!is_ok)
+            if (unlikely(!is_ok))
                 return error_code::HttpParserError;
 
             next(is);
             skipWhiteSpaces(is);
 
             is_ok = parseVersion(is);
-            if unlikely(!is_ok)
+            if (unlikely(!is_ok))
                 return error_code::HttpParserError;
 
             // Skip the CrLf, move the cursor 2 bytes.
@@ -558,7 +558,7 @@ scan_restart:
             header_fields_.setRef(is.current(), length - (is.current() - start));
 
             is_ok = parseHeaderFields(is);
-            if unlikely(!is_ok)
+            if (unlikely(!is_ok))
                 return error_code::HttpParserError;
         }
         else {
@@ -571,17 +571,17 @@ scan_restart:
     const char * copyContent(const char * data, size_t len) {
         assert(data != nullptr);
         const char * content;
-        if likely(len < kInitContentSize) {
+        if (likely(len < kInitContentSize)) {
             ::memcpy((void *)&inner_content_[0], data, len);
             inner_content_[len] = '\0';
-            if unlikely(content_)
+            if (unlikely(content_))
                 content_ = nullptr;
             content = const_cast<const char * >(&inner_content_[0]);
             content_size_ = len;
         }
         else {
             char * new_content = new char [len + 1];
-            if likely(new_content != nullptr) {
+            if (likely(new_content != nullptr)) {
                 ::memcpy((void *)new_content, data, len);
                 new_content[len] = '\0';
                 content_ = const_cast<const char *>(new_content);
@@ -598,12 +598,12 @@ scan_restart:
     int parseRequest(const char * data, size_t len) {
         int ec = 0;
         assert(data != nullptr);
-        if unlikely(len == 0 || data == nullptr)
+        if (unlikely(len == 0 || data == nullptr))
             return error_code::Succeed;
 
         // Copy the input http header data.
         const char * content = copyContent(data, len);
-        if unlikely(content == nullptr)
+        if (unlikely(content == nullptr))
             return error_code::HttpParserError;
 
         // Start parse the request http header.

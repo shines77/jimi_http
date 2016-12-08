@@ -140,7 +140,7 @@ public:
     bool attach(const string_ref & str) {
         // If the string reference don't recover the truncated char,
         // don't accept the new attach.
-        if likely(!truncated_) {
+        if (likely(!truncated_)) {
             str_ = str;
         }
         return (!truncated_);
@@ -149,14 +149,14 @@ public:
     void detach() {
         // If have be truncated, recover the saved terminator char first,
         // and then clear the string reference.
-        if unlikely(truncated_) {
+        if (unlikely(truncated_)) {
             recover();
             str_.clear();
         }
     }
 
     void truncate() {
-        if likely(!truncated_) {
+        if (likely(!truncated_)) {
             char_type * first = (char_type *)str_.data();
             char_type * last = first + str_.size();
             assert(last != nullptr);
@@ -167,7 +167,7 @@ public:
     }
 
     void recover() {
-        if likely(truncated_) {
+        if (likely(truncated_)) {
             char_type * first = (char_type *)str_.data();
             char_type * last = first + str_.size();
             assert(last != nullptr);
