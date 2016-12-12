@@ -67,24 +67,15 @@ struct base_padding_data : public root_padding_data
 
     static const std::size_t kCacheLineSize = CacheLineSize;
     static const std::size_t kSizeOfData = sizeof(value_type);
-#if 0
     static const std::size_t kPaddingBytes =
-        (kCacheLineSize - kSizeOfData) > 0 ? (kCacheLineSize - kSizeOfData) : 1;
-#else
-    static const std::size_t kPaddingBytes =
-        ((kSizeOfData - 1) / kCacheLineSize + 1) * kCacheLineSize - kSizeOfData;
-#endif
+        (kSizeOfData <= kCacheLineSize) ? (kCacheLineSize - kSizeOfData)
+        : (((kSizeOfData - 1) / kCacheLineSize + 1) * kCacheLineSize - kSizeOfData);
 };
 
 template <typename T, std::size_t CacheLineSize>
-struct base_padding_data_decay : public root_padding_data
+struct base_padding_data_decay : public base_padding_data<typename std::decay<T>::type, CacheLineSize>
 {
     typedef typename std::decay<T>::type value_type;
-
-    static const std::size_t kCacheLineSize = CacheLineSize;
-    static const std::size_t kSizeOfData = sizeof(value_type);
-    static const std::size_t kPaddingBytes =
-        (kCacheLineSize - kSizeOfData) > 0 ? (kCacheLineSize - kSizeOfData) : 1;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -103,8 +94,8 @@ struct alignas(CacheLineSize) padding_data_impl : public std::decay<T>::type,
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    padding_data_impl(value_type const & value) : value_type(value) {};
-    ~padding_data_impl() {};
+    padding_data_impl(value_type const & value) : value_type(value) {}
+    ~padding_data_impl() {}
 };
 
 template <typename T, std::size_t CacheLineSize>
@@ -123,8 +114,8 @@ struct padding_data_impl<T, CacheLineSize, false> : public base_padding_data_dec
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    padding_data_impl(value_type value) : data(value) {};
-    ~padding_data_impl() {};
+    padding_data_impl(value_type value) : data(value) {}
+    ~padding_data_impl() {}
 };
 
 template <typename T, std::size_t CacheLineSize = CACHE_LINE_SIZE>
@@ -148,8 +139,8 @@ struct alignas(CacheLineSize) volatile_padding_data_impl : public base_padding_d
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    volatile_padding_data_impl(value_type const & value) : data(value) {};
-    ~volatile_padding_data_impl() {};
+    volatile_padding_data_impl(value_type const & value) : data(value) {}
+    ~volatile_padding_data_impl() {}
 };
 
 template <typename T, std::size_t CacheLineSize>
@@ -168,8 +159,8 @@ struct volatile_padding_data_impl<T, CacheLineSize, false> : public base_padding
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    volatile_padding_data_impl(value_type value) : data(value) {};
-    ~volatile_padding_data_impl() {};
+    volatile_padding_data_impl(value_type value) : data(value) {}
+    ~volatile_padding_data_impl() {}
 };
 
 template <typename T, std::size_t CacheLineSize = CACHE_LINE_SIZE>
@@ -193,8 +184,28 @@ struct alignas(CacheLineSize) atomic_padding : public std::atomic<typename std::
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    atomic_padding(value_type const & value) : std::atomic<value_type>(value) {};
-    ~atomic_padding() {};
+    atomic_padding(value_type const & value) : std::atomic<value_type>(value) {}
+    ~atomic_padding() {}
+
+    atomic_padding & operator = (value_type const & that) {
+        atomic_type * pThisAtomic =  static_cast<atomic_type *>(this);
+        if ((void *)&that != (void *)pThisAtomic)
+            *pThisAtomic = that;
+        return *this;
+    }
+
+    value_type & get() const {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<atomic_padding *>(this));
+        value_type * pThisValue = static_cast<value_type *>(&(pThisAtomic->_My_val));
+        assert(pThisValue != nullptr);
+        return *pThisValue;
+    }
+
+    atomic_type & getAtomic() const {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<atomic_padding *>(this));
+        assert(pThisAtomic != nullptr);
+        return *pThisAtomic;
+    }
 };
 
 template <typename T, std::size_t CacheLineSize = CACHE_LINE_SIZE>
@@ -214,8 +225,23 @@ struct atomic_padding_wrapper : public base_padding_data_decay<T, CacheLineSize>
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    atomic_padding_wrapper(value_type value) : data(value) {};
-    ~atomic_padding_wrapper() {};
+    atomic_padding_wrapper(value_type value) : data(value) {}
+    ~atomic_padding_wrapper() {}
+
+    atomic_padding_wrapper & operator = (value_type value) {
+        data = value;
+        return *this;
+    }
+
+    value_type & get() const {
+        value_type * pAtomicValue = const_cast<value_type *>(&(data._My_val));
+        assert(pAtomicValue != nullptr);
+        return *pAtomicValue;
+    }
+
+    atomic_type & getAtomic() const {
+        return *(const_cast<atomic_type *>(&data));
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
