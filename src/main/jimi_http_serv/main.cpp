@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <atomic>
 #include <thread>
 #include <chrono>
 #include <exception>
@@ -46,6 +47,73 @@ jimi::atomic_padding<uint32_t> jimi::g_client_count(0);
 jimi::atomic_padding<uint64_t> jimi::g_recv_bytes(0);
 jimi::atomic_padding<uint64_t> jimi::g_send_bytes(0);
 
+struct Foo
+{
+    int i;
+    char b[60];
+};
+
+int foo_test(int i, Foo & foo)
+{
+    printf("foo_test(), i = %d, foo & = 0x%0p\n", i, &foo);
+    return 0;
+}
+
+void run_decay_test()
+{
+    printf("typeid( std::decay<std::function<void()>> ).name() = %s\n", typeid(std::decay< std::function<void()> >::type).name());
+    printf("typeid( std::decay<std::function<void(Foo &)>> ).name() = %s\n", typeid(std::decay< std::function<void(Foo &)> >::type).name());
+    printf("typeid( std::decay<std::function<int(Foo &)>> ).name() = %s\n", typeid(std::decay< std::function<int(Foo &)> >::type).name());
+    printf("typeid( std::function<int(Foo &)> ).name() = %s\n", typeid(std::function<int(Foo &)>).name());
+    printf("typeid( std::function<int(int, int)> ).name() = %s\n", typeid(std::function<int(int, int)>).name());
+    printf("typeid( std::function<int(int, Foo &)> ).name() = %s\n", typeid(std::function<int(int, Foo &)>).name());
+    printf("typeid( std::function<int(int, const Foo &)> ).name() = %s\n", typeid(std::function<int(int, const Foo &)>).name());
+    printf("\n");
+}
+
+void run_atomic_padding_test()
+{
+    printf("is_inheritable<Foo>::value = %d\n", jimi::detail::is_inheritable<Foo>::value);
+    printf("is_inheritable<Foo &>::value = %d\n", jimi::detail::is_inheritable<Foo &>::value);
+    printf("is_inheritable<Foo *>::value = %d\n", jimi::detail::is_inheritable<Foo *>::value);
+    printf("is_inheritable<volatile Foo>::value = %d\n", jimi::detail::is_inheritable<volatile Foo>::value);
+    printf("is_inheritable<int>::value = %d\n", jimi::detail::is_inheritable<int>::value);
+    printf("is_inheritable<volatile int>::value = %d\n", jimi::detail::is_inheritable<volatile int>::value);
+    printf("is_inheritable< std::function<void()> >::value = %d\n", jimi::detail::is_inheritable< std::function<void()> >::value);
+    printf("is_inheritable< std::function<void(Foo)> >::value = %d\n", jimi::detail::is_inheritable< std::function<void(Foo)> >::value);
+    printf("\n");
+
+    printf("is_inheritable_decay<Foo>::value = %d\n", jimi::detail::is_inheritable_decay<Foo>::value);
+    printf("is_inheritable_decay<Foo &>::value = %d\n", jimi::detail::is_inheritable_decay<Foo &>::value);
+    printf("is_inheritable_decay<Foo *>::value = %d\n", jimi::detail::is_inheritable_decay<Foo *>::value);
+    printf("is_inheritable_decay<volatile Foo>::value = %d\n", jimi::detail::is_inheritable_decay<volatile Foo>::value);
+    printf("is_inheritable_decay<int>::value = %d\n", jimi::detail::is_inheritable_decay<int>::value);
+    printf("is_inheritable_decay<volatile int>::value = %d\n", jimi::detail::is_inheritable_decay<volatile int>::value);
+    printf("is_inheritable_decay< std::function<void()> >::value = %d\n", jimi::detail::is_inheritable_decay< std::function<void()> >::value);
+    printf("is_inheritable_decay< std::function<void(Foo)> >::value = %d\n", jimi::detail::is_inheritable_decay< std::function<void(Foo)> >::value);
+    printf("\n");
+
+    Foo foo;
+
+    jimi::atomic_padding<int> counter(4);
+    printf("jimi::atomic_padding<int> ounter(4) = %d\n", counter.load(std::memory_order_relaxed));
+    printf("\n");
+
+    jimi::atomic_padding<Foo> counter_foo(foo);
+    printf("sizeof(Foo) = %u\n", (uint32_t)sizeof(Foo));
+    printf("jimi::atomic_padding<Foo>::kSizeOfData = %u\n", (uint32_t)jimi::atomic_padding<Foo>::kSizeOfData);
+    printf("jimi::atomic_padding<Foo>::kPaddingBytes = %u\n", (uint32_t)jimi::atomic_padding<Foo>::kPaddingBytes);
+    printf("sizeof(jimi::atomic_padding<Foo>) = %u\n", (uint32_t)sizeof(jimi::atomic_padding<Foo>));
+    printf("jimi::atomic_padding<Foo> counter_foo(foo) = 0x%0p\n", &counter_foo.load(std::memory_order_relaxed));
+    //counter_foo = 3;
+    printf("\n");
+
+    jimi::atomic_padding_wrapper<int> counter_wrapper(8);
+    printf("jimi::atomic_padding<int> counter_wrapper(8) = %d\n", counter_wrapper.data.load(std::memory_order_relaxed));
+
+    printf("\n");
+}
+
 void run_http_server(const std::string & host, const std::string & port,
                      uint32_t packet_size, uint32_t thread_num,
                      bool confirm = false)
@@ -85,14 +153,6 @@ void print_usage(const std::string & app_name, const boost::program_options::opt
               << std::endl
               << "  " << app_name.c_str() << " -s 127.0.0.1 -p 9000 -m echo -t pingpong -l 10 -k 64 -n 8" << std::endl;
     std::cerr << std::endl;
-}
-
-class Foo {};
-
-int foo_test(int i, Foo & foo)
-{
-    printf("foo_test(), i = %d, foo & = 0x%0p\n", i, &foo);
-    return 0;
 }
 
 int main(int argc, char * argv[])
@@ -221,50 +281,20 @@ int main(int argc, char * argv[])
     std::cout << "packet_size: " << packet_size << ", thread_num: " << thread_num << std::endl;
     std::cout << std::endl;
 
-    printf("typeid( std::decay<std::function<void()>> ).name() = %s\n", typeid(std::decay< std::function<void()> >::type).name());
-    printf("typeid( std::decay<std::function<void(Foo &)>> ).name() = %s\n", typeid(std::decay< std::function<void(Foo &)> >::type).name());
-    printf("typeid( std::decay<std::function<int(Foo &)>> ).name() = %s\n", typeid(std::decay< std::function<int(Foo &)> >::type).name());
-    printf("typeid( std::function<int(Foo &)> ).name() = %s\n", typeid(std::function<int(Foo &)>).name());
-    printf("typeid( std::function<int(int, int)> ).name() = %s\n", typeid(std::function<int(int, int)>).name());
-    printf("typeid( std::function<int(int, Foo &)> ).name() = %s\n", typeid(std::function<int(int, Foo &)>).name());
-    printf("typeid( std::function<int(int, const Foo &)> ).name() = %s\n", typeid(std::function<int(int, const Foo &)>).name());
-    printf("\n");
-
-    Foo foo;
-    std::function<int(int, Foo &)> func = std::bind(&foo_test, std::placeholders::_1, std::placeholders::_2);
-    int result = func(1, foo);
-    printf("\n");
-
-    printf("is_inheritable<Foo>::value = %d\n", jimi::detail::is_inheritable<Foo>::value);
-    printf("is_inheritable<Foo &>::value = %d\n", jimi::detail::is_inheritable<Foo &>::value);
-    printf("is_inheritable<Foo *>::value = %d\n", jimi::detail::is_inheritable<Foo *>::value);
-    printf("is_inheritable<volatile Foo>::value = %d\n", jimi::detail::is_inheritable<volatile Foo>::value);
-    printf("is_inheritable<int>::value = %d\n", jimi::detail::is_inheritable<int>::value);
-    printf("is_inheritable<volatile int>::value = %d\n", jimi::detail::is_inheritable<volatile int>::value);
-    printf("is_inheritable<std::function<void()> >::value = %d\n", jimi::detail::is_inheritable<std::function<void()> >::value);
-    printf("is_inheritable<std::function<void(Foo)> >::value = %d\n", jimi::detail::is_inheritable<std::function<void(Foo)> >::value);
-    printf("\n");
-
-    printf("is_inheritable_decay<Foo>::value = %d\n", jimi::detail::is_inheritable_decay<Foo>::value);
-    printf("is_inheritable_decay<Foo &>::value = %d\n", jimi::detail::is_inheritable_decay<Foo &>::value);
-    printf("is_inheritable_decay<Foo *>::value = %d\n", jimi::detail::is_inheritable_decay<Foo *>::value);
-    printf("is_inheritable_decay<volatile Foo>::value = %d\n", jimi::detail::is_inheritable_decay<volatile Foo>::value);
-    printf("is_inheritable_decay<int>::value = %d\n", jimi::detail::is_inheritable_decay<int>::value);
-    printf("is_inheritable_decay<volatile int>::value = %d\n", jimi::detail::is_inheritable_decay<volatile int>::value);
-    printf("is_inheritable_decay<std::function<void()> >::value = %d\n", jimi::detail::is_inheritable_decay<std::function<void()> >::value);
-    printf("is_inheritable_decay<std::function<void(Foo)> >::value = %d\n", jimi::detail::is_inheritable_decay<std::function<void(Foo)> >::value);
-    printf("\n");
-
     if (mode == http_server_mode) {
         run_http_server(server_ip, server_port, packet_size, thread_num);
     }
     else if (mode == echo_server_mode) {
-        // TODO:
-        std::cout << "TODO: mode_echo_server." << std::endl;
+        // TODO: echo server
+        std::cout << "TODO: echo_server_mode." << std::endl;
     }
     else {
         run_http_server_ex(server_ip, server_port, packet_size, thread_num);
     }
+
+#if 1
+    run_atomic_padding_test();
+#endif
 
 #ifdef _WIN32
     ::system("pause");

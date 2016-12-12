@@ -67,8 +67,13 @@ struct base_padding_data : public root_padding_data
 
     static const std::size_t kCacheLineSize = CacheLineSize;
     static const std::size_t kSizeOfData = sizeof(value_type);
+#if 0
     static const std::size_t kPaddingBytes =
         (kCacheLineSize - kSizeOfData) > 0 ? (kCacheLineSize - kSizeOfData) : 1;
+#else
+    static const std::size_t kPaddingBytes =
+        ((kSizeOfData - 1) / kCacheLineSize + 1) * kCacheLineSize - kSizeOfData;
+#endif
 };
 
 template <typename T, std::size_t CacheLineSize>
@@ -180,7 +185,7 @@ struct alignas(CacheLineSize) atomic_padding : public std::atomic<typename std::
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
 
-    typedef base_padding_data_decay<T, CacheLineSize> base_type;
+    typedef base_padding_data<atomic_type, CacheLineSize> base_type;
     static const std::size_t kCacheLineSize = base_type::kCacheLineSize;
     static const std::size_t kSizeOfData = base_type::kSizeOfData;
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
@@ -198,7 +203,7 @@ struct atomic_padding_wrapper : public base_padding_data_decay<T, CacheLineSize>
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
 
-    typedef base_padding_data_decay<T, CacheLineSize> base_type;
+    typedef base_padding_data<atomic_type, CacheLineSize> base_type;
     static const std::size_t kCacheLineSize = base_type::kCacheLineSize;
     static const std::size_t kSizeOfData = base_type::kSizeOfData;
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
