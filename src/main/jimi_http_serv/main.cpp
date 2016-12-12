@@ -15,14 +15,14 @@
 #define MAX_PACKET_SIZE     (128 * 1024)
 
 enum http_server_mode_t {
-    mode_http_server,
-    mode_echo_server,
+    http_server_mode,
+    echo_server_mode,
 };
 
 std::string g_server_ip;
 std::string g_server_port;
 
-uint32_t g_mode         = http_server_mode_t::mode_http_server;
+uint32_t g_mode         = http_server_mode_t::http_server_mode;
 uint32_t g_nodelay      = 0;
 uint32_t g_need_echo    = 1;
 uint32_t g_packet_size  = 64;
@@ -87,12 +87,19 @@ void print_usage(const std::string & app_name, const boost::program_options::opt
     std::cerr << std::endl;
 }
 
+class Foo {};
+
+int foo_test(int i, Foo & foo)
+{
+    printf("foo_test(), i = %d, foo & = 0x%0p\n", i, &foo);
+    return 0;
+}
+
 int main(int argc, char * argv[])
 {
     std::string app_name;
     std::string server_ip, server_port;
-    std::string test_mode, test_method, nodelay, rpc_topic;
-    std::string mode_str, test_str, cmd, cmd_value;
+    std::string mode_str, test_str, nodelay_str, cmd, cmd_value;
     int32_t mode = 0;
     int32_t pipeline = 1, packet_size = 0, thread_num = 0, need_echo = 1;
 
@@ -102,13 +109,12 @@ int main(int argc, char * argv[])
         ("help,h",                                                                                  "usage info")
         ("host,s",          options::value<std::string>(&server_ip)->default_value("127.0.0.1"),    "server host or ip address")
         ("port,p",          options::value<std::string>(&server_port)->default_value("9000"),       "server port")
-        ("mode,m",          options::value<std::string>(&test_mode)->default_value("echo"),         "test mode = [echo]")
-        ("test,t",          options::value<std::string>(&test_method)->default_value("pingpong"),   "test method = [pingpong, qps, latency, throughput]")
-        ("pipeline,l",      options::value<int32_t>(&pipeline)->default_value(1),                   "pipeline numbers")
+        ("mode,m",          options::value<std::string>(&mode_str)->default_value("http"),          "server mode = [http]")
         ("packet-size,k",   options::value<int32_t>(&packet_size)->default_value(64),               "packet size")
         ("thread-num,n",    options::value<int32_t>(&thread_num)->default_value(0),                 "thread numbers")
-        ("nodelay,y",       options::value<std::string>(&nodelay)->default_value("false"),          "TCP socket nodelay = [0 or 1, true or false]")
+        ("nodelay,y",       options::value<std::string>(&nodelay_str)->default_value("false"),      "TCP socket nodelay = [0 or 1, true or false]")
         ("echo,e",          options::value<int32_t>(&need_echo)->default_value(1),                  "whether the server need echo")
+        ("pipeline,l",      options::value<int32_t>(&pipeline)->default_value(1),                   "pipeline numbers")
         ;
 
     // parse command line
@@ -156,26 +162,22 @@ int main(int argc, char * argv[])
     }
 
     // Get the mode info
-    if (mode_str == "http") {
-        g_mode = mode_http_server;
-        g_mode_str = "Http Server";
-    }
     if (mode_str == "echo") {
-        g_mode = mode_echo_server;
+        g_mode = echo_server_mode;
         g_mode_str = "Http Echo Server";
     }
     else {
-        g_mode = mode_http_server;
+        // Default mode
+        g_mode = http_server_mode;
         g_mode_str = "Http Server";
     }
-    std::cout << "mode string: " << mode_str.c_str() << std::endl;
-    std::cout << "mode       : " << g_mode_str.c_str() << std::endl;
+    std::cout << "mode str:  " << mode_str.c_str() << std::endl;
+    std::cout << "mode info: " << g_mode_str.c_str() << std::endl;
 
     // packet-size
     if (args_map.count("packet-size") > 0) {
         packet_size = args_map["packet-size"].as<int32_t>();
     }
-    std::cout << "packet-size: " << packet_size << std::endl;
     if (packet_size <= 0)
         packet_size = DEFAULT_PACKET_SIZE;
     if (packet_size > MAX_PACKET_SIZE) {
@@ -184,6 +186,7 @@ int main(int argc, char * argv[])
                   << MAX_PACKET_SIZE << " bytes [MAX_PACKET_SIZE]." << std::endl;
     }
     g_packet_size = packet_size;
+    std::cout << "packet-size: " << packet_size << std::endl;
 
     // thread-num
     if (args_map.count("thread-num") > 0) {
@@ -197,9 +200,9 @@ int main(int argc, char * argv[])
 
     // nodelay
     if (args_map.count("nodelay") > 0) {
-        nodelay = args_map["nodelay"].as<std::string>();
+        nodelay_str = args_map["nodelay"].as<std::string>();
     }
-    if (nodelay == "1" || nodelay == "true") {
+    if (nodelay_str == "1" || nodelay_str == "true") {
         g_nodelay = 1;
         g_nodelay_str = "true";
     }
@@ -218,10 +221,44 @@ int main(int argc, char * argv[])
     std::cout << "packet_size: " << packet_size << ", thread_num: " << thread_num << std::endl;
     std::cout << std::endl;
 
-    if (mode == mode_http_server) {
+    printf("typeid( std::decay<std::function<void()>> ).name() = %s\n", typeid(std::decay< std::function<void()> >::type).name());
+    printf("typeid( std::decay<std::function<void(Foo &)>> ).name() = %s\n", typeid(std::decay< std::function<void(Foo &)> >::type).name());
+    printf("typeid( std::decay<std::function<int(Foo &)>> ).name() = %s\n", typeid(std::decay< std::function<int(Foo &)> >::type).name());
+    printf("typeid( std::function<int(Foo &)> ).name() = %s\n", typeid(std::function<int(Foo &)>).name());
+    printf("typeid( std::function<int(int, int)> ).name() = %s\n", typeid(std::function<int(int, int)>).name());
+    printf("typeid( std::function<int(int, Foo &)> ).name() = %s\n", typeid(std::function<int(int, Foo &)>).name());
+    printf("typeid( std::function<int(int, const Foo &)> ).name() = %s\n", typeid(std::function<int(int, const Foo &)>).name());
+    printf("\n");
+
+    Foo foo;
+    std::function<int(int, Foo &)> func = std::bind(&foo_test, std::placeholders::_1, std::placeholders::_2);
+    int result = func(1, foo);
+    printf("\n");
+
+    printf("is_inheritable<Foo>::value = %d\n", jimi::detail::is_inheritable<Foo>::value);
+    printf("is_inheritable<Foo &>::value = %d\n", jimi::detail::is_inheritable<Foo &>::value);
+    printf("is_inheritable<Foo *>::value = %d\n", jimi::detail::is_inheritable<Foo *>::value);
+    printf("is_inheritable<volatile Foo>::value = %d\n", jimi::detail::is_inheritable<volatile Foo>::value);
+    printf("is_inheritable<int>::value = %d\n", jimi::detail::is_inheritable<int>::value);
+    printf("is_inheritable<volatile int>::value = %d\n", jimi::detail::is_inheritable<volatile int>::value);
+    printf("is_inheritable<std::function<void()> >::value = %d\n", jimi::detail::is_inheritable<std::function<void()> >::value);
+    printf("is_inheritable<std::function<void(Foo)> >::value = %d\n", jimi::detail::is_inheritable<std::function<void(Foo)> >::value);
+    printf("\n");
+
+    printf("is_inheritable_decay<Foo>::value = %d\n", jimi::detail::is_inheritable_decay<Foo>::value);
+    printf("is_inheritable_decay<Foo &>::value = %d\n", jimi::detail::is_inheritable_decay<Foo &>::value);
+    printf("is_inheritable_decay<Foo *>::value = %d\n", jimi::detail::is_inheritable_decay<Foo *>::value);
+    printf("is_inheritable_decay<volatile Foo>::value = %d\n", jimi::detail::is_inheritable_decay<volatile Foo>::value);
+    printf("is_inheritable_decay<int>::value = %d\n", jimi::detail::is_inheritable_decay<int>::value);
+    printf("is_inheritable_decay<volatile int>::value = %d\n", jimi::detail::is_inheritable_decay<volatile int>::value);
+    printf("is_inheritable_decay<std::function<void()> >::value = %d\n", jimi::detail::is_inheritable_decay<std::function<void()> >::value);
+    printf("is_inheritable_decay<std::function<void(Foo)> >::value = %d\n", jimi::detail::is_inheritable_decay<std::function<void(Foo)> >::value);
+    printf("\n");
+
+    if (mode == http_server_mode) {
         run_http_server(server_ip, server_port, packet_size, thread_num);
     }
-    else if (mode == mode_echo_server) {
+    else if (mode == echo_server_mode) {
         // TODO:
         std::cout << "TODO: mode_echo_server." << std::endl;
     }
