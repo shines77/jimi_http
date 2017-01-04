@@ -343,7 +343,7 @@ int main(int argc, char * argv[])
         run_http_server_ex(server_ip, server_port, packet_size, thread_num);
     }
 
-#if 1
+#if 0
     run_atomic_padding_test();
 #endif
 
