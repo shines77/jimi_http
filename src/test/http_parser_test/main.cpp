@@ -93,6 +93,10 @@ void http_parser_test()
     int sum = 0;
     std::size_t request_len = ::strlen(http_header);
 
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  http_parser_test()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
         http::Parser<1024> http_parser;
@@ -100,6 +104,7 @@ void http_parser_test()
     }
     sw.stop();
 
+    std::cout << std::endl;
     std::cout << "Sum:               " << sum << std::endl;
     std::cout << "Length:            " << ::strlen(http_header) << std::endl;
     std::cout << "Iterations:        " << kIterations << std::endl;
@@ -125,11 +130,16 @@ void http_parser_ref_test()
     StringRefHelper helper;
     static int mark = 0;
 
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  http_parser_ref_test()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
         http::ParserRef<1024> http_parser;
         sum += http_parser.parseRequest(http_header, ::strlen(http_header));
-        if (mark < 2) {
+        if (mark < 3) {
             if (helper.attach(http_parser.getMethodStr())) {
                 helper.truncate();
                 std::cout << "method = " << http_parser.getMethodStr().c_str() << std::endl;
@@ -159,6 +169,11 @@ void http_parser_ref_test()
 
 void http_parser_benchmark()
 {
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  http_parser_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
     volatile int64_t dummy = 0;
@@ -205,11 +220,16 @@ void http_parser_benchmark()
 
 int main(int argn, char * argv[])
 {
-    printf("http_parser_test\n\n");
+    std::cout << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  Program: http_parser_test" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
     http::Parser<1024> http_parser;
+    http_parser.parseRequest(http_header, ::strlen(http_header));
     printf("http_parser.getVersion() = %u\n", http_parser.getVersion());
     printf("http_parser.getMethod() = %u\n", http_parser.getMethod());
-    http_parser.parseRequest(http_header, ::strlen(http_header));
     printf("\n");
     http_parser.displayFields();
     printf("\n");
