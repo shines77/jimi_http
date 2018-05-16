@@ -111,6 +111,9 @@ public:
     const value_type * c_str() const { return this->data(); }
     size_type size() const  { return this->length(); }
 
+    value_type * data() { return const_cast<value_type *>(this->data_); }
+    value_type * c_str() { return const_cast<value_type *>(this->data()); }
+
     bool empty() const { return (this->length() == 0); }
 
     void reset() {
