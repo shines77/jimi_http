@@ -114,7 +114,7 @@ public:
     bool empty() const { return (this->length() == 0); }
 
     void reset() {
-        this->data_ = nullptr;=
+        this->data_ = nullptr;
         this->length_ = 0;
     }
 
