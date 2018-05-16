@@ -250,4 +250,4 @@ typedef BasicStringRefHelper<char>      StringRefHelper;
 
 } // namespace jimi
 
-#endif // !JIMI_HTTP_STRINGREF_H
+#endif // JIMI_HTTP_STRINGREF_H

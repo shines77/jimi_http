@@ -23,4 +23,4 @@ public:
 } // namespace http
 } // namespace jimi
 
-#endif // !JIMI_HTTP_RESPONSE_H
+#endif // JIMI_HTTP_RESPONSE_H

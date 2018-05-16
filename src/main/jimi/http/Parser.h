@@ -66,7 +66,7 @@ private:
     std::size_t content_length_;
     std::size_t content_size_;
     const char * content_;
-    StringRefList<16> header_fields_;
+    StringRefList<64> header_fields_;
     char inner_content_[kInitContentSize];
 
 public:
@@ -686,4 +686,4 @@ using ParserRef = BasicParser<StringRef>;
 } // namespace http
 } // namespace jimi
 
-#endif // !JIMI_HTTP_PARSER_H
+#endif // JIMI_HTTP_PARSER_H

@@ -41,4 +41,4 @@ public:
 } // namespace http
 } // namespace jimi
 
-#endif // !JIMI_HTTP_REQUEST_H
+#endif // JIMI_HTTP_REQUEST_H

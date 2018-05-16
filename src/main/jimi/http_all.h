@@ -22,4 +22,4 @@ namespace http {
 } // namespace http
 } // namespace jimi
 
-#endif // !JIMI_HTTP_PARSER_ALL_H
+#endif // JIMI_HTTP_PARSER_ALL_H

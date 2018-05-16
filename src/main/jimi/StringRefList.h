@@ -18,13 +18,13 @@
 
 namespace jimi {
 
-template <typename CharT, std::size_t InitCapacity>
+template <typename CharTy, std::size_t InitCapacity>
 class BasicStringRefList {
 public:
-    typedef CharT char_type;
+    typedef CharTy char_type;
     typedef std::size_t size_type;
-    typedef std::basic_string<char_type> std_string;
-    typedef BasicStringRef<char_type> string_ref;
+    typedef std::basic_string<char_type> string_type;
+    typedef BasicStringRef<char_type> stringref_type;
 
     static const std::size_t kInitCapacity = InitCapacity;
 
@@ -41,9 +41,9 @@ private:
 
     struct EntryChunk {
         EntryChunk * next;
-        std::size_t capacity;
-        std::size_t size;
-        EntryPair * entries;
+        std::size_t  capacity;
+        std::size_t  size;
+        EntryPair *  entries;
 
         EntryChunk(std::size_t _capacity)
             : next(nullptr), capacity(_capacity), size(0), entries(nullptr) {
@@ -60,7 +60,7 @@ private:
     };
 
 public:
-    StringRef ref;
+    stringref_type ref;
 private:
     size_type capacity_;
     size_type size_;
@@ -71,27 +71,40 @@ public:
 
 public:
     BasicStringRefList(std::size_t capacity = kInitCapacity)
-        : ref(), capacity_(capacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+        : ref(), capacity_(capacity), size_(0), head_(nullptr), tail_(nullptr) {
+        initList();
+    }
     BasicStringRefList(const char_type * data)
-        : ref(data),  capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+        : ref(data),  capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        initList();
+    }
     BasicStringRefList(const char_type * data, size_type size)
-        : ref(data, size), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+        : ref(data, size), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        initList();
+    }
     template <size_type N>
-    BasicStringRefList(char_type (&src)[N])
-        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
-    BasicStringRefList(const std_string & src)
-        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
-    BasicStringRefList(const string_ref & src)
-        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) { initList(); }
+    BasicStringRefList(const char_type (&src)[N])
+        : ref(src, N - 1), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        initList();
+    }
+    BasicStringRefList(const string_type & src)
+        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        initList();
+    }
+    BasicStringRefList(const stringref_type & src)
+        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        initList();
+    }
 
     ~BasicStringRefList() {
-        freeEntryChunks();
+        destroyChunks();
     }
 
 private:
-    void append_item(std::size_t index, const char * key, std::size_t key_len,
-                     const char * value, std::size_t value_len) {
-        EntryPair & item = items[index];
+    void appendItem(std::size_t index,
+                    const char * key, std::size_t key_len,
+                    const char * value, std::size_t value_len) {
+        EntryPair & item = this->items[index];
         item.key.offset = static_cast<uint16_t>(key - ref.data());
         item.key.length = static_cast<uint16_t>(key_len);
         item.value.offset = static_cast<uint16_t>(value - ref.data());
@@ -109,12 +122,12 @@ public:
     bool is_empty() const { return (size() == 0); }
 
     void reset() {
-        ref.clear();
+        this->ref.clear();
         capacity_ = kInitCapacity;
         size_ = 0;
         head_ = nullptr;
         tail_ = nullptr;
-        freeEntryChunks();
+        destroyChunks();
     }
 
     void clear() {
@@ -122,20 +135,28 @@ public:
     }
 
     void setRef(const char_type * data) {
-        ref.assign(data);
+        this->ref.assign(data);
     }
 
     void setRef(const char_type * data, size_type size) {
-        ref.assign(data, size);
+        this->ref.assign(data, size);
     }
 
-    void setRef(const std_string & src) {
-        ref.assign(src);
+    void setRef(const char_type * first, const char_type * last) {
+        this->ref.assign(first, last);
     }
 
     template <size_type N>
-    void setRef(char_type (&src)[N]) {
-        ref.assign(src);
+    void setRef(const char_type (&src)[N]) {
+        this->ref.assign(src, N - 1);
+    }
+
+    void setRef(const string_type & src) {
+        this->ref.assign(src);
+    }
+
+    void setRef(const stringref_type & src) {
+        this->ref.assign(src);
     }
 
     void initList() {
@@ -144,7 +165,7 @@ public:
 #endif // !NDEBUG
     }
 
-    void freeEntryChunks() {
+    void destroyChunks() {
         EntryChunk * chunk = head_;
         while (chunk != nullptr) {
             EntryChunk * next = chunk->next;
@@ -172,7 +193,7 @@ public:
         assert(value != nullptr);
         if (likely(size_ < kInitCapacity)) {
             assert(size_ < capacity_);
-            append_item(size_, key, key_len, value, value_len);
+            appendItem(size_, key, key_len, value, value_len);
             size_++;
         }
         else {
@@ -194,10 +215,11 @@ public:
                 capacity_ += kChunkSize;
             }
             assert(size_ < capacity_);
-            // TODO: If the item count more than fixed kInitCapacity size,
-            // append to the last position of last chunk.
             //
-            append_item(size_, key, key_len, value, value_len);
+            // TODO: If the item count more than fixed kInitCapacity size,
+            //       append to the last position of last chunk.
+            //
+            appendItem(size_, key, key_len, value, value_len);
             size_++;
         }
     }
@@ -210,8 +232,8 @@ template <std::size_t InitCapacity>
 using StringRefListW = BasicStringRefList<wchar_t, InitCapacity>;
 
 template <std::size_t InitCapacity>
-using StringRefList  = StringRefListA<InitCapacity>;
+using StringRefList  = BasicStringRefList<char, InitCapacity>;
 
 } // namespace jimi
 
-#endif // !JIMI_HTTP_STRINGREFLIST_H
+#endif // JIMI_HTTP_STRINGREFLIST_H

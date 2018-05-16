@@ -121,4 +121,4 @@ public:
 } // namespace http
 } // namespace jimi
 
-#endif // !JIMI_HTTP_COMMON_H
+#endif // JIMI_HTTP_COMMON_H

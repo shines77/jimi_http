@@ -172,4 +172,4 @@ typedef BasicInputStream<char>      InputStream;
 
 } // namespace jimi
 
-#endif // !JIMI_HTTP_INPUTSTREAM_H
+#endif // JIMI_HTTP_INPUTSTREAM_H
