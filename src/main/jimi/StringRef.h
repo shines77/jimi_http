@@ -114,7 +114,7 @@ public:
     bool empty() const { return (this->length() == 0); }
 
     void reset() {
-        this->data_ = nullptr;
+        this->data_ = nullptr;=
         this->length_ = 0;
     }
 
@@ -190,7 +190,11 @@ private:
     value_type save_char_;
 
 public:
-    BasicStringRefHelper() : truncated_(false) { (void)save_char_; }
+    BasicStringRefHelper()
+        : truncated_(false),
+          save_char_(static_cast<value_type>('\0')) {
+        (void)save_char_;
+    }
     ~BasicStringRefHelper() { detach(); }
 
     bool attach(const stringref_type & str) {
