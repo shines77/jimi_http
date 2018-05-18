@@ -176,8 +176,8 @@ public:
         this->set_data(src.data(), src.length());
     }
 
-    std::string toString() const {
-        return std::string(this->data_, this->length_);
+    string_type toString() const {
+        return string_type(this->data_, this->length_);
     }
 };
 
@@ -188,8 +188,8 @@ public:
     typedef BasicStringRef<value_type> stringref_type;
 
 private:
-    bool truncated_;
     stringref_type str_;
+    bool truncated_;
     value_type save_char_;
 
 public:
@@ -244,9 +244,7 @@ typedef BasicStringRef<char>            StringRefA;
 typedef BasicStringRef<wchar_t>         StringRefW;
 typedef BasicStringRef<char>            StringRef;
 
-typedef BasicStringRefHelper<char>      StringRefHelperA;
-typedef BasicStringRefHelper<wchar_t>   StringRefHelperW;
-typedef BasicStringRefHelper<char>      StringRefHelper;
+=
 
 } // namespace jimi
 
