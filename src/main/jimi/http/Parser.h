@@ -52,7 +52,8 @@ public:
     // kInitContentSize minimize value is 256.
     static const std::size_t kMinContentSize = 256;
     // kInitContentSize = max(InitContentSize, 256);
-    static const std::size_t kInitContentSize = (InitContentSize > kMinContentSize) ? InitContentSize : kMinContentSize;
+    static const std::size_t kInitContentSize = (InitContentSize > kMinContentSize)
+                                                ? InitContentSize : kMinContentSize;
 
 private:
     int32_t status_code_;
