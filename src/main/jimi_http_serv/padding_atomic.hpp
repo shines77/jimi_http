@@ -175,6 +175,7 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
 {
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
+    typedef padding_atomic<T, CacheLineSize> this_type;
 
     typedef base_padding_data<atomic_type, CacheLineSize> base_type;
     static const std::size_t kCacheLineSize = base_type::kCacheLineSize;
@@ -194,30 +195,39 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
         return *this;
     }
 
-    value_type get() {
-        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
-        assert(pThisAtomic != nullptr);
-        value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
-        return thisValue;
+    value_type & get() {
+        return *(static_cast<value_type *>(&static_cast<value_type>(*(const_cast<this_type *>(this)))));
     }
 
-    const value_type get() const {
-        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
-        assert(pThisAtomic != nullptr);
-        value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
-        return *(const_cast<const value_type *>(&thisValue));
+    const value_type & get() const {
+        return *(const_cast<const value_type *>(static_cast<value_type *>(&static_cast<value_type>(
+                *(const_cast<this_type *>(this))))));
     }
 
     atomic_type & getAtomic() {
-        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<this_type *>(this));
         assert(pThisAtomic != nullptr);
         return *pThisAtomic;
     }
 
     const atomic_type & getAtomic() const {
-        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<this_type *>(this));
         assert(pThisAtomic != nullptr);
         return *(const_cast<const atomic_type *>(pThisAtomic));
+    }
+
+    value_type getValue() {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<this_type *>(this));
+        assert(pThisAtomic != nullptr);
+        value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
+        return thisValue;
+    }
+
+    const value_type getValue() const {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<this_type *>(this));
+        assert(pThisAtomic != nullptr);
+        value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
+        return *(const_cast<const value_type *>(&thisValue));
     }
 };
 
@@ -246,14 +256,12 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
         return *this;
     }
 
-    value_type get() {
-        value_type atomicValue = atomic.load(std::memory_order_acq_rel);
-        return atomicValue;
+    value_type & get() {
+        return static_cast<value_type>(*(static_cast<atomic_type *>(&atomic)));
     }
 
-    const value_type get() const {
-        value_type atomicValue = atomic.load(std::memory_order_acq_rel);
-        return *(const_cast<const value_type *>(&atomicValue));
+    const value_type & get() const {
+        return const_cast<const value_type>(static_cast<value_type>(*(static_cast<atomic_type *>(&atomic))));
     }
 
     atomic_type & getAtomic() {
@@ -262,6 +270,16 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
 
     const atomic_type & getAtomic() const {
         return *(const_cast<const atomic_type *>(&atomic));
+    }
+
+    value_type getValue() {
+        value_type atomicValue = atomic.load(std::memory_order_acq_rel);
+        return atomicValue;
+    }
+
+    const value_type getValue() const {
+        value_type atomicValue = atomic.load(std::memory_order_acq_rel);
+        return *(const_cast<const value_type *>(&atomicValue));
     }
 };
 
