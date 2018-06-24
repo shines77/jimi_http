@@ -66,7 +66,7 @@ public:
         return 0;
     }
 
-    int parse_from_list(const std::string & info_list) {
+    int parse_list(const std::string & info_list) {
         from_string(info_list);
         return 0;
     }
@@ -78,9 +78,9 @@ static rpc::endpoint get_tcp_endpoint(const std::string & endpoint_info) {
     return endpoint;
 }
 
-static rpc::endpoint_list get_tcp_endpoints(const std::string & endpoints_info) {
+static rpc::endpoint_list get_tcp_endpoints(const std::string & endpoint_list) {
     rpc::endpoint_list endpoints;
-    endpoints.parse_from_list(endpoints_info);
+    endpoints.parse_list(endpoint_list);
     return endpoints;
 }
 
@@ -171,28 +171,28 @@ struct message {
 class config
 {
 protected:
-    rpc::endpoint_list endpoint_;
-    rpc::endpoint_list remote_endpoints_;
+    rpc::endpoint_list host_;
+    rpc::endpoint_list remote_;
 
 public:
     config() {}
     ~config() {}
 
     void set_endpoint(const std::string & endpoint) {
-        endpoint_.from_string(endpoint);
+        host_.from_string(endpoint);
     }    
 
     void set_endpoint(const rpc::endpoint & endpoint) {
-        endpoint_.add(endpoint);
+        host_.add(endpoint);
     }
 
     void set_remote_endpoint(const rpc::endpoint & endpoint) {
-        remote_endpoints_.clear();
-        remote_endpoints_.add(endpoint);
+        remote_.clear();
+        remote_.add(endpoint);
     }
 
-    void set_remote_endpoints(const rpc::endpoint_list & endpoints) {
-        remote_endpoints_ = endpoints;
+    void set_remote_endpoints(const rpc::endpoint_list & endpoint_list) {
+        remote_ = endpoint_list;
     }
 };
 
