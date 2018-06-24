@@ -119,7 +119,7 @@ void run_padding_atomic_test()
     counter_foo = foo;
     counter_foo.store(foo);
 
-    jimi::padding_atomic<Foo>::value_type & foo_val = counter_foo.get();
+    jimi::padding_atomic<Foo>::value_type foo_val = counter_foo.get();
     foo_val.i = 10;
     foo_val.buf[0] = 'A';
     foo_val.buf[1] = 'B';
@@ -148,9 +148,7 @@ void run_padding_atomic_test()
     wrapper_foo = foo;
     wrapper_foo.atomic.store(foo);
 
-    jimi::padding_atomic_wrapper<Foo>::value_type & foo_atomic = wrapper_foo.get();
-    std::atomic<Foo> & a = wrapper_foo.getAtomic();
-    a.load(std::memory_order_relaxed);
+    jimi::padding_atomic_wrapper<Foo>::value_type foo_atomic = wrapper_foo.get();
     foo_atomic.i = 20;
     foo_atomic.buf[0] = 'a';
     foo_atomic.buf[1] = 'b';

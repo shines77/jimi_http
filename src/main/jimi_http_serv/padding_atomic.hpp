@@ -195,13 +195,13 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
         return *this;
     }
 
-    value_type & get() {
-        return *(static_cast<value_type *>(&static_cast<value_type>(*(const_cast<this_type *>(this)))));
+    value_type get() {
+        return static_cast<value_type>(*(const_cast<this_type *>(this)));
     }
 
-    const value_type & get() const {
-        return *(const_cast<const value_type *>(static_cast<value_type *>(&static_cast<value_type>(
-                *(const_cast<this_type *>(this))))));
+    const value_type get() const {
+        return *(const_cast<const value_type *>(&static_cast<value_type>(
+                *(const_cast<this_type *>(this)))));
     }
 
     atomic_type & getAtomic() {
@@ -256,12 +256,12 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
         return *this;
     }
 
-    value_type & get() {
-        return static_cast<value_type>(*(static_cast<atomic_type *>(&atomic)));
+    value_type get() {
+        return static_cast<value_type>(*(const_cast<atomic_type *>(&atomic)));
     }
 
-    const value_type & get() const {
-        return const_cast<const value_type>(static_cast<value_type>(*(static_cast<atomic_type *>(&atomic))));
+    const value_type get() const {
+        return *(const_cast<const value_type *>(&static_cast<value_type>(*(const_cast<atomic_type *>(&atomic)))));
     }
 
     atomic_type & getAtomic() {
