@@ -127,8 +127,8 @@ void run_padding_atomic_test()
     foo_val.buf[3] = '\0';
     printf("jimi::padding_atomic<Foo> = 0x%p\n", &counter_foo);
     printf("& Foo = 0x%p\n", &foo_val);
-    printf("& Foo.i = 0x%p\n", &foo_val.i);
-    printf("& Foo.buf = 0x%p\n", &foo_val.buf[0]);
+    printf("& Foo.i = 0x%p, Foo.i = %d\n", &foo_val.i, foo_val.i);
+    printf("& Foo.buf = 0x%p, Foo.buf[0] = '%c'\n", &foo_val.buf[0], foo_val.buf[0]);
     printf("\n");
 
     jimi::padding_atomic_wrapper<int> counter_wrapper(8);
@@ -156,8 +156,8 @@ void run_padding_atomic_test()
     foo_atomic.buf[3] = '\0';
     printf("jimi::padding_atomic_wrapper<Foo> = 0x%p\n", &wrapper_foo);
     printf("& Foo = 0x%p\n", &foo_atomic);
-    printf("& Foo.i = 0x%p\n", &foo_atomic.i);
-    printf("& Foo.buf = 0x%p\n", &foo_atomic.buf[0]);
+    printf("& Foo.i = 0x%p, Foo.i = %d\n", &foo_atomic.i, foo_atomic.i);
+    printf("& Foo.buf = 0x%p, Foo.buf[0] = '%c'\n", &foo_atomic.buf[0], foo_atomic.buf[0]);
     printf("\n");
 
     printf("\n");
