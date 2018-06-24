@@ -18,7 +18,7 @@
     <ClInclude Include="..\..\..\src\main\jimi_http_serv\utils.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\main\jimi_http_serv\atomic_padding.hpp">
+    <ClInclude Include="..\..\..\src\main\jimi_http_serv\padding_atomic.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

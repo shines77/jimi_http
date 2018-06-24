@@ -109,12 +109,12 @@ struct padding_data_impl<T, CacheLineSize, false> : public base_padding_data_dec
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // T aligned to cacheline size
-    alignas(CacheLineSize) value_type data;
+    alignas(CacheLineSize) value_type atomic;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    padding_data_impl(value_type value) : data(value) {}
+    padding_data_impl(value_type value) : atomic(value) {}
     ~padding_data_impl() {}
 };
 
@@ -134,12 +134,12 @@ struct alignas(CacheLineSize) volatile_padding_data_impl : public base_padding_d
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // (volatile T) aligned to cacheline size
-    alignas(CacheLineSize) volatile value_type data;
+    alignas(CacheLineSize) volatile value_type atomic;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    volatile_padding_data_impl(value_type const & value) : data(value) {}
+    volatile_padding_data_impl(value_type const & value) : atomic(value) {}
     ~volatile_padding_data_impl() {}
 };
 
@@ -154,12 +154,12 @@ struct volatile_padding_data_impl<T, CacheLineSize, false> : public base_padding
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // (volatile T) aligned to cacheline size
-    alignas(CacheLineSize) volatile value_type data;
+    alignas(CacheLineSize) volatile value_type atomic;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    volatile_padding_data_impl(value_type value) : data(value) {}
+    volatile_padding_data_impl(value_type value) : atomic(value) {}
     ~volatile_padding_data_impl() {}
 };
 
@@ -170,7 +170,7 @@ struct volatile_padding_data : public volatile_padding_data_impl<T, CacheLineSiz
 ////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename T, std::size_t CacheLineSize = CACHE_LINE_SIZE>
-struct alignas(CacheLineSize) atomic_padding : public std::atomic<typename std::decay<T>::type>,
+struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::decay<T>::type>,
                                                public base_padding_data_decay<T, CacheLineSize>
 {
     typedef typename std::decay<T>::type value_type;
@@ -184,32 +184,45 @@ struct alignas(CacheLineSize) atomic_padding : public std::atomic<typename std::
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    atomic_padding(value_type const & value) : std::atomic<value_type>(value) {}
-    ~atomic_padding() {}
+    padding_atomic(value_type const & value) : std::atomic<value_type>(value) {}
+    ~padding_atomic() {}
 
-    atomic_padding & operator = (value_type const & that) {
+    padding_atomic & operator = (value_type const & that) {
         atomic_type * pThisAtomic =  static_cast<atomic_type *>(this);
         if ((void *)&that != (void *)pThisAtomic)
             *pThisAtomic = that;
         return *this;
     }
 
-    value_type & get() const {
-        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<atomic_padding *>(this));
-        value_type * pThisValue = static_cast<value_type *>(&(pThisAtomic->_My_val));
-        assert(pThisValue != nullptr);
-        return *pThisValue;
+    value_type & get() {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
+        assert(pThisAtomic != nullptr);
+        value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
+        return thisValue;
     }
 
-    atomic_type & getAtomic() const {
-        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<atomic_padding *>(this));
+    const value_type & get() const {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
+        assert(pThisAtomic != nullptr);
+        value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
+        return *(const_cast<const value_type *>(&thisValue));
+    }
+
+    atomic_type & getAtomic() {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
         assert(pThisAtomic != nullptr);
         return *pThisAtomic;
+    }
+
+    const atomic_type & getAtomic() const {
+        atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
+        assert(pThisAtomic != nullptr);
+        return *(const_cast<const atomic_type *>(pThisAtomic));
     }
 };
 
 template <typename T, std::size_t CacheLineSize = CACHE_LINE_SIZE>
-struct atomic_padding_wrapper : public base_padding_data_decay<T, CacheLineSize>
+struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
 {
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
@@ -220,27 +233,35 @@ struct atomic_padding_wrapper : public base_padding_data_decay<T, CacheLineSize>
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // std::atomic<T> aligned to cacheline size
-    alignas(CacheLineSize) atomic_type data;
+    alignas(CacheLineSize) atomic_type atomic;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    atomic_padding_wrapper(value_type value) : data(value) {}
-    ~atomic_padding_wrapper() {}
+    padding_atomic_wrapper(value_type const & value) : atomic(value) {}
+    ~padding_atomic_wrapper() {}
 
-    atomic_padding_wrapper & operator = (value_type value) {
-        data = value;
+    padding_atomic_wrapper & operator = (value_type const & value) {
+        atomic = value;
         return *this;
     }
 
-    value_type & get() const {
-        value_type * pAtomicValue = const_cast<value_type *>(&(data._My_val));
-        assert(pAtomicValue != nullptr);
-        return *pAtomicValue;
+    value_type & get() {
+        value_type atomicValue = atomic.load(std::memory_order_acq_rel);
+        return atomicValue;
     }
 
-    atomic_type & getAtomic() const {
-        return *(const_cast<atomic_type *>(&data));
+    const value_type & get() const {
+        value_type atomicValue = atomic.load(std::memory_order_acq_rel);
+        return *(const_cast<const value_type *>(&atomicValue));
+    }
+
+    atomic_type & getAtomic() {
+        return *(const_cast<atomic_type *>(&atomic));
+    }
+
+    const atomic_type & getAtomic() const {
+        return *(const_cast<const atomic_type *>(&atomic));
     }
 };
 
