@@ -109,12 +109,12 @@ struct padding_data_impl<T, CacheLineSize, false> : public base_padding_data_dec
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // T aligned to cacheline size
-    alignas(CacheLineSize) value_type atomic;
+    alignas(CacheLineSize) value_type value;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    padding_data_impl(value_type value) : atomic(value) {}
+    padding_data_impl(value_type _value) : value(_value) {}
     ~padding_data_impl() {}
 };
 
@@ -176,11 +176,13 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
     typedef padding_atomic<T, CacheLineSize> this_type;
-
     typedef base_padding_data<atomic_type, CacheLineSize> base_type;
+
     static const std::size_t kCacheLineSize = base_type::kCacheLineSize;
-    static const std::size_t kSizeOfData = base_type::kSizeOfData;
-    static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
+    static const std::size_t kSizeOfData = sizeof(atomic_type);
+    static const std::size_t kPaddingBytes =
+        (kSizeOfData <= kCacheLineSize) ? (kCacheLineSize - kSizeOfData)
+        : (((kSizeOfData - 1) / kCacheLineSize + 1) * kCacheLineSize - kSizeOfData);
 
     // Cacheline padding
     char padding[kPaddingBytes];
@@ -246,11 +248,13 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
     typedef padding_atomic_wrapper<T, CacheLineSize> this_type;
-
     typedef base_padding_data<atomic_type, CacheLineSize> base_type;
+
     static const std::size_t kCacheLineSize = base_type::kCacheLineSize;
-    static const std::size_t kSizeOfData = base_type::kSizeOfData;
-    static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
+    static const std::size_t kSizeOfData = sizeof(atomic_type);
+    static const std::size_t kPaddingBytes =
+        (kSizeOfData <= kCacheLineSize) ? (kCacheLineSize - kSizeOfData)
+        : (((kSizeOfData - 1) / kCacheLineSize + 1) * kCacheLineSize - kSizeOfData);
 
     // std::atomic<T> aligned to cacheline size
     alignas(CacheLineSize) atomic_type atomic;
