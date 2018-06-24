@@ -4,6 +4,28 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 project(jimi_http_parser)
 
+# Single thread mode /ML and /MLd have be deprecated from VS 2003.
+option(BoostOption_USE_MULTITHREADED "Enable Boost's library use multithread" ON)
+
+if (WIN32)
+    option(BoostOption_USE_STATIC_LIBS "Enable Boost use static library" ON)
+    option(BoostOption_USE_STATIC_RUNTIME "Enable Boost use static runtime library" OFF)
+else()
+    option(BoostOption_USE_STATIC_LIBS "Enable Boost use static library" OFF)
+    option(BoostOption_USE_STATIC_RUNTIME "Enable Boost use static runtime library" OFF)
+endif()
+
+set(Boost_USE_STATIC_LIBS        BoostOption_USE_STATIC_LIBS)      # only find static libs
+set(Boost_USE_MULTITHREADED      BoostOption_USE_MULTITHREADED)
+set(Boost_USE_STATIC_RUNTIME     BoostOption_USE_STATIC_RUNTIME)
+
+find_package(Boost 1.55 COMPONENTS coroutine context system thread chrono program_options REQUIRED)
+
+if (Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    set(EXTRA_LIBS ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
