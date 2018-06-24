@@ -134,12 +134,12 @@ struct alignas(CacheLineSize) volatile_padding_data_impl : public base_padding_d
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // (volatile T) aligned to cacheline size
-    alignas(CacheLineSize) volatile value_type atomic;
+    alignas(CacheLineSize) volatile value_type value;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    volatile_padding_data_impl(value_type const & value) : atomic(value) {}
+    volatile_padding_data_impl(value_type const & _value) : value(_value) {}
     ~volatile_padding_data_impl() {}
 };
 
@@ -154,12 +154,12 @@ struct volatile_padding_data_impl<T, CacheLineSize, false> : public base_padding
     static const std::size_t kPaddingBytes = base_type::kPaddingBytes;
 
     // (volatile T) aligned to cacheline size
-    alignas(CacheLineSize) volatile value_type atomic;
+    alignas(CacheLineSize) volatile value_type value;
 
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    volatile_padding_data_impl(value_type value) : atomic(value) {}
+    volatile_padding_data_impl(value_type _value) : value(_value) {}
     ~volatile_padding_data_impl() {}
 };
 
@@ -185,7 +185,7 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
     // Cacheline padding
     char padding[kPaddingBytes];
 
-    padding_atomic(value_type const & value) : std::atomic<value_type>(value) {}
+    padding_atomic(value_type const & value) : atomic_type(value) {}
     ~padding_atomic() {}
 
     padding_atomic & operator = (value_type const & that) {
@@ -195,13 +195,13 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
         return *this;
     }
 
-    value_type get() {
-        return static_cast<value_type>(*(const_cast<this_type *>(this)));
+    value_type & get() {
+        return *(reinterpret_cast<value_type *>(const_cast<this_type *>(this)));
     }
 
-    const value_type get() const {
-        return *(const_cast<const value_type *>(&static_cast<value_type>(
-                *(const_cast<this_type *>(this)))));
+    const value_type & get() const {
+        return *(const_cast<const value_type *>(&reinterpret_cast<value_type *>(
+                const_cast<this_type *>(this))));
     }
 
     atomic_type & getAtomic() {
@@ -214,6 +214,15 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
         atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<this_type *>(this));
         assert(pThisAtomic != nullptr);
         return *(const_cast<const atomic_type *>(pThisAtomic));
+    }
+
+    value_type getVal() {
+        return static_cast<value_type>(*(const_cast<this_type *>(this)));
+    }
+
+    const value_type getVal() const {
+        return *(const_cast<const value_type *>(&static_cast<value_type>(
+                *(const_cast<this_type *>(this)))));
     }
 
     value_type getValue() {
@@ -236,6 +245,7 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
 {
     typedef typename std::decay<T>::type value_type;
     typedef std::atomic<value_type> atomic_type;
+    typedef padding_atomic_wrapper<T, CacheLineSize> this_type;
 
     typedef base_padding_data<atomic_type, CacheLineSize> base_type;
     static const std::size_t kCacheLineSize = base_type::kCacheLineSize;
@@ -256,12 +266,12 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
         return *this;
     }
 
-    value_type get() {
-        return static_cast<value_type>(*(const_cast<atomic_type *>(&atomic)));
+    value_type & get() {
+        return *(reinterpret_cast<value_type *>(const_cast<atomic_type *>(&atomic)));
     }
 
-    const value_type get() const {
-        return *(const_cast<const value_type *>(&static_cast<value_type>(*(const_cast<atomic_type *>(&atomic)))));
+    const value_type & get() const {
+        return *(const_cast<const value_type *>(reinterpret_cast<value_type *>(const_cast<atomic_type *>(&atomic))));
     }
 
     atomic_type & getAtomic() {
@@ -270,6 +280,14 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
 
     const atomic_type & getAtomic() const {
         return *(const_cast<const atomic_type *>(&atomic));
+    }
+
+    value_type getVal() {
+        return static_cast<value_type>(*(const_cast<atomic_type *>(&atomic)));
+    }
+
+    const value_type getVal() const {
+        return *(const_cast<const value_type *>(&static_cast<value_type>(*(const_cast<atomic_type *>(&atomic)))));
     }
 
     value_type getValue() {
