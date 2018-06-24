@@ -194,14 +194,14 @@ struct alignas(CacheLineSize) padding_atomic : public std::atomic<typename std::
         return *this;
     }
 
-    value_type & get() {
+    value_type get() {
         atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
         assert(pThisAtomic != nullptr);
         value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
         return thisValue;
     }
 
-    const value_type & get() const {
+    const value_type get() const {
         atomic_type * pThisAtomic = static_cast<atomic_type *>(const_cast<padding_atomic *>(this));
         assert(pThisAtomic != nullptr);
         value_type thisValue = pThisAtomic->load(std::memory_order_acq_rel);
@@ -246,12 +246,12 @@ struct padding_atomic_wrapper : public base_padding_data_decay<T, CacheLineSize>
         return *this;
     }
 
-    value_type & get() {
+    value_type get() {
         value_type atomicValue = atomic.load(std::memory_order_acq_rel);
         return atomicValue;
     }
 
-    const value_type & get() const {
+    const value_type get() const {
         value_type atomicValue = atomic.load(std::memory_order_acq_rel);
         return *(const_cast<const value_type *>(&atomicValue));
     }

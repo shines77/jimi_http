@@ -55,7 +55,7 @@ struct Foo
 
 int foo_test(int i, Foo & foo)
 {
-    printf("foo_test(), i = %d, foo & = 0x%0p\n", i, &foo);
+    printf("foo_test(), i = %d, foo & = 0x%p\n", i, &foo);
     return 0;
 }
 
@@ -104,7 +104,7 @@ void run_padding_atomic_test()
     std::atomic<Foo> atomic_foo;
     printf("sizeof(Foo) = %u\n", (uint32_t)sizeof(Foo));
     printf("sizeof(std::atomic<Foo>) = %u\n", (uint32_t)sizeof(std::atomic<Foo>));
-    printf("std::atomic<Foo> atomic_foo(foo) = 0x%0p\n", &atomic_foo.load(std::memory_order_relaxed));
+    printf("std::atomic<Foo> atomic_foo(foo) = 0x%p\n", &atomic_foo);
     atomic_foo = foo;
     printf("\n");
 
@@ -113,7 +113,7 @@ void run_padding_atomic_test()
     printf("jimi::padding_atomic<Foo>::kSizeOfData = %u\n", (uint32_t)jimi::padding_atomic<Foo>::kSizeOfData);
     printf("jimi::padding_atomic<Foo>::kPaddingBytes = %u\n", (uint32_t)jimi::padding_atomic<Foo>::kPaddingBytes);
     printf("sizeof(jimi::padding_atomic<Foo>) = %u\n", (uint32_t)sizeof(jimi::padding_atomic<Foo>));
-    printf("jimi::padding_atomic<Foo> counter_foo(foo) = 0x%0p\n", &counter_foo.load(std::memory_order_relaxed));
+    printf("jimi::padding_atomic<Foo> counter_foo(foo) = 0x%p\n", &counter_foo);
     printf("\n");
 
     counter_foo = foo;
@@ -125,10 +125,10 @@ void run_padding_atomic_test()
     foo_val.buf[1] = 'B';
     foo_val.buf[2] = 'C';
     foo_val.buf[3] = '\0';
-    printf("jimi::padding_atomic<Foo> = 0x%0p\n", &counter_foo);
-    printf("& Foo = 0x%0p\n", &foo_val);
-    printf("& Foo.i = 0x%0p\n", &foo_val.i);
-    printf("& Foo.buf = 0x%0p\n", &foo_val.buf[0]);
+    printf("jimi::padding_atomic<Foo> = 0x%p\n", &counter_foo);
+    printf("& Foo = 0x%p\n", &foo_val);
+    printf("& Foo.i = 0x%p\n", &foo_val.i);
+    printf("& Foo.buf = 0x%p\n", &foo_val.buf[0]);
     printf("\n");
 
     jimi::padding_atomic_wrapper<int> counter_wrapper(8);
@@ -142,7 +142,7 @@ void run_padding_atomic_test()
     printf("jimi::padding_atomic_wrapper<Foo>::kSizeOfData = %u\n", (uint32_t)jimi::padding_atomic_wrapper<Foo>::kSizeOfData);
     printf("jimi::padding_atomic_wrapper<Foo>::kPaddingBytes = %u\n", (uint32_t)jimi::padding_atomic_wrapper<Foo>::kPaddingBytes);
     printf("sizeof(jimi::padding_atomic_wrapper<Foo>) = %u\n", (uint32_t)sizeof(jimi::padding_atomic_wrapper<Foo>));
-    printf("jimi::padding_atomic_wrapper<Foo> wrapper_foo(foo) = 0x%0p\n", &wrapper_foo.atomic.load(std::memory_order_relaxed));
+    printf("jimi::padding_atomic_wrapper<Foo> wrapper_foo(foo) = 0x%p\n", &wrapper_foo);
     printf("\n");
 
     wrapper_foo = foo;
@@ -156,10 +156,10 @@ void run_padding_atomic_test()
     foo_atomic.buf[1] = 'b';
     foo_atomic.buf[2] = 'c';
     foo_atomic.buf[3] = '\0';
-    printf("jimi::padding_atomic_wrapper<Foo> = 0x%0p\n", &wrapper_foo);
-    printf("& Foo = 0x%0p\n", &foo_atomic);
-    printf("& Foo.i = 0x%0p\n", &foo_atomic.i);
-    printf("& Foo.buf = 0x%0p\n", &foo_atomic.buf[0]);
+    printf("jimi::padding_atomic_wrapper<Foo> = 0x%p\n", &wrapper_foo);
+    printf("& Foo = 0x%p\n", &foo_atomic);
+    printf("& Foo.i = 0x%p\n", &foo_atomic.i);
+    printf("& Foo.buf = 0x%p\n", &foo_atomic.buf[0]);
     printf("\n");
 
     printf("\n");
