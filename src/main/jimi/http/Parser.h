@@ -654,6 +654,9 @@ scan_restart:
                 content_size_ = len;
                 content = content_;
             }
+            else {
+                content = nullptr;
+            }
         }
         return content;
     }
