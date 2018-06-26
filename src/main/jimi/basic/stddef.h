@@ -6,6 +6,8 @@
 #pragma once
 #endif
 
+#include <stddef.h>
+
 ////////////////////////////////////////////////////////////////////////////////
 
 //
@@ -46,6 +48,12 @@
 #ifndef __is_identifier                 // Optional of course.
   // It evaluates to 1 if the argument x is just a regular identifier and not a reserved keyword.
   #define __is_identifier(x)    1       // Compatibility with non-clang compilers.
+#endif
+
+#if defined(_MSC_VER)
+#ifndef __attribute__
+  #define __attribute__(x)
+#endif
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,6 +100,9 @@
 // C++ compiler macro define
 // See: http://www.cnblogs.com/zyl910/archive/2012/08/02/printmacro.html
 //
+// LLVM Branch Weight Metadata
+// See: http://llvm.org/docs/BranchWeightMetadata.html
+//
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -128,6 +139,63 @@
 #define ALIGNED_SUFFIX(n)       __attribute__((aligned(n)))
 #endif
 #endif // ALIGNED(n)
+
+// Declare for inline, forceinline, noinline
+
+#if defined(_MSC_VER) || defined(__ICL) || defined(__INTEL_COMPILER)
+
+#define JM_DECLARE(type)                type
+#define JM_DECLARE_DATA(type)           type
+
+#ifdef __cplusplus
+#define JM_INLINE_DECLARE(type)         inline type
+#else
+#define JM_INLINE_DECLARE(type)         __inline type
+#endif // __cplusplus
+
+#define JM_FORCEINLINE_DECLARE(type)    __forceinline type
+#define JM_NOINLINE_DECLARE(type)       __declspec(noinline) type
+
+#define JM_RESTRICT(type)               __restrict type
+
+#elif defined(__GNUC__) || defined(__clang__) || defined(__linux__)
+
+#define JM_DECLARE(type)                type
+#define JM_DECLARE_DATA(type)           type
+
+#ifdef __cplusplus
+#define JM_INLINE_DECLARE(type)         inline type
+#else
+#define JM_INLINE_DECLARE(type)         __inline__ type
+#endif // __cplusplus
+
+#define JM_FORCEINLINE_DECLARE(type)    type __attribute__((__always_inline__))
+#define JM_NOINLINE_DECLARE(type)       type __attribute__ ((noinline))
+
+#define JM_RESTRICT(type)               __restrict type
+
+#else
+
+#define JM_DECLARE(type)                type
+#define JM_DECLARE_DATA(type)           type
+
+#define JM_INLINE_DECLARE(type)         inline type
+
+#define JM_FORCEINLINE_DECLARE(type)    inline type
+#define JM_NOINLINE_DECLARE(type)       type
+
+#define JM_RESTRICT(type)               __restrict type
+
+#endif // JM_INLINE
+
+
+#ifndef __JM_CDECL
+#if defined(_MSC_VER) || defined(__ICL) || defined(__INTEL_COMPILER)
+#define __JM_CDECL      __cdecl
+#else
+#define __JM_CDECL      __attribute__((__cdecl__))
+#endif
+#endif // __JM_CDECL
 
 ////////////////////////////////////////////////////////////////////////////////
 

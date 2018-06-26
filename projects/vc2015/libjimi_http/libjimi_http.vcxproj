@@ -19,7 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\inttypes.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\inttypes.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\stdbool.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\stdint.h" />
     <ClInclude Include="..\..\..\src\main\jimi\basic\stddef.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\basic\stdint.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\basic\stdsize.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpCommon.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpParser.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpRequest.h" />

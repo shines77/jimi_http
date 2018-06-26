@@ -194,26 +194,26 @@ public:
     }
 }; // class BasicStringRef<CharTy>
 
-template <typename CharType>
-class BasicStringRefHelper {
+template <typename StringTy, typename CharTy>
+class BasicStringHelper {
 public:
-    typedef CharType value_type;
-    typedef BasicStringRef<value_type> stringref_type;
+    typedef StringTy string_type;
+    typedef CharTy value_type;
 
 private:
-    stringref_type str_;
+    string_type str_;
     bool truncated_;
     value_type save_char_;
 
 public:
-    BasicStringRefHelper()
+    BasicStringHelper()
         : truncated_(false),
           save_char_(static_cast<value_type>('\0')) {
         (void)save_char_;
     }
-    ~BasicStringRefHelper() { detach(); }
+    ~BasicStringHelper() { detach(); }
 
-    bool attach(const stringref_type & str) {
+    bool attach(const string_type & str) {
         // If the string reference don't recover the truncated char,
         // don't accept the new attach.
         if (likely(!truncated_)) {
@@ -253,13 +253,14 @@ public:
     }
 };
 
-typedef BasicStringRef<char>    StringRefA;
-typedef BasicStringRef<wchar_t> StringRefW;
 typedef BasicStringRef<char>    StringRef;
+typedef BasicStringRef<wchar_t> StringRefW;
 
-typedef BasicStringRefHelper<char>      StringRefHelperA;
-typedef BasicStringRefHelper<wchar_t>   StringRefHelperW;
-typedef BasicStringRefHelper<char>      StringRefHelper;
+typedef BasicStringHelper<std::string, char>        StringHelper;
+typedef BasicStringHelper<std::wstring, wchar_t>    StringHelperW;
+
+typedef BasicStringHelper<StringRef, char>          StringRefHelper;
+typedef BasicStringHelper<StringRefW, wchar_t>      StringRefHelperW;
 
 } // namespace jimi
 

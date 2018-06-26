@@ -11,6 +11,9 @@
     <Filter Include="src\basic">
       <UniqueIdentifier>{193d882a-c04a-4e17-a309-972eae1517df}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\basic\msvc">
+      <UniqueIdentifier>{6ad4be16-3a55-430e-8ad2-d075f36f6fbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\main\jimi\http\Common.h">
@@ -51,6 +54,24 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\main\jimi\basic\stddef.h">
       <Filter>src\basic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\inttypes.h">
+      <Filter>src\basic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\stdint.h">
+      <Filter>src\basic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\stdsize.h">
+      <Filter>src\basic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\inttypes.h">
+      <Filter>src\basic\msvc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\stdbool.h">
+      <Filter>src\basic\msvc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\stdint.h">
+      <Filter>src\basic\msvc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
