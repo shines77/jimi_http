@@ -79,7 +79,7 @@ public:
     }
 
     ~BasicParser() {
-        if (unlikely(content_)) {
+        if (likely(content_ != nullptr)) {
             delete[] content_;
             content_ = nullptr;
         }
@@ -153,39 +153,51 @@ public:
 #if 1
     void skipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() == ' ')) {
-            is.next();
+        while (likely(is.hasNext())) {
+            if (likely(is.get() == ' '))
+                is.next();
+            else
+                break;
         }
     }
 #else
     void skipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() == ' ' || is.get() == '\t')) {
-            is.next();
+        while (likely(is.hasNext())) {
+            if (likely(is.get() == ' ' || is.get() == '\t'))
+                is.next();
+            else
+                break;
         }
     }
 #endif
 
     bool skipCrLf(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext()) {
-            if (is.get() == '\r' || is.get() == '\n')
+        while (likely(is.hasNext())) {
+            if (likely(is.get() == '\r') {
                 is.next();
-            else
+                if (likely(is.get() == '\n')))
+                    is.next();
+                else
+                    break;
+            }
+            else {
                 break;
+            }
         }
         return is.hasNext();
     }
 
     void nextAndSkipCrLf(InputStream & is) {
-        if (is.remain() > 2) {
+        if (likely(is.remain() > 2)) {
             moveTo(is, 2);
         }
     }
 
     bool skipCrLfAndWhiteSpaces(InputStream & is) {
-        while (is.hasNext()) {
-            if (is.get() == '\r' || is.get() == ' ' || is.get() == '\n' || is.get() == '\t')
+        while (likely(is.hasNext())) {
+            if (likely(is.get() == '\r' || is.get() == ' ' || is.get() == '\n' || is.get() == '\t'))
                 is.next();
             else
                 break;
@@ -196,8 +208,11 @@ public:
     template <char delimiter>
     bool findToken(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && !is.isNullChar())) {
-            is.next();
+        while (likely(is.hasNext())) {
+            if (likely(is.get() != delimiter && is.get() != ' ' && !is.isNullChar()))
+                is.next();
+            else
+                break;
         }
         return is.hasNext();
     }
@@ -207,9 +222,14 @@ public:
         static const hash_type kSeedTime31 = 31U;
         hash = 0;
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != delimiter && is.get() != ' ' && !is.isNullChar())) {
-            hash += static_cast<hash_type>(is.get()) * kSeedTime31;
-            is.next();
+        while (likely(is.hasNext())) {
+            if (likely(is.get() != delimiter && is.get() != ' ' && !is.isNullChar())) {
+                hash += static_cast<hash_type>(is.get()) * kSeedTime31;
+                is.next();
+            }
+            else {
+                break;
+            }
         }
         return is.hasNext();
     }
@@ -217,11 +237,26 @@ public:
     bool findCrLfToken(InputStream & is) {
         assert(is.current() != nullptr);
         while (likely(is.hasNext())) {
-            if (unlikely(is.get() == '\r')) {
-                if (likely(is.peek(1) == '\n') && likely(is.hasNext(1)))
-                    return true;
+            if (likely(is.get() != '\r')) {
+                if (likely(!is.isNullChar()))
+                    is.next();
+                else
+                    break;
             }
-            if (likely(!is.isNullChar()))
+            else {
+                if (likely((is.peek(1) == '\n') && is.hasNext(1)))
+                    return true;
+                else
+                    is.next();
+            }
+        }
+        return is.hasNext();
+    }
+
+    bool findFieldName(InputStream & is) {
+        assert(is.current() != nullptr);
+        while (likely(is.hasNext())) {
+            if (likely(is.get() != ':' && is.get() != ' ' && !is.isNullChar()))
                 is.next();
             else
                 break;
@@ -229,18 +264,13 @@ public:
         return is.hasNext();
     }
 
-    bool findFieldName(InputStream & is) {
-        assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != ':' && is.get() != ' ' && !is.isNullChar())) {
-            is.next();
-        }
-        return is.hasNext();
-    }
-
     bool findFieldValue(InputStream & is) {
         assert(is.current() != nullptr);
-        while (is.hasNext() && (is.get() != '\r' && !is.isNullChar())) {
-            is.next();
+        while (likely(is.hasNext())) {
+            if (likely(is.get() != '\r' && !is.isNullChar()))
+                is.next();
+            else
+                break;
         }
         return is.hasNext();
     }
@@ -260,7 +290,7 @@ public:
                     return false;
                 }
                 else {
-                    if (likely(is.peek(1) == '\n') && likely(is.peek(3) == '\n')) {
+                    if (likely((is.peek(1) == '\n') && (is.peek(3) == '\n'))) {
                         is.moveTo(4);       // "\r\n\r\n", It's the end of the http header.
                         is_end = true;
                         return true;
@@ -274,7 +304,7 @@ public:
             //if (unlikely(!is.hasNext()))
             //    return false;
             if (likely(is.get() == '\r')) {
-                if (likely(is.hasNext(1)) && likely(is.peek(1) == '\n')) {
+                if (likely(is.hasNext(1) && (is.peek(1) == '\n'))) {
                     is.moveTo(2);       // "\r\nX", In most cases, it will be walk to this path.
                     return true;
                 }
@@ -453,7 +483,7 @@ scan_restart:
     }
 
     bool parseMethod(InputStream & is) {
-        if (!method_str_.empty())
+        if (likely(!method_str_.empty()))
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
@@ -461,15 +491,14 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
+            assert(len > 0);
             method_str_.assign(mark, len);
-            if (unlikely(len <= 0))
-                return false;
         }
         return is_ok;
     }
 
     bool parseMethodAndHash(InputStream & is) {
-        if (!method_str_.empty())
+        if (likely(!method_str_.empty()))
             return false;
         hash_type hash;
         const char * mark = is.current();
@@ -478,15 +507,14 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
+            assert(len > 0);
             method_str_.assign(mark, len);
-            if (unlikely(len <= 0))
-                return false;
         }
         return is_ok;
     }
 
     bool parseURI(InputStream & is) {
-        if (!uri_str_.empty())
+        if (likely(!uri_str_.empty()))
             return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
@@ -494,15 +522,14 @@ scan_restart:
             assert(is.current() != nullptr);
             assert(is.current() >= mark);
             std::ptrdiff_t len = is.current() - mark;
+            assert(len > 0);
             uri_str_.assign(mark, len);
-            if (unlikely(len <= 0))
-                return false;
         }
         return is_ok;
     }
 
     bool parseVersion(InputStream & is) {
-        if (!version_str_.empty())
+        if (likely(!version_str_.empty()))
             return false;
         const char * mark = is.current();
         bool is_ok = findCrLfToken(is);
@@ -515,8 +542,9 @@ scan_restart:
                 version_str_.assign(mark, len);
                 return true;
             }
-            else
+            else {
                 return false;
+            }
         }
         return is_ok;
     }
@@ -540,7 +568,7 @@ scan_restart:
             is_ok = findFieldValue(is);
 
             std::ptrdiff_t value_len = is.current() - field_value;
-            if (unlikely(!is_ok) || unlikely(value_len <= 0))
+            if (unlikely((!is_ok) || (value_len <= 0)))
                 return false;
 
             // Append the field-name and field-value pair to StringRefList.
@@ -570,7 +598,6 @@ scan_restart:
         // Http method characters must be upper case letters.
         if (likely(is.get() >= 'A' && is.get() <= 'Z')) {
             is_ok = parseMethod(is);
-            //is_ok = parseHttpMethodAndHash(is);
             if (unlikely(!is_ok))
                 return error_code::InvalidHttpMethod;
 
@@ -613,7 +640,7 @@ scan_restart:
         if (likely(len < kInitContentSize)) {
             ::memcpy((void *)&inner_content_[0], data, len);
             inner_content_[len] = '\0';
-            if (unlikely(content_))
+            if (unlikely(content_ != nullptr))
                 content_ = nullptr;
             content = const_cast<const char * >(&inner_content_[0]);
             content_size_ = len;
@@ -626,9 +653,6 @@ scan_restart:
                 content_ = const_cast<const char *>(new_content);
                 content_size_ = len;
                 content = content_;
-            }
-            else {
-                return nullptr;
             }
         }
         return content;
