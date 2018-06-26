@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <atomic>
 #include <thread>
+#include <chrono>
 
 #include "jimi/http_all.h"
 #include "stop_watch.h"
@@ -100,7 +101,7 @@ void http_parser_test()
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
         http::Parser<1024> http_parser;
-        sum += http_parser.parseRequest(http_header, ::strlen(http_header));
+        sum += http_parser.parseRequest(http_header, request_len);
     }
     sw.stop();
 
@@ -138,7 +139,7 @@ void http_parser_ref_test()
     sw.start();
     for (std::size_t i = 0; i < kIterations; ++i) {
         http::ParserRef<1024> http_parser;
-        sum += http_parser.parseRequest(http_header, ::strlen(http_header));
+        sum += http_parser.parseRequest(http_header, request_len);
         if (mark < 3) {
             if (helper.attach(http_parser.getMethodStr())) {
                 helper.truncate();
@@ -206,10 +207,9 @@ void http_parser_benchmark()
 	});
 
     http::ParserRef<1024> http_parser;
-    http::Parser<1024> p;
 	do {
         std::atomic_thread_fence(std::memory_order_acquire);
-        dummy += http_parser.parseRequest(http_header, ::strlen(http_header));
+        dummy += http_parser.parseRequest(http_header, request_len);
         std::atomic_thread_fence(std::memory_order_acquire);
         //dummy += parser.getEntrySize();
         http_parser.reset();

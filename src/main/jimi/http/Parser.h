@@ -175,9 +175,9 @@ public:
     bool skipCrLf(InputStream & is) {
         assert(is.current() != nullptr);
         while (likely(is.hasNext())) {
-            if (likely(is.get() == '\r') {
+            if (likely(is.get() == '\r')) {
                 is.next();
-                if (likely(is.get() == '\n')))
+                if (likely(is.get() == '\n'))
                     is.next();
                 else
                     break;
