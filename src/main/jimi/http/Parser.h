@@ -79,7 +79,7 @@ public:
     }
 
     ~BasicParser() {
-        if (likely(content_ != nullptr)) {
+        if (unlikely(content_ != nullptr)) {
             delete[] content_;
             content_ = nullptr;
         }
