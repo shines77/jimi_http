@@ -25,20 +25,28 @@
  */
 
 #if !defined(_MSC_VER)
+#ifndef __SSE3__
+#define __SSE3__    1
+#endif
+
+#ifndef __SSSE3__
+#define __SSSE3__   1
+#endif
+
 #ifndef __SSE4__
-#define __SSE4__
+#define __SSE4__    1
 #endif
 
 #ifndef __SSE4A_
-#define __SSE4A_
+#define __SSE4A_    1
 #endif
 
 #ifndef __SSE4_1__
-#define __SSE4_1__
+#define __SSE4_1__  1
 #endif
 
 #ifndef __SSE4_2__
-#define __SSE4_2__
+#define __SSE4_2__  1
 #endif
 #endif // !_MSC_VER
 
