@@ -354,7 +354,7 @@ void pico_http_parser_ref_benchmark()
     char * method, * path;
     int pret, minor_version;
     struct phr_header headers[128];
-    size_t buflen = request_len, prevbuflen = 0, method_len, path_len, num_headers;
+    size_t buflen = request_len + 1, prevbuflen = 0, method_len, path_len, num_headers;
 
 	do {
         /* Read the socket data */
