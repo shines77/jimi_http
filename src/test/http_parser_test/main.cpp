@@ -15,6 +15,12 @@
 #include "jimi/http_all.h"
 #include "stop_watch.h"
 
+#if !defined(_MSC_VER)
+#ifndef __SSE4_2__
+#define __SSE4_2__
+#endif
+#endif
+
 #include <picohttpparser/picohttpparser.h>
 
 using namespace jimi;
