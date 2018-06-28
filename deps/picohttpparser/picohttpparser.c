@@ -25,6 +25,22 @@
  */
 
 #if !defined(_MSC_VER)
+#ifndef __SSE__
+#define __SSE__     1
+#endif
+
+#ifndef __SSE_MATH__
+#define __SSE_MATH__    1
+#endif
+
+#ifndef __SSE2__
+#define __SSE2__    1
+#endif
+
+#ifndef __SSE2_MATH__
+#define __SSE2_MATH__    1
+#endif
+
 #ifndef __SSE3__
 #define __SSE3__    1
 #endif
@@ -48,6 +64,14 @@
 #ifndef __SSE4_2__
 #define __SSE4_2__  1
 #endif
+
+#ifndef __AVX__
+#define __AVX__     1
+#endif
+
+#ifndef __AVX2__
+#define __AVX2__    1
+#endif
 #endif // !_MSC_VER
 
 #include <assert.h>
@@ -56,6 +80,7 @@
 #ifdef __SSE4_2__
 #ifdef _MSC_VER
 #include <nmmintrin.h>
+#include <tmmintrin.h>
 #else
 #include <x86intrin.h>
 #include <nmmintrin.h>  // For SSE 4.2
