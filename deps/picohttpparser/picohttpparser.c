@@ -25,10 +25,22 @@
  */
 
 #if !defined(_MSC_VER)
+#ifndef __SSE4__
+#define __SSE4__
+#endif
+
+#ifndef __SSE4A_
+#define __SSE4A_
+#endif
+
+#ifndef __SSE4_1__
+#define __SSE4_1__
+#endif
+
 #ifndef __SSE4_2__
 #define __SSE4_2__
 #endif
-#endif
+#endif // !_MSC_VER
 
 #include <assert.h>
 #include <stddef.h>
