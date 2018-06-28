@@ -139,6 +139,7 @@ void http_parser_ref_test()
     for (std::size_t i = 0; i < kIterations; ++i) {
         http::ParserRef<1024> http_parser;
         sum += http_parser.parseRequest(http_header, request_len);
+#if 0
         if (mark < 3) {
             if (helper.attach(http_parser.getMethodStr())) {
                 helper.truncate();
@@ -147,6 +148,7 @@ void http_parser_ref_test()
             }
             mark++;
         }
+#endif
     }
     sw.stop();
 
