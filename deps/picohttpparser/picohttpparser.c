@@ -24,7 +24,11 @@
  * IN THE SOFTWARE.
  */
 
+//
 // Linux command: g++ -E -dM -</dev/null | grep 'MMX\|SSE\|AVX'
+//
+// See: http://blog.sina.com.cn/s/blog_89ff8b4b0102xcid.html
+//
 
 #if !defined(_MSC_VER)
 #ifndef __MMX__
@@ -53,10 +57,6 @@
 
 #ifndef __SSSE3__
 #define __SSSE3__   1
-#endif
-
-#ifndef __SSE4__
-#define __SSE4__    1
 #endif
 
 #ifndef __SSE4A_
