@@ -65,12 +65,14 @@
 #define __SSE4_2__  1
 #endif
 
+#if 0
 #ifndef __AVX__
 #define __AVX__     1
 #endif
 
 #ifndef __AVX2__
 #define __AVX2__    1
+#endif
 #endif
 #endif // !_MSC_VER
 
