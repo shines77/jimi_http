@@ -98,6 +98,10 @@
 #endif
 #include "picohttpparser.h"
 
+#ifdef _MSC_VER
+#define ssize_t intptr_t
+#endif
+
 /* $Id: a707070d11d499609f99d09f97535642cec910a8 $ */
 
 #if __GNUC__ >= 3
