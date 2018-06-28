@@ -89,8 +89,7 @@
 #include <string.h>
 #ifdef __SSE4_2__
 #ifdef _MSC_VER
-#include <nmmintrin.h>
-//#include <tmmintrin.h>
+#include <nmmintrin.h>  // For SSE 4.2
 #else
 #include <x86intrin.h>
 //#include <nmmintrin.h>  // For SSE 4.2
