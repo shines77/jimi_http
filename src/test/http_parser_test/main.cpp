@@ -305,10 +305,10 @@ void http_parser_ref_benchmark()
     std::cout << std::endl;
 }
 
-void pico_http_parser_ref_benchmark()
+void pico_http_parser_benchmark()
 {
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  pico_http_parser_ref_benchmark()" << std::endl;
+    std::cout << "  pico_http_parser_benchmark()" << std::endl;
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
@@ -412,7 +412,7 @@ int main(int argn, char * argv[])
 
     http_parser_benchmark();
     http_parser_ref_benchmark();
-    pico_http_parser_ref_benchmark();
+    pico_http_parser_benchmark();
 
 #ifdef _WIN32
     ::system("pause");
