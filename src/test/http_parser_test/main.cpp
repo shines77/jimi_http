@@ -174,7 +174,7 @@ void http_parser_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    static atomic<int> loop_cnt = 0;
+    static atomic<int> loop_cnt(0);
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
     volatile int64_t dummy = 0;
@@ -239,7 +239,7 @@ void http_parser_ref_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    static atomic<int> loop_cnt = 0;
+    static atomic<int> loop_cnt(0);
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
     volatile int64_t dummy = 0;
