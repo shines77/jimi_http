@@ -190,7 +190,7 @@ public:
     }
 
     string_type toString() const {
-        return string_type(this->data_, this->length_);
+        return std::move(string_type(this->data_, this->length_));
     }
 }; // class BasicStringRef<CharTy>
 

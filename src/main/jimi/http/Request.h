@@ -9,7 +9,7 @@
 namespace jimi {
 namespace http {
 
-class Request {
+class Method {
 public:
     /************************************************************************
      *
@@ -18,8 +18,8 @@ public:
      *   GET, POST, HEAD, PUT, DELETE, OPTIONS, TRACE, CONNECT.
      *
      ************************************************************************/
-    enum RequestMethod {
-        UNDEFINED,
+    enum Type {
+        UNKNOWN = 0,
         GET,
         POST,
         HEAD,
@@ -30,6 +30,11 @@ public:
         CONNECT
     };
 
+    Method() {}
+    ~Method() {}
+};
+
+class Request {
 private:
     int error_code_;
 

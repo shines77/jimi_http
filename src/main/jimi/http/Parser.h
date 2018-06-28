@@ -72,8 +72,8 @@ private:
 
 public:
     BasicParser() : status_code_(0),
-        method_(Request::UNDEFINED),
-        version_(Version::HTTP_UNDEFINED),
+        method_(Method::UNKNOWN),
+        version_(Version::UNKNOWN),
         content_length_(0),
         content_size_(0), content_(nullptr) {
     }
@@ -151,6 +151,18 @@ public:
     }
 
 #if 1
+    void skipWhiteSpaces(InputStream & is) {
+        assert(is.current() != nullptr);
+        if (likely(is.get() != ' '))
+            return;
+        while (likely(is.hasNext())) {
+            if (likely(is.get() != ' '))
+                break;
+            else
+                is.next();
+        }
+    }
+#elif 0
     void skipWhiteSpaces(InputStream & is) {
         assert(is.current() != nullptr);
         while (likely(is.hasNext())) {
@@ -237,26 +249,26 @@ public:
     bool findCrLfToken(InputStream & is) {
         assert(is.current() != nullptr);
         while (likely(is.hasNext())) {
-            if (likely(is.get() != '\r')) {
-                if (likely(!is.isNullChar()))
-                    is.next();
-                else
-                    break;
-            }
-            else {
+            if (likely(is.get() == '\r')) {
                 if (likely((is.peek(1) == '\n') && is.hasNext(1)))
                     return true;
                 else
                     is.next();
             }
+            else {
+                if (likely(!is.isNullChar()))
+                    is.next();
+                else
+                    break;
+            }
         }
         return is.hasNext();
     }
 
-    bool findFieldName(InputStream & is) {
+    bool findFieldKey(InputStream & is) {
         assert(is.current() != nullptr);
         while (likely(is.hasNext())) {
-            if (likely(is.get() != ':' && is.get() != ' ' && !is.isNullChar()))
+            if (likely(is.get() != ':' && !is.isNullChar()))
                 is.next();
             else
                 break;
@@ -483,8 +495,8 @@ scan_restart:
     }
 
     bool parseMethod(InputStream & is) {
-        if (likely(!method_str_.empty()))
-            return false;
+        //if (likely(!method_str_.empty()))
+        //    return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
         if (likely(is_ok)) {
@@ -498,8 +510,8 @@ scan_restart:
     }
 
     bool parseMethodAndHash(InputStream & is) {
-        if (likely(!method_str_.empty()))
-            return false;
+        //if (likely(!method_str_.empty()))
+        //    return false;
         hash_type hash;
         const char * mark = is.current();
         bool is_ok = findTokenAndHash<' '>(is, hash);
@@ -514,8 +526,8 @@ scan_restart:
     }
 
     bool parseURI(InputStream & is) {
-        if (likely(!uri_str_.empty()))
-            return false;
+        //if (likely(!uri_str_.empty()))
+        //   return false;
         const char * mark = is.current();
         bool is_ok = findToken<' '>(is);
         if (likely(is_ok)) {
@@ -529,8 +541,8 @@ scan_restart:
     }
 
     bool parseVersion(InputStream & is) {
-        if (likely(!version_str_.empty()))
-            return false;
+        //if (likely(!version_str_.empty()))
+        //    return false;
         const char * mark = is.current();
         bool is_ok = findCrLfToken(is);
         if (likely(is_ok)) {
@@ -554,34 +566,43 @@ scan_restart:
             // Skip the whitespaces ahead of every entry.
             //skipWhiteSpaces(is);
 
-            const char * field_name = is.current();
-            bool is_ok = findFieldName(is);
+            const char * field_key = is.current();
+            bool is_ok = findFieldKey(is);
 
-            std::ptrdiff_t name_len = is.current() - field_name;
-            if (unlikely(!is_ok || (name_len <= 0)))
-                return false;
+            std::ptrdiff_t key_len = is.current() - field_key;
+            if (likely(is_ok && (key_len > 0))) {
+                next(is);
+                skipWhiteSpaces(is);
 
-            next(is);
-            skipWhiteSpaces(is);
+                const char * field_value = is.current();
+                is_ok = findFieldValue(is);
 
-            const char * field_value = is.current();
-            is_ok = findFieldValue(is);
+                std::ptrdiff_t value_len = is.current() - field_value;
+                if (likely(is_ok && (value_len > 0))) {
+                    // Append the field-name and field-value pair to StringRefList.
+                    header_fields_.append(field_key, key_len, field_value, value_len);
 
-            std::ptrdiff_t value_len = is.current() - field_value;
-            if (unlikely((!is_ok) || (value_len <= 0)))
-                return false;
+                    //skipWhiteSpaces(is);
 
-            // Append the field-name and field-value pair to StringRefList.
-            header_fields_.append(field_name, name_len, field_value, value_len);
-
-            //skipWhiteSpaces(is);
-
-            bool is_end;
-            is_ok = checkAndSkipCrLf(is, is_end);
-            if (unlikely(is_end))
-                return true;
-            if (unlikely(!is_ok))
-                return false;
+                    bool is_end;
+                    is_ok = checkAndSkipCrLf(is, is_end);
+                    if (likely(!is_end)) {
+                        if (likely(is_ok))
+                            continue;
+                        else
+                            break;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            else {
+                break;
+            }
         } while (1);
         return false;
     }

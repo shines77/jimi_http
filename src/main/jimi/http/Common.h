@@ -14,7 +14,7 @@ namespace http {
 class Version {
 public:
     enum version {
-        HTTP_UNDEFINED = 0,
+        UNKNOWN = 0,
         HTTP_0_9 = 0x00000009,
         HTTP_1_0 = 0x00010000,
         HTTP_1_1 = 0x00010001,
