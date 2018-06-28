@@ -53,7 +53,7 @@ endif()
 
 if (NOT MSVC)
     ## -Wall -Werror -Wextra -Wno-format -Wno-unused-function
-    set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} -std=c++11 -mmmx -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -fPIC")
+    set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} -std=gnu++11 -mmmx -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -fPIC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -O3 -DNDEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEFAULT} -g -pg -D_DEBUG")
     ## add_compile_options(-D__SSE3__=1 -D__SSE4A__=1 -D__SSE4_1__=1 -D__SSE4_2__=1)

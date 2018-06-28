@@ -24,6 +24,8 @@
  * IN THE SOFTWARE.
  */
 
+// Linux command: g++ -E -dM -</dev/null | grep 'MMX\|SSE\|AVX'
+
 #if !defined(_MSC_VER)
 #ifndef __MMX__
 #define __MMX__     1
