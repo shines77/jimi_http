@@ -122,7 +122,7 @@ public:
         version_.setVersion(http_version);
     }
 
-    string_type getVersiontr() const {
+    string_type getVersionStr() const {
         return version_str_;
     }
 

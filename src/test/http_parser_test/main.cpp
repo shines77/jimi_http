@@ -309,8 +309,9 @@ int main(int argn, char * argv[])
 
     http::Parser<1024> http_parser;
     http_parser.parseRequest(http_header, ::strlen(http_header));
-    printf("http_parser.getVersion() = %u\n", http_parser.getVersion());
-    printf("http_parser.getMethod() = %u\n", http_parser.getMethod());
+    printf("http_parser.getVersion() = %s\n", http_parser.getVersionStr().c_str());
+    printf("http_parser.getMethod() = %s\n", http_parser.getMethodStr().c_str());
+    printf("http_parser.getURI() = %s\n", http_parser.getURI().c_str());
     printf("\n");
     http_parser.displayFields();
     printf("\n");
