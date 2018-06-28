@@ -32,6 +32,7 @@
 #include <nmmintrin.h>
 #else
 #include <x86intrin.h>
+#include <nmmintrin.h>  // For SSE 4.2
 #endif
 #endif
 #include "picohttpparser.h"
