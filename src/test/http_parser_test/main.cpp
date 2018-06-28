@@ -23,7 +23,7 @@ static const std::size_t kIterations = 3000000;
 static const std::size_t kIterations = 10000;
 #endif
 
-#if 1
+#if 0
     static const char * http_header =
         "GET /cookies HTTP/1.1\r\n"
         "Host: 127.0.0.1:8090\r\n"
@@ -202,8 +202,9 @@ void http_parser_benchmark()
             std::cout << std::left << std::dec << dummy_;
             std::cout << std::endl;
 #else
-            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count), (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
-                ::strlen(http_header), dummy);
+            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count),
+                   (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
+                   request_len, dummy_);
 #endif
 			last_count = count_;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -268,8 +269,9 @@ void http_parser_ref_benchmark()
             std::cout << std::left << std::dec << dummy_;
             std::cout << std::endl;
 #else
-            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count), (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
-                ::strlen(http_header), dummy);
+            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count),
+                   (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
+                   request_len, dummy_);
 #endif
 			last_count = count_;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
