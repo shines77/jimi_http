@@ -14,6 +14,9 @@
     <Filter Include="src\basic\msvc">
       <UniqueIdentifier>{6ad4be16-3a55-430e-8ad2-d075f36f6fbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\pico">
+      <UniqueIdentifier>{b74c64d2-91d3-4e9f-b9ec-b8dacf3916f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\main\jimi\http\Common.h">
@@ -73,5 +76,13 @@
     <ClInclude Include="..\..\..\src\main\jimi\basic\msvc\stdint.h">
       <Filter>src\basic\msvc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\deps\picohttpparser\picohttpparser.h">
+      <Filter>src\pico</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c">
+      <Filter>src\pico</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

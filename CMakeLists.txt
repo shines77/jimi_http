@@ -99,8 +99,10 @@ include_directories(src)
 include_directories(src/main)
 include_directories(src/test)
 include_directories(src/unittest)
+include_directories(deps)
 
 set(SOURCE_FILES
+    deps/picohttpparser/picohttpparse.c
     src/test/http_parser_test/main.cpp
     )
 
@@ -127,6 +129,7 @@ include_directories(src)
 include_directories(src/main)
 include_directories(src/test)
 include_directories(src/unittest)
+include_directories(deps)
 
 set(SOURCE_FILES
     src/main/jimi_http_serv/main.cpp

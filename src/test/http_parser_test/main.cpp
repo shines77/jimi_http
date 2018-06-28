@@ -11,8 +11,11 @@
 #include <thread>
 #include <chrono>
 
+#include "jimi/basic/stdsize.h"
 #include "jimi/http_all.h"
 #include "stop_watch.h"
+
+#include <picohttpparser/picohttpparser.h>
 
 using namespace jimi;
 using namespace jimi::http;
@@ -302,6 +305,88 @@ void http_parser_ref_benchmark()
     std::cout << std::endl;
 }
 
+void pico_http_parser_ref_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  pico_http_parser_ref_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    static const int kMaxLoop = 20;
+    static std::atomic<int> loop_cnt(0);
+	auto request_len = ::strlen(http_header);
+	volatile int64_t count = 0;
+    volatile int64_t dummy = 0;
+	std::thread counter([&] {
+		auto last_count = count;
+		auto count_ = count;
+        auto dummy_ = dummy;
+		do {
+            std::atomic_thread_fence(std::memory_order_acquire);
+			count_ = count;
+            dummy_ = dummy;
+            std::atomic_thread_fence(std::memory_order_release);
+#if 1
+            std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
+            std::cout << (count_ - last_count);
+            std::cout << ", ";
+			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
+            std::cout << ",  ";
+            std::cout << std::left << std::dec << request_len;
+            std::cout << " bytes,  dummy = ";
+            std::cout << std::left << std::dec << dummy_;
+            std::cout << std::endl;
+#else
+            printf("%lld,  %0.3f MB/Sec,  %llu bytes,  %lld\n", (count_ - last_count),
+                   (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
+                   request_len, dummy_);
+#endif
+			last_count = count_;
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            loop_cnt++;
+            if (loop_cnt > kMaxLoop) {
+                break;
+            }
+		} while (1);
+	});
+
+    char * method, * path;
+    int pret, minor_version;
+    struct phr_header headers[128];
+    size_t buflen = request_len, prevbuflen = 0, method_len, path_len, num_headers;
+
+	do {
+        /* Read the socket data */
+
+        /* Parse the request */
+        num_headers = sizeof(headers) / sizeof(headers[0]);
+        pret = phr_parse_request(http_header, buflen, (const char **)&method, &method_len, (const char **)&path, &path_len,
+                                 &minor_version, headers, &num_headers, prevbuflen);
+        if (pret > 0) {
+            /* successfully parsed the request */
+            std::atomic_thread_fence(std::memory_order_acquire);
+            dummy += (int64_t)num_headers;
+	        count++;
+            std::atomic_thread_fence(std::memory_order_release);
+        }
+        else if (pret == -1) {
+            //return ParseError;
+        }
+        /* request is incomplete, continue the loop */
+        assert(pret == -2);
+
+        if (loop_cnt > kMaxLoop) {
+            if (counter.joinable()) {
+                counter.join();
+            }
+            break;
+        }
+	} while (1);
+
+    std::cout << std::endl;
+}
+
 int main(int argn, char * argv[])
 {
     std::cout << std::endl;
@@ -327,6 +412,7 @@ int main(int argn, char * argv[])
 
     http_parser_benchmark();
     http_parser_ref_benchmark();
+    pico_http_parser_ref_benchmark();
 
 #ifdef _WIN32
     ::system("pause");
