@@ -174,7 +174,8 @@ void http_parser_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    static atomic<int> loop_cnt(0);
+    static const int kMaxLoop = 11;
+    static std::atomic<int> loop_cnt(0);
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
     volatile int64_t dummy = 0;
@@ -205,7 +206,7 @@ void http_parser_benchmark()
 			last_count = count_;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             loop_cnt++;
-            if (loop_cnt > 10) {
+            if (loop_cnt > kMaxLoop) {
                 break;
             }
 		} while (1);
@@ -219,7 +220,7 @@ void http_parser_benchmark()
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
 		count++;
-        if (loop_cnt > 10) {
+        if (loop_cnt > kMaxLoop) {
             std::atomic_thread_fence(std::memory_order_release);
             if (counter.joinable()) {
                 counter.join();
@@ -239,7 +240,8 @@ void http_parser_ref_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    static atomic<int> loop_cnt(0);
+    static const int kMaxLoop = 11;
+    static std::atomic<int> loop_cnt(0);
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
     volatile int64_t dummy = 0;
@@ -270,7 +272,7 @@ void http_parser_ref_benchmark()
 			last_count = count_;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             loop_cnt++;
-            if (loop_cnt > 10) {
+            if (loop_cnt > kMaxLoop) {
                 break;
             }
 		} while (1);
@@ -284,7 +286,7 @@ void http_parser_ref_benchmark()
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
 		count++;
-        if (loop_cnt > 10) {
+        if (loop_cnt > kMaxLoop) {
             std::atomic_thread_fence(std::memory_order_release);
             if (counter.joinable()) {
                 counter.join();
