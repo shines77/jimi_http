@@ -659,17 +659,16 @@ scan_restart:
         assert(data != nullptr);
         const char * content;
         if (likely(len < kInitContentSize)) {
-            ::memcpy((void *)&inner_content_[0], data, len);
+            ::memcpy((void *)&inner_content_[0], data, len * sizeof(char));
             inner_content_[len] = '\0';
-            if (unlikely(content_ != nullptr))
-                content_ = nullptr;
+            content_ = nullptr;
             content = const_cast<const char * >(&inner_content_[0]);
             content_size_ = len;
         }
         else {
             char * new_content = new char [len + 1];
             if (likely(new_content != nullptr)) {
-                ::memcpy((void *)new_content, data, len);
+                ::memcpy((void *)new_content, data, len * sizeof(char));
                 new_content[len] = '\0';
                 content_ = const_cast<const char *>(new_content);
                 content_size_ = len;
@@ -685,18 +684,22 @@ scan_restart:
     int parseRequest(const char * data, size_t len) {
         int ec = 0;
         assert(data != nullptr);
-        if (unlikely(len == 0 || data == nullptr))
+        if (likely(len != 0)) {
+            // Copy the input http header data.
+            const char * content = copyContent(data, len);
+            if (likely(content != nullptr)) {
+                // Start parse the request http header.
+                InputStream is(content, len);
+                ec = parseRequestHeader(is);
+                return ec;
+            }
+            else {
+                return error_code::HttpParserError;
+            }
+        }
+        else {
             return error_code::Succeed;
-
-        // Copy the input http header data.
-        const char * content = copyContent(data, len);
-        if (unlikely(content == nullptr))
-            return error_code::HttpParserError;
-
-        // Start parse the request http header.
-        InputStream is(content, len);
-        ec = parseRequestHeader(is);
-        return ec;
+        }
     }
 
     int parseRequest(const std::string & data) {

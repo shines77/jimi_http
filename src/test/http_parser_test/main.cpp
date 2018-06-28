@@ -222,14 +222,14 @@ void http_parser_benchmark()
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
 		count++;
+        std::atomic_thread_fence(std::memory_order_release);
         if (loop_cnt > kMaxLoop) {
-            std::atomic_thread_fence(std::memory_order_release);
             if (counter.joinable()) {
                 counter.join();
             }
             break;
         }
-        std::atomic_thread_fence(std::memory_order_release);
+        
 	} while (1);
 
     std::cout << std::endl;
@@ -288,14 +288,13 @@ void http_parser_ref_benchmark()
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
 		count++;
+        std::atomic_thread_fence(std::memory_order_release);
         if (loop_cnt > kMaxLoop) {
-            std::atomic_thread_fence(std::memory_order_release);
             if (counter.joinable()) {
                 counter.join();
             }
             break;
         }
-        std::atomic_thread_fence(std::memory_order_release);
 	} while (1);
 
     std::cout << std::endl;
