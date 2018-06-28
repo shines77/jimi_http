@@ -174,7 +174,7 @@ void http_parser_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    static const int kMaxLoop = 11;
+    static const int kMaxLoop = 20;
     static std::atomic<int> loop_cnt(0);
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
@@ -195,7 +195,7 @@ void http_parser_benchmark()
 			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
             std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
             std::cout << ",  ";
-            std::cout << std::left << std::dec << ::strlen(http_header);
+            std::cout << std::left << std::dec << request_len;
             std::cout << " bytes,  dummy = ";
             std::cout << std::left << std::dec << dummy_;
             std::cout << std::endl;
@@ -240,7 +240,7 @@ void http_parser_ref_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    static const int kMaxLoop = 11;
+    static const int kMaxLoop = 20;
     static std::atomic<int> loop_cnt(0);
 	auto request_len = ::strlen(http_header);
 	volatile int64_t count = 0;
@@ -261,7 +261,7 @@ void http_parser_ref_benchmark()
 			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
             std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
             std::cout << ",  ";
-            std::cout << std::left << std::dec << ::strlen(http_header);
+            std::cout << std::left << std::dec << request_len;
             std::cout << " bytes,  dummy = ";
             std::cout << std::left << std::dec << dummy_;
             std::cout << std::endl;
