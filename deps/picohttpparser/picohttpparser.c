@@ -25,6 +25,10 @@
  */
 
 #if !defined(_MSC_VER)
+#ifndef __MMX__
+#define __MMX__     1
+#endif
+
 #ifndef __SSE__
 #define __SSE__     1
 #endif
@@ -82,10 +86,10 @@
 #ifdef __SSE4_2__
 #ifdef _MSC_VER
 #include <nmmintrin.h>
-#include <tmmintrin.h>
+//#include <tmmintrin.h>
 #else
 #include <x86intrin.h>
-#include <nmmintrin.h>  // For SSE 4.2
+//#include <nmmintrin.h>  // For SSE 4.2
 #endif
 #endif
 #include "picohttpparser.h"
