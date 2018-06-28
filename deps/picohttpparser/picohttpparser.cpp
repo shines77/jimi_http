@@ -32,6 +32,16 @@
 // See: http://blog.sina.com.cn/s/blog_89ff8b4b0102xcid.html
 //
 
+//
+// error: can¡¯t convert between vector values of different size
+//
+// See: https://stackoverflow.com/questions/19043109/gcc-4-8-1-combining-c-code-with-c11-code
+//
+//  - however, all the intrinsic functions have the __always_inline__ attribute,
+//  so the extern "C" shouldn't matter. I think you should risk being 'annoying'
+//  by reporting the issue yet again, as no action seems to have been taken for a long time.
+//
+
 #if !defined(_MSC_VER)
 #ifndef __MMX__
 #define __MMX__     1

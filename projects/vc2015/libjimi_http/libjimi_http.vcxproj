@@ -41,7 +41,7 @@
     <ClInclude Include="..\..\..\src\main\jimi\StringRefList.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c" />
+    <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{03B2B339-B5BF-489C-AB9F-0E4A208EA198}</ProjectGuid>
