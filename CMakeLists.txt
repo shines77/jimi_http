@@ -46,12 +46,18 @@ message("  PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
 message("----------------------------------")
 
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DEBUG")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_DEBUG")
 else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
 endif()
 
 if (NOT MSVC)
+    set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS} -std=c99 -march=native -mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -fPIC -U__STRICT_ANSI__")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -O3 -DNDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg -D_DEBUG")
+
     ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
     set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} --std=gnu++11 -march=native -mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -fPIC -U__STRICT_ANSI__")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -O3 -DNDEBUG")
