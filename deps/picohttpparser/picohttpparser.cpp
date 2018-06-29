@@ -27,7 +27,7 @@
 //
 // Linux command: g++ -E -dM -</dev/null | grep 'MMX\|SSE\|AVX'
 //
-// Linux command: gcc -dM -E -x c /dev/null -march=native | grep -E "(MMX|SSE|AVX|XOP)"
+// Linux command: g++ -dM -E -x c /dev/null -march=native | grep -E "(MMX|SSE|AVX|XOP)"
 //
 // See: http://blog.sina.com.cn/s/blog_89ff8b4b0102xcid.html
 //

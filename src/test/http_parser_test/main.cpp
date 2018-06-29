@@ -26,7 +26,7 @@ static const std::size_t kIterations = 3000000;
 static const std::size_t kIterations = 10000;
 #endif
 
-#if 0
+#if 1
     static const char * http_header =
         "GET /cookies HTTP/1.1\r\n"
         "Host: 127.0.0.1:8090\r\n"
