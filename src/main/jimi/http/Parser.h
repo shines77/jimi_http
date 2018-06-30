@@ -94,7 +94,7 @@ public:
         header_fields_.clear();
     }
 
-    std::size_t getEntrySize() const {
+    std::size_t getFieldSize() const {
         return header_fields_.size();
     }
 

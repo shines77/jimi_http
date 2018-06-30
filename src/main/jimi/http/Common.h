@@ -11,9 +11,33 @@
 namespace jimi {
 namespace http {
 
+union version_t {
+    struct ver {
+        uint16_t major;
+        uint16_t minor;
+
+        ver(uint16_t major, uint16_t minor) : major(major), minor(minor) {}
+    } v;
+    uint32_t value;
+
+    version_t(uint32_t version = 0) : value(version) {}
+    version_t(uint16_t major, uint16_t minor) : v(major, minor) {}
+    version_t(const version_t & src) : value(src.value) {}
+
+    version_t & operator = (uint32_t version) {
+        this->value = version;
+        return (*this);
+    }
+
+    version_t & operator = (const version_t & rhs) {
+        this->value = rhs.value;
+        return (*this);
+    }
+};
+
 class Version {
 public:
-    enum version {
+    enum Type {
         UNKNOWN = 0,
         HTTP_0_9 = 0x00000009,
         HTTP_1_0 = 0x00010000,
@@ -22,30 +46,23 @@ public:
         HTTP_2_X = 0x00020001,
     };
 
-    union version_t {
-        struct {
-            uint16_t major_;
-            uint16_t minor_;
-        };
-        uint32_t value;
-
-        version_t() {}
-        version_t(uint32_t version) : value(version) {}
-        version_t(uint16_t major, uint16_t minor) : major_(major), minor_(minor) {}
-    };
-
 private:
     version_t version_;
 
 public:
-    Version() : version_(0) {}
-    Version(uint32_t version) : version_(version) {}
+    Version(uint32_t version = Type::UNKNOWN) : version_(version) {}
     Version(uint16_t major, uint16_t minor) : version_(major, minor) {}
+    Version(const version_t & src) : version_(src.value) {}
     Version(const Version & src) : version_(src.getVersion()) {}
     ~Version() {}
 
     Version & operator = (uint32_t version) {
         version_.value = version;
+        return (*this);
+    }
+
+    Version & operator = (const version_t & rhs) {
+        version_.value = rhs.value;
         return (*this);
     }
 
@@ -59,22 +76,22 @@ public:
         return version.value;
     }
 
-    static uint16_t calcMajor(uint32_t http_version) {
+    static uint16_t getMajor(uint32_t http_version) {
         version_t version(http_version);
-        return version.major_;
+        return version.v.major;
     }
 
-    static uint16_t calcMinor(uint32_t http_version) {
+    static uint16_t getMinor(uint32_t http_version) {
         version_t version(http_version);
-        return version.minor_;
+        return version.v.minor;
     }
 
     uint16_t getMajor() const {
-        return version_.major_;
+        return version_.v.major;
     }
 
     uint16_t getMinor() const {
-        return version_.minor_;
+        return version_.v.minor;
     }
 
     uint32_t getVersion() const {
@@ -82,11 +99,11 @@ public:
     }
 
     void setMajor(uint16_t major) {
-        version_.major_ = major;
+        version_.v.major = major;
     }
 
     void setMinor(uint16_t minor) {
-        version_.minor_ = minor;
+        version_.v.minor = minor;
     }
 
     void setVersion(uint32_t version) {

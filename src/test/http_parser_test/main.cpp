@@ -221,7 +221,7 @@ void http_parser_benchmark()
     http::Parser<1024> http_parser;
 	do {
         int64_t dummy_tmp = http_parser.parseRequest(http_header, request_len);
-        dummy_tmp += (int64_t)http_parser.getEntrySize();
+        dummy_tmp += (int64_t)http_parser.getFieldSize();
         http_parser.reset();
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
@@ -288,7 +288,7 @@ void http_parser_ref_benchmark()
     http::ParserRef<1024> http_parser;
 	do {
         int64_t dummy_tmp = http_parser.parseRequest(http_header, request_len);
-        dummy_tmp += (int64_t)http_parser.getEntrySize();
+        dummy_tmp += (int64_t)http_parser.getFieldSize();
         http_parser.reset();
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
