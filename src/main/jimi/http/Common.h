@@ -13,13 +13,13 @@ namespace http {
 
 union version_t {
     struct {
-        uint16_t major;
-        uint16_t minor;
+        uint16_t major_;
+        uint16_t minor_;
     };
     uint32_t value;
 
     version_t(uint32_t version = 0) : value(version) {}
-    version_t(uint16_t major, uint16_t minor) : major(major), minor(minor) {}
+    version_t(uint16_t major, uint16_t minor) : major_(major), minor_(minor) {}
     version_t(const version_t & src) : value(src.value) {}
     ~version_t() {}
 
@@ -77,20 +77,20 @@ public:
 
     static uint16_t getMajor(uint32_t http_version) {
         version_t version(http_version);
-        return version.major;
+        return version.major_;
     }
 
     static uint16_t getMinor(uint32_t http_version) {
         version_t version(http_version);
-        return version.minor;
+        return version.minor_;
     }
 
     uint16_t getMajor() const {
-        return version_.major;
+        return version_.major_;
     }
 
     uint16_t getMinor() const {
-        return version_.minor;
+        return version_.minor_;
     }
 
     uint32_t getVersion() const {
@@ -98,11 +98,11 @@ public:
     }
 
     void setMajor(uint16_t major) {
-        version_.major = major;
+        version_.major_ = major;
     }
 
     void setMinor(uint16_t minor) {
-        version_.minor = minor;
+        version_.minor_ = minor;
     }
 
     void setVersion(uint32_t version) {
