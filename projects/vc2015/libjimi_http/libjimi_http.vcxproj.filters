@@ -81,7 +81,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.cpp">
+    <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c">
       <Filter>src\pico</Filter>
     </ClCompile>
   </ItemGroup>
