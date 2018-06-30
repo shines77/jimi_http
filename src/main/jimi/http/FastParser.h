@@ -1,6 +1,6 @@
 
-#ifndef JIMI_HTTP_PARSER_H
-#define JIMI_HTTP_PARSER_H
+#ifndef JIMI_HTTP_FASTPARSER_H
+#define JIMI_HTTP_FASTPARSER_H
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
@@ -24,17 +24,8 @@ using namespace std;
 namespace jimi {
 namespace http {
 
-class ParseErrorCode {
-private:
-    int ec_;
-
-public:
-    ParseErrorCode() : ec_(0) {}
-    ~ParseErrorCode() {}
-};
-
 template <typename StringType = std::string, std::size_t InitContentSize = 1024>
-class BasicParser {
+class BasicFastParser {
 public:
     typedef StringType      string_type;
     typedef std::uint32_t   hash_type;
@@ -61,14 +52,14 @@ private:
     char inner_content_[kInitContentSize];
 
 public:
-    BasicParser() : status_code_(0),
+    BasicFastParser() : status_code_(0),
         method_(Method::UNKNOWN),
         version_(Version::UNKNOWN),
         content_length_(0),
         content_size_(0), content_(nullptr) {
     }
 
-    ~BasicParser() {
+    ~BasicFastParser() {
         if (unlikely(content_ != nullptr)) {
             delete[] content_;
             content_ = nullptr;
@@ -726,12 +717,12 @@ scan_restart:
 };
 
 template <std::size_t InitContentSize = 1024>
-using Parser = BasicParser<std::string>;
+using FastParser = BasicFastParser<std::string>;
 
 template <std::size_t InitContentSize = 1024>
-using ParserRef = BasicParser<StringRef>;
+using FastParserRef = BasicFastParser<StringRef>;
 
 } // namespace http
 } // namespace jimi
 
-#endif // JIMI_HTTP_PARSER_H
+#endif // JIMI_HTTP_FASTPARSER_H

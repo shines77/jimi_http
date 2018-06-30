@@ -41,19 +41,26 @@ private:
 
     struct EntryChunk {
         EntryChunk * next;
-        std::size_t  capacity;
         std::size_t  size;
+        std::size_t  capacity;
         EntryPair *  entries;
 
         EntryChunk(std::size_t _capacity)
-            : next(nullptr), capacity(_capacity), size(0), entries(nullptr) {
+            : next(nullptr), size(0), capacity(0), entries(nullptr) {
+            EntryPair * new_entries = new EntryPair[_capacity];
+            if (new_entries != nullptr) {
+                this->entries = new_entries;
+                this->capacity = _capacity;
+            }
         }
         ~EntryChunk() {
+#if 0
             next = nullptr;
+            size = 0;
+            capacity = 0;
+#endif
             if (entries) {
                 delete[] entries;
-                capacity = 0;
-                size = 0;
                 entries = nullptr;
             }
         }
@@ -62,8 +69,8 @@ private:
 public:
     stringref_type ref;
 private:
-    size_type capacity_;
     size_type size_;
+    size_type capacity_;
     EntryChunk * head_;
     EntryChunk * tail_;
 public:
@@ -71,28 +78,28 @@ public:
 
 public:
     BasicStringRefList(std::size_t capacity = kInitCapacity)
-        : ref(), capacity_(capacity), size_(0), head_(nullptr), tail_(nullptr) {
+        : ref(), size_(0), capacity_(capacity), head_(nullptr), tail_(nullptr) {
         initList();
     }
     BasicStringRefList(const char_type * data)
-        : ref(data),  capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        : ref(data), size_(0), capacity_(kInitCapacity), head_(nullptr), tail_(nullptr) {
         initList();
     }
     BasicStringRefList(const char_type * data, size_type size)
-        : ref(data, size), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        : ref(data, size), size_(0), capacity_(kInitCapacity), head_(nullptr), tail_(nullptr) {
         initList();
     }
     template <size_type N>
     BasicStringRefList(const char_type (&src)[N])
-        : ref(src, N - 1), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        : ref(src, N - 1), size_(0), capacity_(kInitCapacity), head_(nullptr), tail_(nullptr) {
         initList();
     }
     BasicStringRefList(const string_type & src)
-        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        : ref(src), size_(0), capacity_(kInitCapacity), head_(nullptr), tail_(nullptr) {
         initList();
     }
     BasicStringRefList(const stringref_type & src)
-        : ref(src), capacity_(kInitCapacity), size_(0), head_(nullptr), tail_(nullptr) {
+        : ref(src), size_(0), capacity_(kInitCapacity), head_(nullptr), tail_(nullptr) {
         initList();
     }
 
@@ -112,26 +119,26 @@ private:
     }
 
 public:
-    const char_type * data() const { return ref.data(); }
-    size_type capacity() const { return capacity_; }
-    size_type size() const { return size_; }
+    const char_type * data() const { return this->ref.data(); }
+    size_type size() const { return this->size_; }
+    size_type capacity() const { return this->capacity_; }
 
-    const char_type * c_str() const { return data(); }
-    size_type length() const { return size(); }
+    const char_type * c_str() const { return this->data(); }
+    size_type length() const { return this->size(); }
 
-    bool is_empty() const { return (size() == 0); }
+    bool is_empty() const { return (this->size() == 0); }
 
     void reset() {
         this->ref.clear();
-        capacity_ = kInitCapacity;
-        size_ = 0;
-        head_ = nullptr;
-        tail_ = nullptr;
+        this->size_ = 0;
+        this->capacity_ = kInitCapacity;
+        this->head_ = nullptr;
+        this->tail_ = nullptr;
         destroyChunks();
     }
 
     void clear() {
-        reset();
+        this->reset();
     }
 
     void setRef(const char_type * data) {
@@ -166,18 +173,18 @@ public:
     }
 
     void destroyChunks() {
-        EntryChunk * chunk = head_;
+        EntryChunk * chunk = this->head_;
         while (chunk != nullptr) {
             EntryChunk * next = chunk->next;
             delete chunk;
             chunk = next;
         }
-        head_ = nullptr;
-        tail_ = nullptr;
+        this->head_ = nullptr;
+        this->tail_ = nullptr;
     }
 
     EntryChunk * findLastChunk() {
-        EntryChunk * chunk = head_;
+        EntryChunk * chunk = this->head_;
         while (chunk != nullptr) {
             if (chunk->next != nullptr)
                 chunk = chunk->next;
@@ -191,48 +198,45 @@ public:
                 const char * value, std::size_t value_len) {
         assert(key != nullptr);
         assert(value != nullptr);
-        if (likely(size_ < kInitCapacity)) {
-            assert(size_ < capacity_);
-            appendItem(size_, key, key_len, value, value_len);
-            size_++;
+        if (likely(this->size_ < kInitCapacity)) {
+            assert(this->size_ < this->capacity_);
+            appendItem(this->size_, key, key_len, value, value_len);
+            ++(this->size_);
         }
         else {
-            if (unlikely(size_ >= capacity_)) {
-                // Add a new enttries chunk
-                static const std::size_t kChunkSize = 32;
+            if (unlikely(this->size_ >= this->capacity_)) {
+                // Add a new entries chunk
+                static const std::size_t kChunkSize = 64;
                 EntryChunk * newChunk = new EntryChunk(kChunkSize);
                 if (newChunk != nullptr) {
-                    if (head_ == nullptr)
-                        head_ = newChunk;
-                    if (tail_ == nullptr) {
-                        tail_ = newChunk;
+                    if (this->head_ == nullptr)
+                        this->head_ = newChunk;
+                    if (this->tail_ == nullptr) {
+                        this->tail_ = newChunk;
                     }
                     else {
-                        tail_->next = newChunk;
-                        tail_ = newChunk;
+                        this->tail_->next = newChunk;
+                        this->tail_ = newChunk;
                     }
+                    this->capacity_ += kChunkSize;
                 }
-                capacity_ += kChunkSize;
             }
-            assert(size_ < capacity_);
+            assert(this->size_ < this->capacity_);
             //
             // TODO: If the item count more than fixed kInitCapacity size,
             //       append to the last position of last chunk.
             //
-            appendItem(size_, key, key_len, value, value_len);
-            size_++;
+            appendItem(this->size_, key, key_len, value, value_len);
+            ++(this->size_);
         }
     }
 };
 
 template <std::size_t InitCapacity>
-using StringRefListA = BasicStringRefList<char, InitCapacity>;
+using StringRefList = BasicStringRefList<char, InitCapacity>;
 
 template <std::size_t InitCapacity>
 using StringRefListW = BasicStringRefList<wchar_t, InitCapacity>;
-
-template <std::size_t InitCapacity>
-using StringRefList  = BasicStringRefList<char, InitCapacity>;
 
 } // namespace jimi
 

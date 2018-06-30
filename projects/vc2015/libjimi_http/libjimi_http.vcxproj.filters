@@ -79,6 +79,9 @@
     <ClInclude Include="..\..\..\deps\picohttpparser\picohttpparser.h">
       <Filter>src\pico</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\http\FastParser.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c">

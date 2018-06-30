@@ -11,6 +11,16 @@
 namespace jimi {
 namespace http {
 
+struct error_code {
+    enum error_code_t {
+        Succeed,
+        NoErrors,
+        InvalidHttpMethod,
+        HttpParserError,
+    };
+    int code;
+};
+
 union version_t {
     struct {
         uint16_t major_;
