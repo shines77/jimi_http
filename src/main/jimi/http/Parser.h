@@ -156,10 +156,10 @@ public:
         if (likely(is.get() != ' '))
             return;
         while (likely(is.hasNext())) {
-            if (likely(is.get() != ' '))
-                break;
-            else
+            if (likely(is.get() == ' '))
                 is.next();
+            else
+                break;
         }
     }
 #elif 0
@@ -609,7 +609,7 @@ scan_restart:
 
     // Parse request http header
     int parseRequestHeader(InputStream & is) {
-        int ec = 0;
+        int ec = error_code::Succeed;
         bool is_ok;
         // Skip the whitespaces ahead of request http header.
         //skipWhiteSpaces(is);
@@ -619,34 +619,40 @@ scan_restart:
         // Http method characters must be upper case letters.
         if (likely(is.get() >= 'A' && is.get() <= 'Z')) {
             is_ok = parseMethod(is);
-            if (unlikely(!is_ok))
-                return error_code::InvalidHttpMethod;
+            if (likely(is_ok)) {
+                next(is);
+                skipWhiteSpaces(is);
 
-            next(is);
-            skipWhiteSpaces(is);
+                is_ok = parseURI(is);
+                if (likely(is_ok)) {
+                    next(is);
+                    skipWhiteSpaces(is);
 
-            is_ok = parseURI(is);
-            if (unlikely(!is_ok))
-                return error_code::HttpParserError;
-
-            next(is);
-            skipWhiteSpaces(is);
-
-            is_ok = parseVersion(is);
-            if (unlikely(!is_ok))
-                return error_code::HttpParserError;
-
-            // Skip the CrLf, move the cursor 2 bytes.
-            assert(is.remain() >= 2);
-            moveTo(is, 2);
+                    is_ok = parseVersion(is);
+                    if (likely(is_ok)) {
+                        // Skip the CrLf, move the cursor 2 bytes.
+                        assert(is.remain() >= 2);
+                        moveTo(is, 2);
  
-            assert(is.current() >= start);
-            assert(length >= (std::size_t)(is.current() - start));
-            header_fields_.setRef(is.current(), length - (is.current() - start));
+                        assert(is.current() >= start);
+                        assert(length >= (std::size_t)(is.current() - start));
+                        header_fields_.setRef(is.current(), length - (is.current() - start));
 
-            is_ok = parseHeaderFields(is);
-            if (unlikely(!is_ok))
-                return error_code::HttpParserError;
+                        is_ok = parseHeaderFields(is);
+                        if (unlikely(!is_ok))
+                            return error_code::HttpParserError;
+                    }
+                    else {
+                        ec = error_code::HttpParserError;
+                    }
+                }
+                else {
+                    ec = error_code::HttpParserError;
+                }
+            }
+            else {
+                ec = error_code::InvalidHttpMethod;
+            }
         }
         else {
             ec = error_code::InvalidHttpMethod;
@@ -686,7 +692,7 @@ scan_restart:
         assert(data != nullptr);
         if (likely(len != 0)) {
             // Copy the input http header data.
-            const char * content = copyContent(data, len);
+            const char * content = data;    //copyContent(data, len);
             if (likely(content != nullptr)) {
                 // Start parse the request http header.
                 InputStream is(content, len);

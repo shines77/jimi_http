@@ -23,17 +23,15 @@ public:
 
 private:
     char_type *         current_;
-    const char_type *   data_;
     const char_type *   end_;
-    size_type           size_;
-    size_type           capacity_;
+    const char_type *   data_;
 
 public:
     BasicInputStream(const char * data = nullptr) : current_(const_cast<char_type *>(data)),
-        data_(data), end_((data != nullptr) ? (data + ::strlen(data)) : nullptr) {
+        end_((data != nullptr) ? (data + ::strlen(data)) : nullptr), data_(data) {
     }
     BasicInputStream(const char * data, std::size_t len) : current_(const_cast<char_type *>(data)),
-        data_(data), end_((data != nullptr) ? (data + len) : nullptr) {
+        end_((data != nullptr) ? (data + len) : nullptr), data_(data) {
     }
     ~BasicInputStream() {}
 
@@ -74,7 +72,7 @@ public:
     }
 
     bool hasNext() const {
-        return (!is_overflow());
+        return (current_ < end_);
     }
 
     bool hasNext(int offset) const {
@@ -166,9 +164,8 @@ public:
     }
 };
 
-typedef BasicInputStream<char>      InputStreamA;
-typedef BasicInputStream<wchar_t>   InputStreamW;
 typedef BasicInputStream<char>      InputStream;
+typedef BasicInputStream<wchar_t>   InputStreamW;
 
 } // namespace jimi
 
