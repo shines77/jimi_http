@@ -129,12 +129,10 @@ public:
     bool is_empty() const { return (this->size() == 0); }
 
     void reset() {
-        this->ref.clear();
+        this->destroyChunks();
         this->size_ = 0;
         this->capacity_ = kInitCapacity;
-        this->head_ = nullptr;
-        this->tail_ = nullptr;
-        destroyChunks();
+        this->ref.clear();
     }
 
     void clear() {
@@ -174,7 +172,7 @@ public:
 
     void destroyChunks() {
         EntryChunk * chunk = this->head_;
-        while (chunk != nullptr) {
+        while (unlikely(chunk != nullptr)) {
             EntryChunk * next = chunk->next;
             delete chunk;
             chunk = next;
@@ -185,8 +183,8 @@ public:
 
     EntryChunk * findLastChunk() {
         EntryChunk * chunk = this->head_;
-        while (chunk != nullptr) {
-            if (chunk->next != nullptr)
+        while (likely(chunk != nullptr)) {
+            if (likely(chunk->next != nullptr))
                 chunk = chunk->next;
             else
                 break;
@@ -200,14 +198,14 @@ public:
         assert(value != nullptr);
         if (likely(this->size_ < kInitCapacity)) {
             assert(this->size_ < this->capacity_);
-            appendItem(this->size_, key, key_len, value, value_len);
+            this->appendItem(this->size_, key, key_len, value, value_len);
             ++(this->size_);
         }
         else {
             if (unlikely(this->size_ >= this->capacity_)) {
                 // Add a new entries chunk
-                static const std::size_t kChunkSize = 64;
-                EntryChunk * newChunk = new EntryChunk(kChunkSize);
+                static const std::size_t kNewChunkSize = 64;
+                EntryChunk * newChunk = new EntryChunk(kNewChunkSize);
                 if (newChunk != nullptr) {
                     if (this->head_ == nullptr)
                         this->head_ = newChunk;
@@ -218,7 +216,7 @@ public:
                         this->tail_->next = newChunk;
                         this->tail_ = newChunk;
                     }
-                    this->capacity_ += kChunkSize;
+                    this->capacity_ += kNewChunkSize;
                 }
             }
             assert(this->size_ < this->capacity_);
