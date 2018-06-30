@@ -16,13 +16,15 @@ union version_t {
         uint16_t major;
         uint16_t minor;
 
-        ver(uint16_t major, uint16_t minor) : major(major), minor(minor) {}
+        ver(uint16_t _major, uint16_t _minor) : major(_major), minor(_minor) {}
+        ~ver() {}
     } v;
     uint32_t value;
 
     version_t(uint32_t version = 0) : value(version) {}
     version_t(uint16_t major, uint16_t minor) : v(major, minor) {}
     version_t(const version_t & src) : value(src.value) {}
+    ~version_t() {}
 
     version_t & operator = (uint32_t version) {
         this->value = version;
