@@ -56,18 +56,26 @@ public:
     ~Version() {}
 
     Version & operator = (uint32_t version) {
-        version_.value = version;
+        this->version_.value = version;
         return (*this);
     }
 
     Version & operator = (const version_t & rhs) {
-        version_.value = rhs.value;
+        this->version_.value = rhs.value;
         return (*this);
     }
 
     Version & operator = (const Version & rhs) {
-        version_.value = rhs.getVersion();
+        this->version_.value = rhs.getVersion();
         return (*this);
+    }
+
+    operator uint32_t () {
+        return this->getVersion();
+    }
+
+    operator version_t () {
+        return this->version_;
     }
 
     static uint32_t makeVersion(uint32_t major, uint32_t minor) {
@@ -86,51 +94,59 @@ public:
     }
 
     uint16_t getMajor() const {
-        return version_.major_;
+        return this->version_.major_;
     }
 
     uint16_t getMinor() const {
-        return version_.minor_;
+        return this->version_.minor_;
     }
 
     uint32_t getVersion() const {
-        return version_.value;
+        return this->version_.value;
     }
 
     void setMajor(uint16_t major) {
-        version_.major_ = major;
+        this->version_.major_ = major;
     }
 
     void setMinor(uint16_t minor) {
-        version_.minor_ = minor;
+        this->version_.minor_ = minor;
     }
 
     void setVersion(uint32_t version) {
-        version_.value = version;
+        this->version_.value = version;
+    }
+
+    bool operator == (uint32_t rhs) {
+        return (this->version_.value == rhs);
+    }
+
+    bool operator != (uint32_t rhs) {
+        return (this->version_.value != rhs);
     }
 
     bool operator == (const Version & rhs) {
-        return (version_.value == rhs.getVersion());
+        return (this->version_.value == rhs.getVersion());
     }
 
     bool operator != (const Version & rhs) {
-        return (version_.value != rhs.getVersion());
+        return (this->version_.value != rhs.getVersion());
     }
 
     bool operator > (const Version & rhs) {
-        return (version_.value > rhs.getVersion());
+        return (this->version_.value > rhs.getVersion());
     }
 
     bool operator >= (const Version & rhs) {
-        return (version_.value >= rhs.getVersion());
+        return (this->version_.value >= rhs.getVersion());
     }
 
     bool operator < (const Version & rhs) {
-        return (version_.value < rhs.getVersion());
+        return (this->version_.value < rhs.getVersion());
     }
 
     bool operator <= (const Version & rhs) {
-        return (version_.value <= rhs.getVersion());
+        return (this->version_.value <= rhs.getVersion());
     }
 };
 
