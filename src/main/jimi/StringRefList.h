@@ -204,8 +204,8 @@ public:
         else {
             if (unlikely(this->size_ >= this->capacity_)) {
                 // Add a new entries chunk
-                static const std::size_t kNewChunkSize = 64;
-                EntryChunk * newChunk = new EntryChunk(kNewChunkSize);
+                static const std::size_t kChunkSize = 64;
+                EntryChunk * newChunk = new EntryChunk(kChunkSize);
                 if (newChunk != nullptr) {
                     if (this->head_ == nullptr)
                         this->head_ = newChunk;
@@ -216,7 +216,7 @@ public:
                         this->tail_->next = newChunk;
                         this->tail_ = newChunk;
                     }
-                    this->capacity_ += kNewChunkSize;
+                    this->capacity_ += kChunkSize;
                 }
             }
             assert(this->size_ < this->capacity_);
