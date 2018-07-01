@@ -603,7 +603,7 @@ int main(int argn, char * argv[])
 
     crc32_benchmark();
 
-#if 0
+#if 1
     http_parser_benchmark();
     http_parser_ref_benchmark();
     pico_http_parser_benchmark();
