@@ -88,7 +88,7 @@ public:
         return this->version_;
     }
 
-    static uint32_t makeVersion(uint32_t major, uint32_t minor) {
+    static uint32_t makeVersion(uint16_t major, uint16_t minor) {
         version_t version(major, minor);
         return version.value;
     }
