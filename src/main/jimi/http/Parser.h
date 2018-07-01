@@ -16,6 +16,7 @@
 #include "jimi/StringRef.h"
 #include "jimi/StringRefList.h"
 #include "jimi/http/Common.h"
+#include "jimi/http/Version.h"
 #include "jimi/http/Request.h"
 #include "jimi/http/Response.h"
 

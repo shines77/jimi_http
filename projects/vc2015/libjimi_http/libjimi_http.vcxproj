@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\..\src\main\jimi\http\Parser.h" />
     <ClInclude Include="..\..\..\src\main\jimi\http\Request.h" />
     <ClInclude Include="..\..\..\src\main\jimi\http\Response.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\http\Version.h" />
     <ClInclude Include="..\..\..\src\main\jimi\http_all.h" />
     <ClInclude Include="..\..\..\src\main\jimi\InputStream.h" />
     <ClInclude Include="..\..\..\src\main\jimi\Slice.h" />
