@@ -14,12 +14,14 @@
 #include "jimi/basic/stdsize.h"
 #include "jimi/http_all.h"
 #include "jimi/crc32.h"
+#include "jimi/Hash.h"
 #include "stop_watch.h"
 
 #include <picohttpparser/picohttpparser.h>
 
 using namespace jimi;
 using namespace jimi::http;
+using namespace TiStore;
 
 #ifdef NDEBUG
 static const std::size_t kIterations = 3000000;
@@ -272,6 +274,30 @@ void crc32_benchmark()
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
+        std::cout << "elapsed time : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
+    {
+        StopWatch sw;
+        uint64_t hash32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            hash32_sum += TiStore::hash::Times31(crc32_data, sizeof(crc32_data) - 1);
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "TiStore::hash::Times31()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "hash32       : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << TiStore::hash::Times31(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << "hash32_sum   : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << hash32_sum << std::endl;
         std::cout << "elapsed time : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
