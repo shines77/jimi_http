@@ -299,11 +299,40 @@ static std::uint32_t BKDRHash_31(const char * key, std::size_t len)
 }
 
 //
+// BKDR Hash Function (seed = 31) -- Times31, use on Java string hashCode.
+//
+//   hash = hash * seed^4 + a * seed^3 + b * seed^2 + c * seed + d;
+//
+static std::uint32_t BKDRHash_31_std(const char * key, std::size_t len)
+{
+    static const std::uint32_t seed = 31U;   // 31, 33, 131, 1313, 13131, 131313, etc ...
+
+    register const unsigned char * src = (const unsigned char *)key;
+    register const unsigned char * end = src + len;
+    register std::uint32_t hash = 0;
+
+    while (src != end) {
+        hash = hash * seed + (std::uint32_t)(*src);
+        src++;
+    }
+
+    return hash;
+}
+
+//
 // Times31, BKDR Hash Function (seed = 31) -- Often use in Java string hash.
 //
 static inline std::uint32_t Times31(const char * key, std::size_t len)
 {
     return BKDRHash_31(key, len);
+}
+
+//
+// Times31, BKDR Hash Function (seed = 31) -- Often use in Java string hash.
+//
+static inline std::uint32_t Times31_std(const char * key, std::size_t len)
+{
+    return BKDRHash_31_std(key, len);
 }
 
 //

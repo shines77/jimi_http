@@ -306,6 +306,30 @@ void crc32_benchmark()
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
 
+    {
+        StopWatch sw;
+        uint32_t hash32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            hash32_sum += TiStore::hash::Times31_std(test_data.c_str(), test_data.size());
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "TiStore::hash::Times31_std()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "hash32       : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << TiStore::hash::Times31_std(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "hash32_sum   : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << hash32_sum << std::endl;
+        std::cout << "elapsed time : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
     std::cout << std::endl;
 }
 
@@ -549,9 +573,11 @@ int main(int argn, char * argv[])
 
     crc32_benchmark();
 
+#if 0
     http_parser_benchmark();
     http_parser_ref_benchmark();
     pico_http_parser_benchmark();
+#endif
 
 #ifdef _WIN32
     ::system("pause");
