@@ -180,13 +180,13 @@ void crc32_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << "  crc32_benchmark()" << std::endl;
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << std::endl;
 
     static const char crc32_data[] = "Content-Length";
 
     std::string crc32_str(crc32_data);
     StringRef test_data(crc32_str.c_str(), crc32_str.size());
 
+#if __IS_X86_64
     {
         StopWatch sw;
         uint64_t crc32_sum = 0;
@@ -196,6 +196,7 @@ void crc32_benchmark()
         }
         sw.stop();
 
+        std::cout << std::endl;
         std::cout << "crc32_x64()" << std::endl;
         std::cout << std::endl;
 
@@ -209,6 +210,7 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
+#endif // __IS_X86_64
 
     {
         StopWatch sw;
@@ -234,6 +236,7 @@ void crc32_benchmark()
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
 
+#if __IS_X86_64
     {
         StopWatch sw;
         uint32_t crc32_sum = 0;
@@ -257,7 +260,9 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
+#endif // __IS_X86_64
 
+#if __IS_X86_64
     {
         StopWatch sw;
         uint32_t crc32_sum = 0;
@@ -281,6 +286,7 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
+#endif // __IS_X86_64
 
     {
         StopWatch sw;

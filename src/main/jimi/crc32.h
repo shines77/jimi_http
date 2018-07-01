@@ -21,6 +21,13 @@
 #endif
 #endif
 
+#if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
+ || defined(__amd64__) || defined(__x86_64__)
+#ifndef __IS_X86_64
+#define __IS_X86_64     1
+#endif
+#endif // _WIN64 || __amd64__
+
 namespace jimi {
 
 static uint32_t crc32_x86(const char * data, size_t length)
@@ -57,6 +64,8 @@ static uint32_t crc32_x86(const char * data, size_t length)
     return crc32;
 }
 
+#if __IS_X86_64
+
 static uint64_t crc32_x64(const char * data, size_t length)
 {
     assert(data != nullptr);
@@ -91,6 +100,10 @@ static uint64_t crc32_x64(const char * data, size_t length)
     return crc64;
 }
 
+#endif // __IS_X86_64
+
+#if __IS_X86_64
+
 static uint32_t intel_crc32_u64(const char * data, size_t length)
 {
     assert(data != nullptr);
@@ -114,6 +127,10 @@ static uint32_t intel_crc32_u64(const char * data, size_t length)
     }
     return crc32;
 }
+
+#endif // __IS_X86_64
+
+#if __IS_X86_64
 
 static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
 {
@@ -139,6 +156,8 @@ static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
     }
     return crc32;
 }
+
+#endif // __IS_X86_64
 
 static uint32_t intel_crc32_u32(const char * data, size_t length)
 {
