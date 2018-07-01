@@ -112,15 +112,15 @@ else()
     set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-include_directories(src)
-include_directories(src/main)
-include_directories(src/test)
-include_directories(src/unittest)
-include_directories(deps)
+include_directories(../src)
+include_directories(../src/main)
+include_directories(../src/test)
+include_directories(../src/unittest)
+include_directories(../deps)
 
 set(SOURCE_FILES
-    deps/picohttpparser/picohttpparser.c
-    src/test/http_parser_test/main.cpp
+    ../deps/picohttpparser/picohttpparser.c
+    ../src/test/http_parser_test/main.cpp
     )
 
 add_custom_target(debug
@@ -142,14 +142,14 @@ target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
 
 project(jimi_http_serv)
 
-include_directories(src)
-include_directories(src/main)
-include_directories(src/test)
-include_directories(src/unittest)
-include_directories(deps)
+include_directories(../src)
+include_directories(../src/main)
+include_directories(../src/test)
+include_directories(../src/unittest)
+include_directories(../deps)
 
 set(SOURCE_FILES
-    src/main/jimi_http_serv/main.cpp
+    ../src/main/jimi_http_serv/main.cpp
     )
 
 add_executable(jimi_http_serv ${SOURCE_FILES})
