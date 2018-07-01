@@ -281,7 +281,7 @@ void crc32_benchmark()
 
     {
         StopWatch sw;
-        uint64_t hash32_sum = 0;
+        uint32_t hash32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {
             hash32_sum += TiStore::hash::Times31(crc32_data, sizeof(crc32_data) - 1);
