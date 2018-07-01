@@ -129,10 +129,10 @@ public:
     bool is_empty() const { return (this->size() == 0); }
 
     void reset() {
-        this->destroyChunks();
+        this->ref.clear();
         this->size_ = 0;
         this->capacity_ = kInitCapacity;
-        this->ref.clear();
+        this->destroyChunks();
     }
 
     void clear() {
