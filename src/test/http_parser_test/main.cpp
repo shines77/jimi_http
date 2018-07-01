@@ -194,10 +194,13 @@ void crc32_benchmark()
         std::cout << "crc32_x64()" << std::endl;
         std::cout << std::endl;
 
-        std::cout << "crc32_sum   : ";
-        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << "crc32        : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << crc32_x64(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << "crc32_sum    : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
-        std::cout << "elapsed time: ";
+        std::cout << "elapsed time : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
@@ -215,10 +218,13 @@ void crc32_benchmark()
         std::cout << "crc32_x86()" << std::endl;
         std::cout << std::endl;
 
-        std::cout << "crc32_sum   : ";
-        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << "crc32        : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << crc32_x86(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << "crc32_sum    : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
-        std::cout << "elapsed time: ";
+        std::cout << "elapsed time : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
@@ -236,10 +242,13 @@ void crc32_benchmark()
         std::cout << "intel_crc32_u64()" << std::endl;
         std::cout << std::endl;
 
-        std::cout << "crc32_sum   : ";
-        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << "crc32        : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << intel_crc32_u64(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << "crc32_sum    : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
-        std::cout << "elapsed time: ";
+        std::cout << "elapsed time : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
@@ -257,10 +266,13 @@ void crc32_benchmark()
         std::cout << "intel_crc32_u64_v2()" << std::endl;
         std::cout << std::endl;
 
-        std::cout << "crc32_sum   : ";
-        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << "crc32        : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << intel_crc32_u64_v2(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << "crc32_sum    : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
-        std::cout << "elapsed time: ";
+        std::cout << "elapsed time : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }

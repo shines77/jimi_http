@@ -38,7 +38,7 @@ static uint32_t crc32_x86(const char * data, size_t length)
     data += kStepLen;
 
     do {
-        if (unlikely(data <= data_end)) {
+        if (likely(data <= data_end)) {
             crc32 = _mm_crc32_u32(crc32, data32);
             data += kStepLen;
             data32 = *(uint32_t *)(data);
@@ -72,7 +72,7 @@ static uint64_t crc32_x64(const char * data, size_t length)
     data += kStepLen;
 
     do {
-        if (unlikely(data <= data_end)) {
+        if (likely(data <= data_end)) {
             crc64 = _mm_crc32_u64(crc64, data64);
             data += kStepLen;
             data64 = *(uint64_t *)(data);
@@ -100,7 +100,7 @@ static uint32_t intel_crc32_u64(const char * data, size_t length)
     uint64_t * src = (uint64_t *)data;
     uint64_t * src_end = src + (length / kStepLen);
 
-    while (unlikely(src < src_end)) {
+    while (likely(src < src_end)) {
         crc64 = _mm_crc32_u64(crc64, *src);
         ++src;
     }
@@ -124,7 +124,7 @@ static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
     uint64_t * src = (uint64_t *)data;
     uint64_t * src_end = src + (length / kStepLen);
 
-    while (unlikely(src < src_end)) {
+    while (likely(src < src_end)) {
         crc64 = _mm_crc32_u64(crc64, *src);
         ++src;
     }
