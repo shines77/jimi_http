@@ -21,6 +21,35 @@
 
 using namespace std;
 
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// HTTP response smuggling
+//
+//   https://www.mozilla.org/en-US/security/advisories/mfsa2006-33/
+//
+// HTTP Response Smuggling
+//
+//   https://www.whitehatsec.com/glossary/content/http-response-smuggling
+//
+// HTTP Response Splitting
+//
+//   https://www.whitehatsec.com/glossary/content/http-response-splitting
+//
+// Testing for HTTP Splitting/Smuggling (OTG-INPVAL-016)
+//
+//   https://www.owasp.org/index.php/Testing_for_HTTP_Splitting/Smuggling_(OTG-INPVAL-016)
+//   http://netsecurity.51cto.com/art/201001/177371.htm (Chinese)
+//
+// Content injection spoofing with a space before colon in HTTP header
+//
+//   https://bugzilla.mozilla.org/show_bug.cgi?id=329746
+//
+// Difference between HTTP Splitting AND HTTP Smuggling?
+//
+//   https://stackoverflow.com/questions/28580568/difference-between-http-splitting-and-http-smuggling
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
 namespace jimi {
 namespace http {
 
