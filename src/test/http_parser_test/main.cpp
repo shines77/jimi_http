@@ -284,6 +284,30 @@ void crc32_benchmark()
 
     {
         StopWatch sw;
+        uint32_t crc32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            crc32_sum += intel_crc32_u32(test_data.c_str(), test_data.size());
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "intel_crc32_u32()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "crc32        : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << intel_crc32_u32(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "crc32_sum    : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << crc32_sum << std::endl;
+        std::cout << "elapsed time : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
+    {
+        StopWatch sw;
         uint32_t hash32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {

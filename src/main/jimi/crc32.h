@@ -140,6 +140,30 @@ static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
     return crc32;
 }
 
+static uint32_t intel_crc32_u32(const char * data, size_t length)
+{
+    assert(data != nullptr);
+    uint32_t crc32 = 0;
+
+    static const size_t kStepLen = sizeof(uint32_t);
+    uint32_t * src = (uint32_t *)data;
+    uint32_t * src_end = src + (length / kStepLen);
+
+    while (likely(src < src_end)) {
+        crc32 = _mm_crc32_u32(crc32, *src);
+        ++src;
+    }
+
+    unsigned char * src8 = (unsigned char *)src;
+    unsigned char * src8_end = (unsigned char *)(data + length);
+
+    while (likely(src8 < src8_end)) {
+        crc32 = _mm_crc32_u8(crc32, *src8);
+        ++src8;
+    }
+    return crc32;
+}
+
 } // namespace jimi
 
 #endif // JIMI_HTTP_CRC32_H
