@@ -13,6 +13,7 @@
 
 #include "jimi/basic/stdsize.h"
 #include "jimi/http_all.h"
+#include "jimi/crc32.h"
 #include "stop_watch.h"
 
 #include <picohttpparser/picohttpparser.h>
@@ -169,6 +170,101 @@ void http_parser_ref_test()
         std::cout << "Parse speed:       0   Parse/Sec" << std::endl;
         std::cout << "Parse throughput:  0.0 MB/Sec" << std::endl;
     }
+    std::cout << std::endl;
+}
+
+void crc32_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  crc32_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    static const char crc32_data[] = "Content-Length";
+
+    {
+        StopWatch sw;
+        uint64_t crc32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            crc32_sum += crc32_x64(crc32_data, sizeof(crc32_data) - 1);
+        }
+        sw.stop();
+
+        std::cout << "crc32_x64()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "crc32_sum   : ";
+        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << crc32_sum << std::endl;
+        std::cout << "elapsed time: ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
+    {
+        StopWatch sw;
+        uint32_t crc32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            crc32_sum += crc32_x86(crc32_data, sizeof(crc32_data) - 1);
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "crc32_x86()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "crc32_sum   : ";
+        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << crc32_sum << std::endl;
+        std::cout << "elapsed time: ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
+    {
+        StopWatch sw;
+        uint32_t crc32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            crc32_sum += intel_crc32_u64(crc32_data, sizeof(crc32_data) - 1);
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "intel_crc32_u64()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "crc32_sum   : ";
+        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << crc32_sum << std::endl;
+        std::cout << "elapsed time: ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
+    {
+        StopWatch sw;
+        uint32_t crc32_sum = 0;
+        sw.start();
+        for (size_t i = 0;  i < kIterations; ++i) {
+            crc32_sum += intel_crc32_u64_v2(crc32_data, sizeof(crc32_data) - 1);
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "intel_crc32_u64_v2()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "crc32_sum   : ";
+        std::cout << std::left << std::setw(10) << std::setfill(' ') << std::dec;
+        std::cout << crc32_sum << std::endl;
+        std::cout << "elapsed time: ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
     std::cout << std::endl;
 }
 
@@ -409,6 +505,8 @@ int main(int argn, char * argv[])
     http_parser_test();
     http_parser_ref_test();
 #endif
+
+    crc32_benchmark();
 
     http_parser_benchmark();
     http_parser_ref_benchmark();
