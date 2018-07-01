@@ -184,12 +184,15 @@ void crc32_benchmark()
 
     static const char crc32_data[] = "Content-Length";
 
+    std::string crc32_str(crc32_data);
+    StringRef test_data(crc32_str.c_str(), crc32_str.size());
+
     {
         StopWatch sw;
         uint64_t crc32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += crc32_x64(crc32_data, sizeof(crc32_data) - 1);
+            crc32_sum += crc32_x64(test_data.c_str(), test_data.size());
         }
         sw.stop();
 
@@ -198,7 +201,7 @@ void crc32_benchmark()
 
         std::cout << "crc32        : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << crc32_x64(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << crc32_x64(test_data.c_str(), test_data.size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -212,7 +215,7 @@ void crc32_benchmark()
         uint32_t crc32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += crc32_x86(crc32_data, sizeof(crc32_data) - 1);
+            crc32_sum += crc32_x86(test_data.c_str(), test_data.size());
         }
         sw.stop();
 
@@ -222,7 +225,7 @@ void crc32_benchmark()
 
         std::cout << "crc32        : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << crc32_x86(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << crc32_x86(test_data.c_str(), test_data.size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -236,7 +239,7 @@ void crc32_benchmark()
         uint32_t crc32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += intel_crc32_u64(crc32_data, sizeof(crc32_data) - 1);
+            crc32_sum += intel_crc32_u64(test_data.c_str(), test_data.size());
         }
         sw.stop();
 
@@ -246,7 +249,7 @@ void crc32_benchmark()
 
         std::cout << "crc32        : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << intel_crc32_u64(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << intel_crc32_u64(test_data.c_str(), test_data.size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -260,7 +263,7 @@ void crc32_benchmark()
         uint32_t crc32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += intel_crc32_u64_v2(crc32_data, sizeof(crc32_data) - 1);
+            crc32_sum += intel_crc32_u64_v2(test_data.c_str(), test_data.size());
         }
         sw.stop();
 
@@ -270,7 +273,7 @@ void crc32_benchmark()
 
         std::cout << "crc32        : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << intel_crc32_u64_v2(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << intel_crc32_u64_v2(test_data.c_str(), test_data.size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -284,7 +287,7 @@ void crc32_benchmark()
         uint32_t hash32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kIterations; ++i) {
-            hash32_sum += TiStore::hash::Times31(crc32_data, sizeof(crc32_data) - 1);
+            hash32_sum += TiStore::hash::Times31(test_data.c_str(), test_data.size());
         }
         sw.stop();
 
@@ -294,7 +297,7 @@ void crc32_benchmark()
 
         std::cout << "hash32       : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << TiStore::hash::Times31(crc32_data, sizeof(crc32_data) - 1) << std::endl;
+        std::cout << TiStore::hash::Times31(test_data.c_str(), test_data.size()) << std::endl;
         std::cout << "hash32_sum   : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << hash32_sum << std::endl;
