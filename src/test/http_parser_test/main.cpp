@@ -235,6 +235,50 @@ void crc32_benchmark()
         crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
     }
 
+#ifndef NDEBUG
+#if __IS_X86_64
+    {
+        std::cout << std::endl;
+        std::cout << "crc32_x64()" << std::endl;
+        std::cout << std::endl;
+
+        uint32_t crc32_sum = 0;
+        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+            crc32_sum += crc32_x64(crc32_data[i].c_str(), crc32_data[i].size());
+
+            std::cout << "crc32[";
+            std::cout << std::right << std::setw(2) << std::setfill(' ') << std::dec;
+            std::cout << i << "]: ";
+            std::cout << "0x";
+            std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+            std::cout << std::setiosflags(std::ios::uppercase);
+            std::cout << crc32_x64(crc32_data[i].c_str(), crc32_data[i].size()) << std::endl;
+        }
+        std::cout << std::endl;
+    }
+#endif // __IS_X86_64
+
+    {
+        std::cout << std::endl;
+        std::cout << "crc32_x32()" << std::endl;
+        std::cout << std::endl;
+
+        uint32_t crc32_sum = 0;
+        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+            crc32_sum += crc32_x86(crc32_data[i].c_str(), crc32_data[i].size());
+
+            std::cout << "crc32[";
+            std::cout << std::right << std::setw(2) << std::setfill(' ') << std::dec;
+            std::cout << i << "]: ";
+            std::cout << "0x";
+            std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+            std::cout << std::setiosflags(std::ios::uppercase);
+            std::cout << crc32_x86(crc32_data[i].c_str(), crc32_data[i].size()) << std::endl;
+        }
+        std::cout << std::endl;
+    }
+#endif // For debug only
+
 #if __IS_X86_64
     {
         StopWatch sw;
