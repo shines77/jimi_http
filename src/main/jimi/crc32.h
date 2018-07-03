@@ -34,26 +34,27 @@ static uint32_t crc32_x86(const char * data, size_t length)
 {
     assert(data != nullptr);
 
-    static const uint32_t kStepLen = sizeof(uint32_t);
+    static const size_t kStepLen = sizeof(uint32_t);
     static const uint32_t kOneMask = 0xFFFFFFFFUL;
 
     uint32_t crc32 = 0;
 
     uint32_t data32;
     const char * data_end = data + length;
-    data32 = *(uint32_t *)(data);
-    data += kStepLen;
+    ssize_t remain = length;
 
     do {
-        if (likely(data <= data_end)) {
+        if (likely(remain >= (ssize_t)kStepLen)) {
+            data32 = *(uint32_t *)(data);
             crc32 = _mm_crc32_u32(crc32, data32);
             data += kStepLen;
-            data32 = *(uint32_t *)(data);
+            remain -= kStepLen;
         }
         else {
-            assert(data > data_end);
-            uint32_t rest = (uint32_t)(kStepLen - (data - data_end));
-            assert(rest >= 0 && rest < kStepLen);
+            assert(data_end >= data);
+            data32 = *(uint32_t *)(data);
+            size_t rest = (size_t)((ssize_t)kStepLen - (data_end - data));
+            assert(rest > 0 && rest <= kStepLen);
             uint32_t mask = kOneMask >> (rest * 8U);
             data32 &= mask;
             crc32 = _mm_crc32_u32(crc32, data32);
@@ -77,19 +78,20 @@ static uint32_t crc32_x64(const char * data, size_t length)
 
     uint64_t data64;
     const char * data_end = data + length;
-    data64 = *(uint64_t *)(data);
-    data += kStepLen;
+    ssize_t remain = length;
 
     do {
-        if (likely(data <= data_end)) {
+        if (likely(remain >= (ssize_t)kStepLen)) {
+            data64 = *(uint64_t *)(data);
             crc64 = _mm_crc32_u64(crc64, data64);
             data += kStepLen;
-            data64 = *(uint64_t *)(data);
+            remain -= kStepLen;
         }
         else {
-            assert(data > data_end);
-            size_t rest = (size_t)(kStepLen - (data - data_end));
-            assert(rest >= 0 && rest < kStepLen);
+            assert(data_end >= data);
+            data64 = *(uint64_t *)(data);
+            size_t rest = (size_t)((ssize_t)kStepLen - (data_end - data));
+            assert(rest > 0 && rest <= kStepLen);
             uint64_t mask = kOneMask >> (rest * 8U);
             data64 &= mask;
             crc64 = _mm_crc32_u64(crc64, data64);

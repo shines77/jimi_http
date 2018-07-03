@@ -238,7 +238,7 @@ void crc32_benchmark()
 #if __IS_X86_64
     {
         StopWatch sw;
-        uint64_t crc32_sum = 0;
+        uint32_t crc32_sum = 0;
         sw.start();
         for (size_t i = 0;  i < kRepeatTimes; ++i) {
             for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
