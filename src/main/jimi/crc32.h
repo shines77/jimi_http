@@ -66,7 +66,7 @@ static uint32_t crc32_x86(const char * data, size_t length)
 
 #if __IS_X86_64
 
-static uint64_t crc32_x64(const char * data, size_t length)
+static uint32_t crc32_x64(const char * data, size_t length)
 {
     assert(data != nullptr);
 
@@ -97,7 +97,7 @@ static uint64_t crc32_x64(const char * data, size_t length)
         }
     } while (1);
 
-    return crc64;
+    return (uint32_t)crc64;
 }
 
 #endif // __IS_X86_64
