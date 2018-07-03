@@ -15,7 +15,7 @@
 #include "jimi/http_all.h"
 #include "jimi/crc32.h"
 #include "jimi/Hash.h"
-#include "stop_watch.h"
+#include "StopWatch.h"
 
 #include <picohttpparser/picohttpparser.h>
 
@@ -181,18 +181,69 @@ void crc32_benchmark()
     std::cout << "  crc32_benchmark()" << std::endl;
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
 
-    static const char crc32_data[] = "Content-Length";
+    //
+    // See: https://blog.csdn.net/janekeyzheng/article/details/42419407
+    //
+    static const char * header_fields[] = {
+        "Accept",
+        "Content-Length",
+        "Accept-Charset",
+        "Accept-Encoding",
+        "Accept-Language",
+        "Authorization",
+        "Cache-Control",
+        "Connection",
+        "Cookie",
+        "Content-Length",
+        "Content-MD5",
+        "Content-Type",
+        "Date",
+        "From",
+        "Host",
+        "Referer",
+        "User-Agent",
+        "Range",
+        "Upgrade",
+        "If-Match",
+        "If-Modified-Since",
+        "If-None-Match",
+        "If-Range",
+        "If-Unmodified-Since",
+        "Max-Forwards",
+        "Pragma",
+        "Proxy-Authorization",
+        "Via",
+        "Warning",
+        "X-Requested-With",
+        "DNT",
+        "X-Forwarded-For",
+        "X-Forwarded-Proto",
+        "Front-End-Https",
+        "X-ATT-DeviceId",
+        "X-XSS-Protection",
+        "X-Content-Type-Options",
+        "X-Powered-By"
+    };
 
-    std::string crc32_str(crc32_data);
-    StringRef test_data(crc32_str.c_str(), crc32_str.size());
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+
+    std::string crc32_str[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+    }
 
 #if __IS_X86_64
     {
         StopWatch sw;
         uint64_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += crc32_x64(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                crc32_sum += crc32_x64(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -201,8 +252,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "crc32        : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << crc32_x64(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << crc32_x64(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -216,8 +269,10 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += crc32_x86(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                crc32_sum += crc32_x86(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -226,8 +281,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "crc32        : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << crc32_x86(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << crc32_x86(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -241,8 +298,10 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += intel_crc32_u64(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                crc32_sum += intel_crc32_u64(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -251,8 +310,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "crc32        : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << intel_crc32_u64(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << intel_crc32_u64(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -267,8 +328,10 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += intel_crc32_u64_v2(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                crc32_sum += intel_crc32_u64_v2(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -277,8 +340,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "crc32        : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << intel_crc32_u64_v2(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << intel_crc32_u64_v2(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -292,8 +357,10 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            crc32_sum += intel_crc32_u32(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                crc32_sum += intel_crc32_u32(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -302,8 +369,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "crc32        : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << intel_crc32_u32(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << intel_crc32_u32(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "crc32_sum    : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << crc32_sum << std::endl;
@@ -316,8 +385,10 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t hash32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            hash32_sum += TiStore::hash::Times31(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                hash32_sum += TiStore::hash::Times31(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -326,8 +397,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "hash32       : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << TiStore::hash::Times31(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << TiStore::hash::Times31(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "hash32_sum   : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << hash32_sum << std::endl;
@@ -340,8 +413,10 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t hash32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kIterations; ++i) {
-            hash32_sum += TiStore::hash::Times31_std(test_data.c_str(), test_data.size());
+        for (size_t i = 0;  i < kRepeatTimes; ++i) {
+            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+                hash32_sum += TiStore::hash::Times31_std(crc32_data[j].c_str(), crc32_data[j].size());
+            }
         }
         sw.stop();
 
@@ -350,8 +425,10 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         std::cout << "hash32       : ";
-        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
-        std::cout << TiStore::hash::Times31_std(test_data.c_str(), test_data.size()) << std::endl;
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << TiStore::hash::Times31_std(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
         std::cout << "hash32_sum   : ";
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
         std::cout << hash32_sum << std::endl;
@@ -595,7 +672,7 @@ int main(int argn, char * argv[])
     http_parser.displayFields();
     printf("\n");
 
-#if 1
+#if 0
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
@@ -603,7 +680,7 @@ int main(int argn, char * argv[])
 
     crc32_benchmark();
 
-#if 1
+#if 0
     http_parser_benchmark();
     http_parser_ref_benchmark();
     pico_http_parser_benchmark();

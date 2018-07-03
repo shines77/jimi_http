@@ -53,7 +53,7 @@ static uint32_t crc32_x86(const char * data, size_t length)
         else {
             assert(data > data_end);
             uint32_t rest = (uint32_t)(kStepLen - (data - data_end));
-            assert(rest > 0 && rest < kStepLen);
+            assert(rest >= 0 && rest < kStepLen);
             uint32_t mask = kOneMask >> (rest * 8U);
             data32 &= mask;
             crc32 = _mm_crc32_u32(crc32, data32);
@@ -89,7 +89,7 @@ static uint64_t crc32_x64(const char * data, size_t length)
         else {
             assert(data > data_end);
             size_t rest = (size_t)(kStepLen - (data - data_end));
-            assert(rest > 0 && rest < kStepLen);
+            assert(rest >= 0 && rest < kStepLen);
             uint64_t mask = kOneMask >> (rest * 8U);
             data64 &= mask;
             crc64 = _mm_crc32_u64(crc64, data64);
