@@ -236,7 +236,7 @@ void crc32_benchmark()
     }
 
 #ifndef NDEBUG
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
     {
         std::cout << std::endl;
         std::cout << "crc32_x64()" << std::endl;
@@ -256,7 +256,7 @@ void crc32_benchmark()
         }
         std::cout << std::endl;
     }
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
     {
         std::cout << std::endl;
@@ -279,7 +279,7 @@ void crc32_benchmark()
     }
 #endif // For debug only
 
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
     {
         StopWatch sw;
         uint32_t crc32_sum = 0;
@@ -307,7 +307,7 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
     {
         StopWatch sw;
@@ -337,7 +337,7 @@ void crc32_benchmark()
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
 
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
     {
         StopWatch sw;
         uint32_t crc32_sum = 0;
@@ -365,9 +365,9 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
     {
         StopWatch sw;
         uint32_t crc32_sum = 0;
@@ -395,7 +395,7 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
     {
         StopWatch sw;

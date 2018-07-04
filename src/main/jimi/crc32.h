@@ -23,8 +23,8 @@
 
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
  || defined(__amd64__) || defined(__x86_64__)
-#ifndef __IS_X86_64
-#define __IS_X86_64     1
+#ifndef CRC32C_IS_X86_64
+#define CRC32C_IS_X86_64    1
 #endif
 #endif // _WIN64 || __amd64__
 
@@ -35,18 +35,16 @@ static uint32_t crc32_x86(const char * data, size_t length)
     assert(data != nullptr);
 
     static const ssize_t kStepLen = sizeof(uint32_t);
-    static const uint32_t kOneMask = 0xFFFFFFFFUL;
+    static const uint32_t kMaskOne = 0xFFFFFFFFUL;
+    const char * data_end = data + length;
 
     uint32_t crc32 = ~0;
-
-    uint32_t data32;
-    const char * data_end = data + length;
     ssize_t remain = length;
 
     do {
         if (likely(remain >= kStepLen)) {
             assert(data < data_end);
-            data32 = *(uint32_t *)(data);
+            uint32_t data32 = *(uint32_t *)(data);
             crc32 = _mm_crc32_u32(crc32, data32);
             data += kStepLen;
             remain -= kStepLen;
@@ -56,10 +54,10 @@ static uint32_t crc32_x86(const char * data, size_t length)
             assert((data_end - data) == remain);
             assert(remain >= 0);
             if (likely(remain > 0)) {
-                data32 = *(uint32_t *)(data);
+                uint32_t data32 = *(uint32_t *)(data);
                 uint32_t rest = (uint32_t)(kStepLen - remain);
                 assert(rest > 0 && rest < (uint32_t)kStepLen);
-                uint32_t mask = kOneMask >> (rest * 8U);
+                uint32_t mask = kMaskOne >> (rest * 8U);
                 data32 &= mask;
                 crc32 = _mm_crc32_u32(crc32, data32);
             }
@@ -70,25 +68,23 @@ static uint32_t crc32_x86(const char * data, size_t length)
     return ~crc32;
 }
 
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
 
 static uint32_t crc32_x64(const char * data, size_t length)
 {
     assert(data != nullptr);
 
     static const ssize_t kStepLen = sizeof(uint64_t);
-    static const uint64_t kOneMask = 0xFFFFFFFFFFFFFFFFULL;
+    static const uint64_t kMaskOne = 0xFFFFFFFFFFFFFFFFULL;
+    const char * data_end = data + length;
 
     uint64_t crc64 = ~0;
-
-    uint64_t data64;
-    const char * data_end = data + length;
     ssize_t remain = length;
 
     do {
         if (likely(remain >= kStepLen)) {
             assert(data < data_end);
-            data64 = *(uint64_t *)(data);
+            uint64_t data64 = *(uint64_t *)(data);
             crc64 = _mm_crc32_u64(crc64, data64);
             data += kStepLen;
             remain -= kStepLen;
@@ -98,10 +94,10 @@ static uint32_t crc32_x64(const char * data, size_t length)
             assert((data_end - data) == remain);
             assert(remain >= 0);
             if (likely(remain > 0)) {
-                data64 = *(uint64_t *)(data);
+                uint64_t data64 = *(uint64_t *)(data);
                 size_t rest = (size_t)(kStepLen - remain);
                 assert(rest > 0 && rest < (size_t)kStepLen);
-                uint64_t mask = kOneMask >> (rest * 8U);
+                uint64_t mask = kMaskOne >> (rest * 8U);
                 data64 &= mask;
                 crc64 = _mm_crc32_u64(crc64, data64);
             }
@@ -112,9 +108,9 @@ static uint32_t crc32_x64(const char * data, size_t length)
     return (uint32_t)~crc64;
 }
 
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
 
 static uint32_t intel_crc32_u64(const char * data, size_t length)
 {
@@ -140,9 +136,9 @@ static uint32_t intel_crc32_u64(const char * data, size_t length)
     return ~crc32;
 }
 
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
-#if __IS_X86_64
+#if CRC32C_IS_X86_64
 
 static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
 {
@@ -169,7 +165,7 @@ static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
     return ~crc32;
 }
 
-#endif // __IS_X86_64
+#endif // CRC32C_IS_X86_64
 
 static uint32_t intel_crc32_u32(const char * data, size_t length)
 {
