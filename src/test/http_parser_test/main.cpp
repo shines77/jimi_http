@@ -185,8 +185,8 @@ void crc32_benchmark()
     // See: https://blog.csdn.net/janekeyzheng/article/details/42419407
     //
     static const char * header_fields[] = {
+        // Request
         "Accept",
-        "Content-Length",
         "Accept-Charset",
         "Accept-Encoding",
         "Accept-Language",
@@ -198,12 +198,10 @@ void crc32_benchmark()
         "Content-MD5",
         "Content-Type",
         "Date",
+        "DNT",
         "From",
+        "Front-End-Https",
         "Host",
-        "Referer",
-        "User-Agent",
-        "Range",
-        "Upgrade",
         "If-Match",
         "If-Modified-Since",
         "If-None-Match",
@@ -212,17 +210,57 @@ void crc32_benchmark()
         "Max-Forwards",
         "Pragma",
         "Proxy-Authorization",
+        "Range",
+        "Referer",
+        "User-Agent",
+        "Upgrade",
         "Via",
         "Warning",
-        "X-Requested-With",
-        "DNT",
+        "X-ATT-DeviceId",
+        "X-Content-Type-Options",
         "X-Forwarded-For",
         "X-Forwarded-Proto",
-        "Front-End-Https",
-        "X-ATT-DeviceId",
-        "X-XSS-Protection",
-        "X-Content-Type-Options",
         "X-Powered-By"
+        "X-Requested-With",
+        "X-XSS-Protection",
+
+        // Response
+        "Access-Control-Allow-Origin",
+        "Accept-Ranges",
+        "Age",
+        "Allow",
+        //"Cache-Control",
+        //"Connection",
+        "Content-Encoding",
+        "Content-Language",
+        //"Content-Length",
+        "Content-Disposition",
+        //"Content-MD5",
+        "Content-Range",
+        //"Content-Type",
+        "Date",
+        "ETag",
+        "Expires",
+        "Last-Modified"
+        "Link",
+        "Location",
+        "P3P",
+        "Proxy-Authenticate",
+        "Refresh",
+        "Retry-After",
+        "Server",
+        "Set-Cookie",
+        "Strict-Transport-Security",
+        "Trailer",
+        "Transfer-Encoding",
+        "Vary",
+        "Via",
+        "WWW-Authenticate",
+        //"X-Content-Type-Options",
+        //"X-Powered-By",
+        //"X-XSS-Protection",
+
+        "Last"
     };
 
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
@@ -716,7 +754,7 @@ int main(int argn, char * argv[])
     http_parser.displayFields();
     printf("\n");
 
-#if 0
+#if 1
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
