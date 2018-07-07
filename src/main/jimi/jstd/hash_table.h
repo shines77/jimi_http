@@ -181,7 +181,7 @@ public:
     void reserve_fast(size_type new_buckets) {
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
-        if (new_buckets > this->buckets_) {
+        if (likely(new_buckets > this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (new_table != nullptr) {
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
@@ -204,7 +204,7 @@ public:
     void resize_fast(size_type new_buckets) {
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
-        if (new_buckets > this->buckets_) {
+        if (likely(new_buckets > this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (new_table != nullptr) {
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
@@ -236,7 +236,7 @@ public:
             // Found, next to check the hash value.
             if (likely(node->hash == hash)) {
                 // If hash value is equal, compare the key sizes and strings.
-                if (node->pair.first.size() == key.size()) {
+                if (likely(node->pair.first.size() == key.size())) {
                     if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                         return (iterator)&this->table_[index];
                     }
@@ -249,7 +249,7 @@ public:
                 node = (node_type *)this->table_[index];
                 if (likely(node->hash == hash)) {
                     // If hash value is equal, compare the key sizes and strings.
-                    if (node->pair.first.size() == key.size()) {
+                    if (likely(node->pair.first.size() == key.size())) {
                         if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                             return (iterator)&this->table_[index];
                         }
@@ -263,12 +263,12 @@ public:
     }
 
     void insert(const key_type & key, const value_type & value) {
-        if (this->size_ >= (this->buckets_ * 3 / 4)) {
+        if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
             this->resize_fast(this->buckets_ * 2);
         }
 
         node_type * new_data = new node_type(key, value);
-        if (new_data != nullptr) {
+        if (likely(new_data != nullptr)) {
             hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
             hash_type index = hash & this->mask_;
             new_data->hash = hash;
@@ -290,13 +290,13 @@ public:
     }
 
     void insert(key_type && key, value_type && value) {
-        if (this->size_ >= (this->buckets_ * 3 / 4)) {
+        if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
             this->resize_fast(this->buckets_ * 2);
         }
 
         node_type * new_data = new node_type(std::forward<key_type>(key),
                                              std::forward<value_type>(value));
-        if (new_data != nullptr) {
+        if (likely(new_data != nullptr)) {
             hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
             hash_type index = hash & this->mask_;
             new_data->hash = hash;
