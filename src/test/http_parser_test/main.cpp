@@ -1,7 +1,11 @@
 
+#include "jimi/basic/stdint.h"
+#include "jimi/basic/stdsize.h"
+#include "jimi/basic/inttypes.h"
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <string.h>
 
 #include <sstream>
@@ -10,12 +14,16 @@
 #include <atomic>
 #include <thread>
 #include <chrono>
+#include <string>
+#include <map>
+#include <unordered_map>
 
-#include "jimi/basic/stdsize.h"
 #include "jimi/http_all.h"
 #include "jimi/crc32.h"
 #include "jimi/Hash.h"
 #include "StopWatch.h"
+
+#include "jimi/jstd/hash_table.h"
 
 #include <picohttpparser/picohttpparser.h>
 
@@ -59,6 +67,88 @@ static const std::size_t kIterations = 10000;
         "__utmz=xxxxxxxxx.xxxxxxxxxx.x.x.utmccn=(referral)|utmcsr=reader.livedoor.com|utmcct=/reader/|utmcmd=referral\r\n"
         "\r\n";
 #endif
+
+//
+// See: https://blog.csdn.net/janekeyzheng/article/details/42419407
+//
+static const char * header_fields[] = {
+    // Request
+    "Accept",
+    "Accept-Charset",
+    "Accept-Encoding",
+    "Accept-Language",
+    "Authorization",
+    "Cache-Control",
+    "Connection",
+    "Cookie",
+    "Content-Length",
+    "Content-MD5",
+    "Content-Type",
+    "Date",
+    "DNT",
+    "From",
+    "Front-End-Https",
+    "Host",
+    "If-Match",
+    "If-Modified-Since",
+    "If-None-Match",
+    "If-Range",
+    "If-Unmodified-Since",
+    "Max-Forwards",
+    "Pragma",
+    "Proxy-Authorization",
+    "Range",
+    "Referer",
+    "User-Agent",
+    "Upgrade",
+    "Via",
+    "Warning",
+    "X-ATT-DeviceId",
+    "X-Content-Type-Options",
+    "X-Forwarded-For",
+    "X-Forwarded-Proto",
+    "X-Powered-By"
+    "X-Requested-With",
+    "X-XSS-Protection",
+
+    // Response
+    "Access-Control-Allow-Origin",
+    "Accept-Ranges",
+    "Age",
+    "Allow",
+    //"Cache-Control",
+    //"Connection",
+    "Content-Encoding",
+    "Content-Language",
+    //"Content-Length",
+    "Content-Disposition",
+    //"Content-MD5",
+    "Content-Range",
+    //"Content-Type",
+    "Date",
+    "ETag",
+    "Expires",
+    "Last-Modified"
+    "Link",
+    "Location",
+    "P3P",
+    "Proxy-Authenticate",
+    "Refresh",
+    "Retry-After",
+    "Server",
+    "Set-Cookie",
+    "Strict-Transport-Security",
+    "Trailer",
+    "Transfer-Encoding",
+    "Vary",
+    "Via",
+    "WWW-Authenticate",
+    //"X-Content-Type-Options",
+    //"X-Powered-By",
+    //"X-XSS-Protection",
+
+    "Last"
+};
 
 void stop_watch_test()
 {
@@ -181,88 +271,6 @@ void crc32_benchmark()
     std::cout << "  crc32_benchmark()" << std::endl;
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
 
-    //
-    // See: https://blog.csdn.net/janekeyzheng/article/details/42419407
-    //
-    static const char * header_fields[] = {
-        // Request
-        "Accept",
-        "Accept-Charset",
-        "Accept-Encoding",
-        "Accept-Language",
-        "Authorization",
-        "Cache-Control",
-        "Connection",
-        "Cookie",
-        "Content-Length",
-        "Content-MD5",
-        "Content-Type",
-        "Date",
-        "DNT",
-        "From",
-        "Front-End-Https",
-        "Host",
-        "If-Match",
-        "If-Modified-Since",
-        "If-None-Match",
-        "If-Range",
-        "If-Unmodified-Since",
-        "Max-Forwards",
-        "Pragma",
-        "Proxy-Authorization",
-        "Range",
-        "Referer",
-        "User-Agent",
-        "Upgrade",
-        "Via",
-        "Warning",
-        "X-ATT-DeviceId",
-        "X-Content-Type-Options",
-        "X-Forwarded-For",
-        "X-Forwarded-Proto",
-        "X-Powered-By"
-        "X-Requested-With",
-        "X-XSS-Protection",
-
-        // Response
-        "Access-Control-Allow-Origin",
-        "Accept-Ranges",
-        "Age",
-        "Allow",
-        //"Cache-Control",
-        //"Connection",
-        "Content-Encoding",
-        "Content-Language",
-        //"Content-Length",
-        "Content-Disposition",
-        //"Content-MD5",
-        "Content-Range",
-        //"Content-Type",
-        "Date",
-        "ETag",
-        "Expires",
-        "Last-Modified"
-        "Link",
-        "Location",
-        "P3P",
-        "Proxy-Authenticate",
-        "Refresh",
-        "Retry-After",
-        "Server",
-        "Set-Cookie",
-        "Strict-Transport-Security",
-        "Trailer",
-        "Transfer-Encoding",
-        "Vary",
-        "Via",
-        "WWW-Authenticate",
-        //"X-Content-Type-Options",
-        //"X-Powered-By",
-        //"X-XSS-Protection",
-
-        "Last"
-    };
-
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
@@ -322,8 +330,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 crc32_sum += crc32_x64(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -351,8 +359,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 crc32_sum += crc32_x86(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -380,8 +388,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 crc32_sum += intel_crc32_u64(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -410,8 +418,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 crc32_sum += intel_crc32_u64_v2(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -439,8 +447,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t crc32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 crc32_sum += intel_crc32_u32(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -467,8 +475,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t hash32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 hash32_sum += TiStore::hash::Times31(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -495,8 +503,8 @@ void crc32_benchmark()
         StopWatch sw;
         uint32_t hash32_sum = 0;
         sw.start();
-        for (size_t i = 0;  i < kRepeatTimes; ++i) {
-            for (size_t j = 0;  j < kHeaderFieldSize; ++j) {
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 hash32_sum += TiStore::hash::Times31_std(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -520,6 +528,108 @@ void crc32_benchmark()
     }
 
     std::cout << std::endl;
+}
+
+void hashtable_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+
+    std::string crc32_str[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+    }
+
+    {
+        size_t count = 0;
+        typedef std::map<std::string, std::string>::iterator map_iterator;
+        std::map<std::string, std::string> map;
+        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+            char buf[16];
+            _itoa_s((int)i, buf, 10);
+            std::string index = buf;
+            map.emplace(std::make_pair(crc32_str[i], index));
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                map_iterator iter = map.find(crc32_str[j]);
+                if (iter != map.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("std::map<std::string, std::string>\n\n");
+        printf("count = %" PRIu64 ", elapsed time: %0.3f ms\n", count, sw.getMillisec());
+        printf("\n");
+    }
+
+    {
+        size_t count = 0;
+        typedef std::unordered_map<std::string, std::string>::iterator map_iterator;
+        std::unordered_map<std::string, std::string> table;
+        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+            char buf[16];
+            _itoa_s((int)i, buf, 10);
+            std::string index = buf;
+            table.emplace(std::make_pair(crc32_str[i], index));
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                map_iterator iter = table.find(crc32_str[j]);
+                if (iter != table.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("std::unordered_map<std::string, std::string>\n\n");
+        printf("count = %" PRIu64 ", elapsed time: %0.3f ms\n", count, sw.getMillisec());
+        printf("\n");
+    }
+
+    {
+        size_t count = 0;
+        typedef jstd::hash_table<std::string, std::string>::iterator iterator;
+        jstd::hash_table<std::string, std::string> table;
+        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+            char buf[16];
+            _itoa_s((int)i, buf, 10);
+            std::string index = buf;
+            table.insert(crc32_str[i], index);
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                iterator iter = table.find(crc32_str[j]);
+                if (iter != table.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("jstd::hash_table<std::string, std::string>\n\n");
+        printf("count = %" PRIu64 ", elapsed time: %0.3f ms\n", count, sw.getMillisec());
+        printf("\n");
+    }
 }
 
 void http_parser_benchmark()
@@ -761,6 +871,7 @@ int main(int argn, char * argv[])
 #endif
 
     crc32_benchmark();
+    hashtable_benchmark();
 
 #if 0
     http_parser_benchmark();

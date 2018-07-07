@@ -17,6 +17,12 @@
     <Filter Include="src\pico">
       <UniqueIdentifier>{b74c64d2-91d3-4e9f-b9ec-b8dacf3916f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\jstd">
+      <UniqueIdentifier>{53293db7-d6a7-46b9-8eef-2e0f251b7068}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\support">
+      <UniqueIdentifier>{cdb83bc5-7531-4fa6-9813-22938e532ba1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\main\jimi\http\Common.h">
@@ -93,6 +99,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\main\jimi\http\Version.h">
       <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\iterator.h">
+      <Filter>src\jstd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\string_iterator.h">
+      <Filter>src\jstd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_table.h">
+      <Filter>src\jstd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
