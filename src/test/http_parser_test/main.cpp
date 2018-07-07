@@ -553,7 +553,11 @@ void hashtable_benchmark()
         std::map<std::string, std::string> map;
         for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
             char buf[16];
+#ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
+#else
+            itoa((int)i, buf, 10);
+#endif
             std::string index = buf;
             map.emplace(std::make_pair(crc32_str[i], index));
         }
@@ -581,7 +585,11 @@ void hashtable_benchmark()
         std::unordered_map<std::string, std::string> table;
         for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
             char buf[16];
+#ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
+#else
+            itoa((int)i, buf, 10);
+#endif
             std::string index = buf;
             table.emplace(std::make_pair(crc32_str[i], index));
         }
@@ -609,7 +617,11 @@ void hashtable_benchmark()
         jstd::hash_table<std::string, std::string> table;
         for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
             char buf[16];
+#ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
+#else
+            itoa((int)i, buf, 10);
+#endif
             std::string index = buf;
             table.insert(crc32_str[i], index);
         }

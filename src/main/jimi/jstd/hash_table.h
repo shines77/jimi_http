@@ -196,7 +196,7 @@ public:
     }
 
     void reserve(size_type new_buckets) {
-        new_buckets = (new_buckets >= kBucketsInit) : (new_buckets - 1) : (kBucketsInit - 1);
+        new_buckets = (new_buckets >= kBucketsInit) ? (new_buckets - 1) : (kBucketsInit - 1);
         size_type new_capacity = detail::round_up_pow2(new_buckets);
         this->reserve_fast(new_capacity);
     }
@@ -223,7 +223,7 @@ public:
     }
 
     void resize(size_type new_buckets) {
-        new_buckets = (new_buckets >= kBucketsInit) : (new_buckets - 1) : (kBucketsInit - 1);
+        new_buckets = (new_buckets >= kBucketsInit) ? (new_buckets - 1) : (kBucketsInit - 1);
         size_type new_capacity = detail::round_up_pow2(new_buckets);
         this->resize_fast(new_capacity);
     }
