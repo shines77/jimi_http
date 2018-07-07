@@ -235,31 +235,6 @@ public:
 #if 1
         if (likely(node != nullptr)) {
             // Found, next to check the hash value.
-            if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
-                // If hash value and key sizes is equal, then compare the strings.
-                if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                    return (iterator)&this->table_[bucket];
-                }
-            }
-
-            // If first position is not found, search next bucket continue.
-            hash_type first_bucket = bucket;
-            do {
-                bucket = (bucket + 1) & this->mask_;
-                node = (node_type *)this->table_[bucket];
-                if (likely(node != nullptr)) {
-                    if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
-                        // If hash value and key sizes is equal, then compare the strings.
-                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                            return (iterator)&this->table_[bucket];
-                        }
-                    }
-                }
-            } while (likely(bucket != first_bucket));
-        }
-#else
-        if (likely(node != nullptr)) {
-            // Found, next to check the hash value.
             if (likely(node->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(node->pair.first.size() == key.size())) {
@@ -281,6 +256,31 @@ public:
                             if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                                 return (iterator)&this->table_[bucket];
                             }
+                        }
+                    }
+                }
+            } while (likely(bucket != first_bucket));
+        }
+#else
+        if (likely(node != nullptr)) {
+            // Found, next to check the hash value.
+            if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
+                // If hash value and key sizes is equal, then compare the strings.
+                if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                    return (iterator)&this->table_[bucket];
+                }
+            }
+
+            // If first position is not found, search next bucket continue.
+            hash_type first_bucket = bucket;
+            do {
+                bucket = (bucket + 1) & this->mask_;
+                node = (node_type *)this->table_[bucket];
+                if (likely(node != nullptr)) {
+                    if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
+                        // If hash value and key sizes is equal, then compare the strings.
+                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                            return (iterator)&this->table_[bucket];
                         }
                     }
                 }
