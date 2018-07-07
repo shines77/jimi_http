@@ -556,7 +556,7 @@ void hashtable_benchmark()
 #ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
 #else
-            itoa((int)i, buf, 10);
+            sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
             map.emplace(std::make_pair(crc32_str[i], index));
@@ -588,7 +588,7 @@ void hashtable_benchmark()
 #ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
 #else
-            itoa((int)i, buf, 10);
+            sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
             table.emplace(std::make_pair(crc32_str[i], index));
@@ -620,7 +620,7 @@ void hashtable_benchmark()
 #ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
 #else
-            itoa((int)i, buf, 10);
+            sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
             table.insert(crc32_str[i], index);
