@@ -247,7 +247,7 @@ public:
             do {
                 index = (index + 1) & this->mask_;
                 node = (node_type *)this->table_[index];
-                if (likely(node->hash == hash)) {
+                if (likely(node != nullptr && node->hash == hash)) {
                     // If hash value is equal, compare the key sizes and strings.
                     if (likely(node->pair.first.size() == key.size())) {
                         if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
@@ -259,61 +259,77 @@ public:
         }
 
         // Not found
-        return nullptr;
+        return this->end();
     }
 
     void insert(const key_type & key, const value_type & value) {
-        if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-            this->resize_fast(this->buckets_ * 2);
-        }
+        iterator iter = this->find(key);
+        if (likely(iter == this->end())) {
+            // Insert the new key.
+            if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
+                this->resize_fast(this->buckets_ * 2);
+            }
 
-        node_type * new_data = new node_type(key, value);
-        if (likely(new_data != nullptr)) {
-            hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
-            hash_type index = hash & this->mask_;
-            new_data->hash = hash;
-            if (likely(this->table_[index] == nullptr)) {
-                this->table_[index] = (data_type)new_data;
-                ++(this->size_);
+            node_type * new_data = new node_type(key, value);
+            if (likely(new_data != nullptr)) {
+                hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
+                hash_type index = hash & this->mask_;
+                new_data->hash = hash;
+                if (likely(this->table_[index] == nullptr)) {
+                    this->table_[index] = (data_type)new_data;
+                    ++(this->size_);
+                }
+                else {
+                    do {
+                        index = (index + 1) & this->mask_;
+                        if (likely(this->table_[index] == nullptr)) {
+                            this->table_[index] = (data_type)new_data;
+                            ++(this->size_);
+                            break;
+                        }
+                    } while (1);
+                }
             }
-            else {
-                do {
-                    index = (index + 1) & this->mask_;
-                    if (likely(this->table_[index] == nullptr)) {
-                        this->table_[index] = (data_type)new_data;
-                        ++(this->size_);
-                        break;
-                    }
-                } while (1);
-            }
+        }
+        else {
+            // Update the existed key.
+            (*iter)->pair.second = value;
         }
     }
 
     void insert(key_type && key, value_type && value) {
-        if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-            this->resize_fast(this->buckets_ * 2);
-        }
+        iterator iter = this->find(key);
+        if (likely(iter == this->end())) {
+            // Insert the new key.
+            if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
+                this->resize_fast(this->buckets_ * 2);
+            }
 
-        node_type * new_data = new node_type(std::forward<key_type>(key),
-                                             std::forward<value_type>(value));
-        if (likely(new_data != nullptr)) {
-            hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
-            hash_type index = hash & this->mask_;
-            new_data->hash = hash;
-            if (likely(this->table_[index] == nullptr)) {
-                this->table_[index] = (data_type)new_data;
-                ++(this->size_);
+            node_type * new_data = new node_type(std::forward<key_type>(key),
+                                                 std::forward<value_type>(value));
+            if (likely(new_data != nullptr)) {
+                hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
+                hash_type index = hash & this->mask_;
+                new_data->hash = hash;
+                if (likely(this->table_[index] == nullptr)) {
+                    this->table_[index] = (data_type)new_data;
+                    ++(this->size_);
+                }
+                else {
+                    do {
+                        index = (index + 1) & this->mask_;
+                        if (likely(this->table_[index] == nullptr)) {
+                            this->table_[index] = (data_type)new_data;
+                            ++(this->size_);
+                            break;
+                        }
+                    } while (1);
+                }
             }
-            else {
-                do {
-                    index = (index + 1) & this->mask_;
-                    if (likely(this->table_[index] == nullptr)) {
-                        this->table_[index] = (data_type)new_data;
-                        ++(this->size_);
-                        break;
-                    }
-                } while (1);
-            }
+        }
+        else {
+            // Update the existed key.
+            (*iter)->pair.second = std::move(std::forward<value_type>(value));
         }
     }
 

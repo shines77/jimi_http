@@ -68,10 +68,9 @@ static uint32_t crc32_x86(const char * data, size_t length)
     return ~crc32;
 }
 
-#if CRC32C_IS_X86_64
-
 static uint32_t crc32_x64(const char * data, size_t length)
 {
+#if CRC32C_IS_X86_64
     assert(data != nullptr);
 
     static const ssize_t kStepLen = sizeof(uint64_t);
@@ -106,9 +105,10 @@ static uint32_t crc32_x64(const char * data, size_t length)
     } while (1);
 
     return (uint32_t)~crc64;
-}
-
+#else
+    return crc32_x86(data, length);
 #endif // CRC32C_IS_X86_64
+}
 
 #if CRC32C_IS_X86_64
 

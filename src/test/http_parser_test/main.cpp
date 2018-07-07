@@ -559,7 +559,7 @@ void hashtable_benchmark()
             sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
-            map.emplace(std::make_pair(crc32_str[i], index));
+            map.insert(std::make_pair(crc32_str[i], index));
         }
 
         StopWatch sw;
@@ -575,7 +575,8 @@ void hashtable_benchmark()
         sw.stop();
 
         printf("std::map<std::string, std::string>\n\n");
-        printf("count = %" PRIu64 ", elapsed time: %0.3f ms\n", count, sw.getMillisec());
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
 
@@ -591,7 +592,7 @@ void hashtable_benchmark()
             sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
-            table.emplace(std::make_pair(crc32_str[i], index));
+            table.insert(std::make_pair(crc32_str[i], index));
         }
 
         StopWatch sw;
@@ -607,7 +608,8 @@ void hashtable_benchmark()
         sw.stop();
 
         printf("std::unordered_map<std::string, std::string>\n\n");
-        printf("count = %" PRIu64 ", elapsed time: %0.3f ms\n", count, sw.getMillisec());
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
 
@@ -639,7 +641,8 @@ void hashtable_benchmark()
         sw.stop();
 
         printf("jstd::hash_table<std::string, std::string>\n\n");
-        printf("count = %" PRIu64 ", elapsed time: %0.3f ms\n", count, sw.getMillisec());
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
 }
