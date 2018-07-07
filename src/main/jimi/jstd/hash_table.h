@@ -230,34 +230,63 @@ public:
 
     iterator find(const key_type & key) {
         hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
-        hash_type index = hash & this->mask_;
-        node_type * node = (node_type *)this->table_[index];
+        hash_type bucket = hash & this->mask_;
+        node_type * node = (node_type *)this->table_[bucket];
+#if 1
+        if (likely(node != nullptr)) {
+            // Found, next to check the hash value.
+            if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
+                // If hash value and key sizes is equal, then compare the strings.
+                if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                    return (iterator)&this->table_[bucket];
+                }
+            }
+
+            // If first position is not found, search next bucket continue.
+            hash_type first_bucket = bucket;
+            do {
+                bucket = (bucket + 1) & this->mask_;
+                node = (node_type *)this->table_[bucket];
+                if (likely(node != nullptr)) {
+                    if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
+                        // If hash value and key sizes is equal, then compare the strings.
+                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                            return (iterator)&this->table_[bucket];
+                        }
+                    }
+                }
+            } while (likely(bucket != first_bucket));
+        }
+#else
         if (likely(node != nullptr)) {
             // Found, next to check the hash value.
             if (likely(node->hash == hash)) {
-                // If hash value is equal, compare the key sizes and strings.
+                // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(node->pair.first.size() == key.size())) {
                     if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                        return (iterator)&this->table_[index];
+                        return (iterator)&this->table_[bucket];
                     }
                 }
             }
 
-            hash_type first_index = index;
+            // If first position is not found, search next bucket continue.
+            hash_type first_bucket = bucket;
             do {
-                index = (index + 1) & this->mask_;
-                node = (node_type *)this->table_[index];
-                if (likely(node != nullptr && node->hash == hash)) {
-                    // If hash value is equal, compare the key sizes and strings.
-                    if (likely(node->pair.first.size() == key.size())) {
-                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                            return (iterator)&this->table_[index];
+                bucket = (bucket + 1) & this->mask_;
+                node = (node_type *)this->table_[bucket];
+                if (likely(node != nullptr)) {
+                    if (likely(node->hash == hash)) {
+                        // If hash value is equal, then compare the key sizes and the strings.
+                        if (likely(node->pair.first.size() == key.size())) {
+                            if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                                return (iterator)&this->table_[bucket];
+                            }
                         }
                     }
                 }
-            } while (likely(index != first_index));
+            } while (likely(bucket != first_bucket));
         }
-
+#endif
         // Not found
         return this->end();
     }
@@ -273,17 +302,17 @@ public:
             node_type * new_data = new node_type(key, value);
             if (likely(new_data != nullptr)) {
                 hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
-                hash_type index = hash & this->mask_;
+                hash_type bucket = hash & this->mask_;
                 new_data->hash = hash;
-                if (likely(this->table_[index] == nullptr)) {
-                    this->table_[index] = (data_type)new_data;
+                if (likely(this->table_[bucket] == nullptr)) {
+                    this->table_[bucket] = (data_type)new_data;
                     ++(this->size_);
                 }
                 else {
                     do {
-                        index = (index + 1) & this->mask_;
-                        if (likely(this->table_[index] == nullptr)) {
-                            this->table_[index] = (data_type)new_data;
+                        bucket = (bucket + 1) & this->mask_;
+                        if (likely(this->table_[bucket] == nullptr)) {
+                            this->table_[bucket] = (data_type)new_data;
                             ++(this->size_);
                             break;
                         }
@@ -292,7 +321,7 @@ public:
             }
         }
         else {
-            // Update the existed key.
+            // Update the existed key's value.
             (*iter)->pair.second = value;
         }
     }
@@ -309,17 +338,17 @@ public:
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
                 hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
-                hash_type index = hash & this->mask_;
+                hash_type bucket = hash & this->mask_;
                 new_data->hash = hash;
-                if (likely(this->table_[index] == nullptr)) {
-                    this->table_[index] = (data_type)new_data;
+                if (likely(this->table_[bucket] == nullptr)) {
+                    this->table_[bucket] = (data_type)new_data;
                     ++(this->size_);
                 }
                 else {
                     do {
-                        index = (index + 1) & this->mask_;
-                        if (likely(this->table_[index] == nullptr)) {
-                            this->table_[index] = (data_type)new_data;
+                        bucket = (bucket + 1) & this->mask_;
+                        if (likely(this->table_[bucket] == nullptr)) {
+                            this->table_[bucket] = (data_type)new_data;
                             ++(this->size_);
                             break;
                         }
@@ -328,7 +357,7 @@ public:
             }
         }
         else {
-            // Update the existed key.
+            // Update the existed key's value.
             (*iter)->pair.second = std::move(std::forward<value_type>(value));
         }
     }
