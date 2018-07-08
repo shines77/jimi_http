@@ -13,8 +13,13 @@
 #include <memory>
 #include <type_traits>
 
+#include <nmmintrin.h>  // For SSE 4.2
+#include "jimi/support/SSEHelper.h"
+
 #include "jimi/support/bitscan_reverse.h"
 #include "jimi/support/bitscan_forward.h"
+
+#define USE_SSE42_STRING_COMPARE    1
 
 namespace jstd {
 
@@ -46,6 +51,66 @@ std::size_t round_up_pow2(std::size_t n)
     unsigned char nonZero = __BitScanReverse(index, n);
     return (nonZero ? (1UL << (index + 1)) : 2UL);
 #endif
+}
+
+template <typename CharTy>
+bool string_compare(const CharTy * str1, const CharTy * str2, size_t length)
+{
+    assert(str1 != nullptr && str2 != nullptr);
+
+    static const int kMaxSize = SSEHelper<CharTy>::kMaxSize;
+    static const int _SIDD_CHAR_OPS = SSEHelper<CharTy>::_SIDD_CHAR_OPS;
+    static const int kEqualEach = _SIDD_CHAR_OPS | _SIDD_CMP_EQUAL_EACH
+                                | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT;
+
+#if 1
+    if (likely(length > 0)) {
+        ssize_t nlength = (ssize_t)length;
+        do {
+            __m128i __str1 = _mm_loadu_si128((const __m128i *)str1);
+            __m128i __str2 = _mm_loadu_si128((const __m128i *)str2);
+            int len = ((int)nlength >= kMaxSize) ? kMaxSize : (int)nlength;
+            assert(len > 0);
+            
+            int full_matched = _mm_cmpestrc(__str1, len, __str2, len, kEqualEach);
+            if (likely(full_matched == 0)) {
+                // Full matched, continue match next kMaxSize bytes.
+                str1 += kMaxSize;
+                str2 += kMaxSize;
+                nlength -= kMaxSize;
+            }
+            else {
+                // It's dismatched.
+                return false;
+            }
+        } while (nlength > 0);
+    }
+#else
+    if (likely(length > 0)) {
+        int nlength = (int)length;
+        do {
+            __m128i __str1 = _mm_loadu_si128((const __m128i *)str1);
+            __m128i __str2 = _mm_loadu_si128((const __m128i *)str2);
+            int len = (nlength >= kMaxSize) ? kMaxSize : nlength;
+            assert(len > 0);
+            
+            int full_matched = _mm_cmpestrc(__str1, len, __str2, len, kEqualEach);
+            if (likely(full_matched == 0)) {
+                // Full matched, continue match next kMaxSize bytes.
+                str1 += kMaxSize;
+                str2 += kMaxSize;
+                nlength -= kMaxSize;
+            }
+            else {
+                // It's dismatched.
+                return false;
+            }
+        } while (nlength > 0);
+    }
+#endif
+
+    // It's matched, or the length is equal 0, .
+    return true;
 }
 
 } // namespace detail
@@ -250,9 +315,15 @@ public:
             if (likely(node->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(node->pair.first.size() == key.size())) {
+#if USE_SSE42_STRING_COMPARE
+                    if (likely(detail::string_compare(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                        return (iterator)&this->table_[bucket];
+                    }
+#else
                     if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                         return (iterator)&this->table_[bucket];
                     }
+#endif
                 }
             }
 
@@ -265,9 +336,15 @@ public:
                     if (likely(node->hash == hash)) {
                         // If hash value is equal, then compare the key sizes and the strings.
                         if (likely(node->pair.first.size() == key.size())) {
+#if USE_SSE42_STRING_COMPARE
+                            if (likely(detail::string_compare(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                                return (iterator)&this->table_[bucket];
+                            }
+#else
                             if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                                 return (iterator)&this->table_[bucket];
                             }
+#endif
                         }
                     }
                 }

@@ -47,6 +47,10 @@
     <ClInclude Include="..\..\..\src\main\jimi\Slice.h" />
     <ClInclude Include="..\..\..\src\main\jimi\StringRef.h" />
     <ClInclude Include="..\..\..\src\main\jimi\StringRefList.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\support\bitscan_forward.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\support\bitscan_reverse.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\support\popcnt.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\support\SSEHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c" />
