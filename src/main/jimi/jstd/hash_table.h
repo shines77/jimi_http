@@ -14,8 +14,11 @@
 #include <type_traits>
 
 #include <nmmintrin.h>  // For SSE 4.2
-#include "jimi/support/SSEHelper.h"
 
+#include "jimi/crc32.h"
+#include "jimi/Hash.h"
+
+#include "jimi/support/SSEHelper.h"
 #include "jimi/support/bitscan_reverse.h"
 #include "jimi/support/bitscan_forward.h"
 
@@ -111,20 +114,47 @@ struct hash_table_node {
     ~hash_table_node() {}
 };
 
-template <typename Key, typename Value>
-class hash_table {
-public:
-    typedef Key                             key_type;
-    typedef Value                           value_type;
-    typedef std::pair<Key, Value>           pair_type;
-    typedef std::size_t                     size_type;
-    typedef std::uint32_t                   hash_type;
+enum hash_mode_t {
+    Hash_CRC32C,
+    Hash_Time31,
+    Hash_Time31Std
+};
 
-    typedef hash_table_node<Key, Value>     node_type;
-    typedef hash_table_node<Key, Value> *   data_type;
-    typedef data_type *                     iterator;
-    typedef const data_type *               const_iterator;
-    typedef hash_table<Key, Value>          this_type;
+template <std::size_t Mode>
+struct hash_helper {
+    static uint32_t getHash(const char * data, size_t length) {
+        return jimi::crc32_x64(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_Time31> {
+    static uint32_t getHash(const char * data, size_t length) {
+        return TiStore::hash::Times31(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_Time31Std> {
+    static uint32_t getHash(const char * data, size_t length) {
+        return TiStore::hash::Times31_std(data, length);
+    }
+};
+
+template <typename Key, typename Value, std::size_t Mode = Hash_CRC32C>
+class basic_hash_table {
+public:
+    typedef Key                                 key_type;
+    typedef Value                               value_type;
+    typedef std::pair<Key, Value>               pair_type;
+    typedef std::size_t                         size_type;
+    typedef std::uint32_t                       hash_type;
+
+    typedef hash_table_node<Key, Value>         node_type;
+    typedef hash_table_node<Key, Value> *       data_type;
+    typedef data_type *                         iterator;
+    typedef const data_type *                   const_iterator;
+    typedef basic_hash_table<Key, Value, Mode>  this_type;
 
 private:
     data_type * table_;
@@ -135,10 +165,10 @@ private:
     static const size_type kBucketsInit = 64;
 
 public:
-    hash_table() : table_(nullptr), size_(0), mask_(0), buckets_(0) {
+    basic_hash_table() : table_(nullptr), size_(0), mask_(0), buckets_(0) {
         this->init(kBucketsInit);
     }
-    ~hash_table() {
+    ~basic_hash_table() {
         this->destroy();
     }
 
@@ -209,7 +239,7 @@ private:
         size_type new_mask = new_buckets - 1;
 
         const std::string & key = old_data->pair.first;
-        hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
+        hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
         hash_type bucket = hash & new_mask;
 
         // Update the hash value
@@ -282,7 +312,7 @@ public:
     }
 
     iterator find(const key_type & key) {
-        hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
+        hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
         hash_type bucket = hash & this->mask_;
         node_type * node = (node_type *)this->table_[bucket];
 
@@ -341,7 +371,7 @@ public:
 
             node_type * new_data = new node_type(key, value);
             if (likely(new_data != nullptr)) {
-                hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
+                hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
                 hash_type bucket = hash & this->mask_;
                 new_data->hash = hash;
                 if (likely(this->table_[bucket] == nullptr)) {
@@ -377,7 +407,7 @@ public:
             node_type * new_data = new node_type(std::forward<key_type>(key),
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
-                hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
+                hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
                 hash_type bucket = hash & this->mask_;
                 new_data->hash = hash;
                 if (likely(this->table_[bucket] == nullptr)) {
@@ -406,6 +436,15 @@ public:
         this->insert(pair.first, pair.second);
     }
 };
+
+template <typename Key, typename Value>
+using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
+
+template <typename Key, typename Value>
+using hash_table_v1 = basic_hash_table<Key, Value, Hash_Time31>;
+
+template <typename Key, typename Value>
+using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 

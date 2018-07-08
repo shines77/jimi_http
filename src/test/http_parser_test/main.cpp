@@ -289,7 +289,7 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         uint32_t crc32_sum = 0;
-        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             crc32_sum += crc32_x64(crc32_data[i].c_str(), crc32_data[i].size());
 
             std::cout << "crc32[";
@@ -310,7 +310,7 @@ void crc32_benchmark()
         std::cout << std::endl;
 
         uint32_t crc32_sum = 0;
-        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             crc32_sum += crc32_x86(crc32_data[i].c_str(), crc32_data[i].size());
 
             std::cout << "crc32[";
@@ -551,7 +551,7 @@ void hashtable_benchmark()
         size_t count = 0;
         typedef std::map<std::string, std::string>::iterator map_iterator;
         std::map<std::string, std::string> map;
-        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
 #ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
@@ -584,7 +584,7 @@ void hashtable_benchmark()
         size_t count = 0;
         typedef std::unordered_map<std::string, std::string>::iterator map_iterator;
         std::unordered_map<std::string, std::string> table;
-        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
 #ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
@@ -617,7 +617,7 @@ void hashtable_benchmark()
         size_t count = 0;
         typedef jstd::hash_table<std::string, std::string>::iterator iterator;
         jstd::hash_table<std::string, std::string> table;
-        for (size_t i = 0;  i < kHeaderFieldSize; ++i) {
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
 #ifdef _MSC_VER
             _itoa_s((int)i, buf, 10);
@@ -641,6 +641,72 @@ void hashtable_benchmark()
         sw.stop();
 
         printf("jstd::hash_table<std::string, std::string>\n\n");
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+
+    {
+        size_t count = 0;
+        typedef jstd::hash_table_v1<std::string, std::string>::iterator iterator;
+        jstd::hash_table_v1<std::string, std::string> table;
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            char buf[16];
+#ifdef _MSC_VER
+            _itoa_s((int)i, buf, 10);
+#else
+            sprintf(buf, "%d", (int)i);
+#endif
+            std::string index = buf;
+            table.insert(crc32_str[i], index);
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                iterator iter = table.find(crc32_str[j]);
+                if (iter != table.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("jstd::hash_table_v1<std::string, std::string>\n\n");
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+
+    {
+        size_t count = 0;
+        typedef jstd::hash_table_v2<std::string, std::string>::iterator iterator;
+        jstd::hash_table_v2<std::string, std::string> table;
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            char buf[16];
+#ifdef _MSC_VER
+            _itoa_s((int)i, buf, 10);
+#else
+            sprintf(buf, "%d", (int)i);
+#endif
+            std::string index = buf;
+            table.insert(crc32_str[i], index);
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                iterator iter = table.find(crc32_str[j]);
+                if (iter != table.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("jstd::hash_table_v2<std::string, std::string>\n\n");
         printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
@@ -879,7 +945,7 @@ int main(int argn, char * argv[])
     http_parser.displayFields();
     printf("\n");
 
-#if 1
+#if 0
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
