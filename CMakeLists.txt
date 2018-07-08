@@ -54,7 +54,7 @@ else()
 endif()
 
 if (NOT MSVC)
-    set(CMAKE_C_FLAGS_COMMON "-march=native -mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -fPIC -U__STRICT_ANSI__")
+    set(CMAKE_C_FLAGS_COMMON "-march=native -mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -mpclmul -msha -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -fPIC -U__STRICT_ANSI__")
 
     set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS} -std=c99 ${CMAKE_C_FLAGS_COMMON}")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -O3 -DNDEBUG")

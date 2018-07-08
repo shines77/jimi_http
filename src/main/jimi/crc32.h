@@ -19,7 +19,7 @@
 #ifdef __SSE4_2__
 #ifdef _MSC_VER
 #include <nmmintrin.h>  // For SSE 4.2
-#include <immintrin.h>  // For SSE 3
+#include <immintrin.h>  // For SHA1 & SHA256 instructions.
 #include <emmintrin.h>  // For SSE 2
 #else
 #include <x86intrin.h>
