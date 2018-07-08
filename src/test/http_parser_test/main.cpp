@@ -16,7 +16,7 @@
 #include <map>
 #include <unordered_map>
 
-#define USE_SHA1_HASH           1
+#define USE_SHA1_HASH           0
 #define USE_PICO_HTTP_PARSER    0
 
 #if USE_PICO_HTTP_PARSER
