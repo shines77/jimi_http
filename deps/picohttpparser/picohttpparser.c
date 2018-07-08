@@ -103,8 +103,9 @@
 #else
 #include <x86intrin.h>
 //#include <nmmintrin.h>  // For SSE 4.2
-#endif
-#endif
+#endif // _MSC_VER
+#endif // __SSE4_2__
+
 #include "picohttpparser.h"
 
 #ifdef _MSC_VER
@@ -114,12 +115,25 @@
 /* $Id: a707070d11d499609f99d09f97535642cec910a8 $ */
 
 #if __GNUC__ >= 3
+#ifndef likely
 #define likely(x) __builtin_expect(!!(x), 1)
+#endif
+
+#ifndef unlikely
 #define unlikely(x) __builtin_expect(!!(x), 0)
-#else
+#endif
+
+#else // !(__GNUC__ >= 3)
+
+#ifndef likely
 #define likely(x) (x)
+#endif
+
+#ifndef unlikely
 #define unlikely(x) (x)
 #endif
+
+#endif // __GNUC__ >= 3
 
 #ifdef _MSC_VER
 #define ALIGNED(n) _declspec(align(n))

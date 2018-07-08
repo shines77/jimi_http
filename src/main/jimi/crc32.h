@@ -34,6 +34,14 @@
 #endif
 #endif // _WIN64 || __amd64__
 
+//
+// Linux command: g++ -dM -E -x c /dev/null -march=native | grep -E "(MMX|SSE|AVX|XOP)"
+//
+// Linux command: g++ -dM -E -</dev/null | grep 'MMX\|SSE\|AVX'
+//
+// See: http://blog.sina.com.cn/s/blog_89ff8b4b0102xcid.html
+//
+
 namespace jimi {
 
 static uint32_t crc32_x86(const char * data, size_t length)
@@ -116,12 +124,93 @@ static uint32_t crc32_x64(const char * data, size_t length)
 #endif // CRC32C_IS_X86_64
 }
 
+#if CRC32C_IS_X86_64
+
+static uint32_t intel_crc32_u64(const char * data, size_t length)
+{
+    assert(data != nullptr);
+    uint64_t crc64 = ~0;
+
+    static const size_t kStepSize = sizeof(uint64_t);
+    uint64_t * src = (uint64_t *)data;
+    uint64_t * src_end = src + (length / kStepSize);
+
+    while (likely(src < src_end)) {
+        crc64 = _mm_crc32_u64(crc64, *src);
+        ++src;
+    }
+
+    uint32_t crc32 = (uint32_t)crc64;
+
+    size_t i = length / kStepSize * kStepSize;
+    while (likely(i < length)) {
+        crc32 = _mm_crc32_u8(crc32, data[i]);
+        ++i;
+    }
+    return ~crc32;
+}
+
+#endif // CRC32C_IS_X86_64
+
+#if CRC32C_IS_X86_64
+
+static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
+{
+    assert(data != nullptr);
+    uint64_t crc64 = ~0;
+
+    static const size_t kStepSize = sizeof(uint64_t);
+    uint64_t * src = (uint64_t *)data;
+    uint64_t * src_end = src + (length / kStepSize);
+
+    while (likely(src < src_end)) {
+        crc64 = _mm_crc32_u64(crc64, *src);
+        ++src;
+    }
+
+    uint32_t crc32 = (uint32_t)crc64;
+    unsigned char * src8 = (unsigned char *)src;
+    unsigned char * src8_end = (unsigned char *)(data + length);
+
+    while (likely(src8 < src8_end)) {
+        crc32 = _mm_crc32_u8(crc32, *src8);
+        ++src8;
+    }
+    return ~crc32;
+}
+
+#endif // CRC32C_IS_X86_64
+
+static uint32_t intel_crc32_u32(const char * data, size_t length)
+{
+    assert(data != nullptr);
+    uint32_t crc32 = ~0;
+
+    static const size_t kStepSize = sizeof(uint32_t);
+    uint32_t * src = (uint32_t *)data;
+    uint32_t * src_end = src + (length / kStepSize);
+
+    while (likely(src < src_end)) {
+        crc32 = _mm_crc32_u32(crc32, *src);
+        ++src;
+    }
+
+    unsigned char * src8 = (unsigned char *)src;
+    unsigned char * src8_end = (unsigned char *)(data + length);
+
+    while (likely(src8 < src8_end)) {
+        crc32 = _mm_crc32_u8(crc32, *src8);
+        ++src8;
+    }
+    return ~crc32;
+}
+
 static uint32_t sha1_msg2(const char * data, size_t length)
 {
+#if USE_SHA1_HASH
     assert(data != nullptr);
     static const ssize_t kMaxSize = 16;
     static const uint64_t kRestMask = (uint64_t)((kMaxSize / 2) - 1);
-    static const uint64_t kRestMask2 = (uint64_t)(kMaxSize - 1);
     static const uint64_t kMaskOne = 0xFFFFFFFFFFFFFFFFULL;
 
     if (likely(length > 0)) {
@@ -208,89 +297,9 @@ static uint32_t sha1_msg2(const char * data, size_t length)
         uint32_t sha1 = _mm_cvtsi128_si32(__msg1);
         return sha1;
     }
+#endif
 
     return 0;
-}
-
-#if CRC32C_IS_X86_64
-
-static uint32_t intel_crc32_u64(const char * data, size_t length)
-{
-    assert(data != nullptr);
-    uint64_t crc64 = ~0;
-
-    static const size_t kStepSize = sizeof(uint64_t);
-    uint64_t * src = (uint64_t *)data;
-    uint64_t * src_end = src + (length / kStepSize);
-
-    while (likely(src < src_end)) {
-        crc64 = _mm_crc32_u64(crc64, *src);
-        ++src;
-    }
-
-    uint32_t crc32 = (uint32_t)crc64;
-
-    size_t i = length / kStepSize * kStepSize;
-    while (likely(i < length)) {
-        crc32 = _mm_crc32_u8(crc32, data[i]);
-        ++i;
-    }
-    return ~crc32;
-}
-
-#endif // CRC32C_IS_X86_64
-
-#if CRC32C_IS_X86_64
-
-static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
-{
-    assert(data != nullptr);
-    uint64_t crc64 = ~0;
-
-    static const size_t kStepSize = sizeof(uint64_t);
-    uint64_t * src = (uint64_t *)data;
-    uint64_t * src_end = src + (length / kStepSize);
-
-    while (likely(src < src_end)) {
-        crc64 = _mm_crc32_u64(crc64, *src);
-        ++src;
-    }
-
-    uint32_t crc32 = (uint32_t)crc64;
-    unsigned char * src8 = (unsigned char *)src;
-    unsigned char * src8_end = (unsigned char *)(data + length);
-
-    while (likely(src8 < src8_end)) {
-        crc32 = _mm_crc32_u8(crc32, *src8);
-        ++src8;
-    }
-    return ~crc32;
-}
-
-#endif // CRC32C_IS_X86_64
-
-static uint32_t intel_crc32_u32(const char * data, size_t length)
-{
-    assert(data != nullptr);
-    uint32_t crc32 = ~0;
-
-    static const size_t kStepSize = sizeof(uint32_t);
-    uint32_t * src = (uint32_t *)data;
-    uint32_t * src_end = src + (length / kStepSize);
-
-    while (likely(src < src_end)) {
-        crc32 = _mm_crc32_u32(crc32, *src);
-        ++src;
-    }
-
-    unsigned char * src8 = (unsigned char *)src;
-    unsigned char * src8_end = (unsigned char *)(data + length);
-
-    while (likely(src8 < src8_end)) {
-        crc32 = _mm_crc32_u8(crc32, *src8);
-        ++src8;
-    }
-    return ~crc32;
 }
 
 } // namespace jimi

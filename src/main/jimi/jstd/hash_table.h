@@ -448,8 +448,10 @@ public:
 template <typename Key, typename Value>
 using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
 
+#if USE_SHA1_HASH
 template <typename Key, typename Value>
 using hash_table_v1 = basic_hash_table<Key, Value, Hash_SHA1>;
+#endif
 
 template <typename Key, typename Value>
 using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31>;

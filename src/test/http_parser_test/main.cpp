@@ -1,11 +1,9 @@
 
+#include <stdlib.h>
+#include <stdio.h>
 #include "jimi/basic/stdint.h"
 #include "jimi/basic/stdsize.h"
 #include "jimi/basic/inttypes.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-//#include <stdint.h>
 #include <string.h>
 
 #include <sstream>
@@ -18,14 +16,16 @@
 #include <map>
 #include <unordered_map>
 
+#include <picohttpparser/picohttpparser.h>
+
+#define USE_SHA1_HASH   1
+
 #include "jimi/http_all.h"
 #include "jimi/crc32.h"
 #include "jimi/Hash.h"
 #include "StopWatch.h"
 
 #include "jimi/jstd/hash_table.h"
-
-#include <picohttpparser/picohttpparser.h>
 
 using namespace jimi;
 using namespace jimi::http;
@@ -471,6 +471,7 @@ void crc32_benchmark()
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
 
+#if USE_SHA1_HASH
     {
         StopWatch sw;
         uint32_t hash32_sum = 0;
@@ -498,6 +499,7 @@ void crc32_benchmark()
         std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
         std::cout << sw.getMillisec() << " ms" << std::endl;
     }
+#endif
 
     {
         StopWatch sw;
@@ -674,6 +676,7 @@ void hashtable_benchmark()
         printf("\n");
     }
 
+#if USE_SHA1_HASH
     {
         size_t count = 0;
         typedef jstd::hash_table_v1<std::string, std::string>::iterator iterator;
@@ -706,6 +709,7 @@ void hashtable_benchmark()
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
+#endif
 
     {
         size_t count = 0;
@@ -961,8 +965,6 @@ void pico_http_parser_benchmark()
     size_t buflen = request_len + 1, prevbuflen = 0, method_len, path_len, num_headers;
 
     do {
-        /* Read the socket data */
-
         /* Parse the request */
         num_headers = sizeof(headers) / sizeof(headers[0]);
         pret = phr_parse_request(http_header, buflen, (const char **)&method, &method_len, (const char **)&path, &path_len,
@@ -977,8 +979,9 @@ void pico_http_parser_benchmark()
         else if (pret == -1) {
             //return ParseError;
         }
+
         /* request is incomplete, continue the loop */
-        assert(pret == -2);
+        //assert(pret == -2);
 
         if (loop_cnt > kMaxLoop) {
             if (counter.joinable()) {
@@ -1008,7 +1011,7 @@ int main(int argn, char * argv[])
     http_parser.displayFields();
     printf("\n");
 
-#if 0
+#if 1
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
@@ -1017,7 +1020,7 @@ int main(int argn, char * argv[])
     crc32_benchmark();
     hashtable_benchmark();
 
-#if 0
+#if 1
     http_parser_benchmark();
     http_parser_ref_benchmark();
     pico_http_parser_benchmark();
