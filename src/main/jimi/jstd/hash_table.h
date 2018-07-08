@@ -285,7 +285,7 @@ public:
         hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
         hash_type bucket = hash & this->mask_;
         node_type * node = (node_type *)this->table_[bucket];
-#if 0
+
         if (likely(node != nullptr)) {
             // Found, next to check the hash value.
             if (likely(node->hash == hash)) {
@@ -326,44 +326,7 @@ public:
                 }
             } while (likely(bucket != first_bucket));
         }
-#else
-        if (likely(node != nullptr)) {
-            // Found, next to check the hash value.
-            if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
-                // If hash value and key sizes is equal, then compare the strings.
-#if USE_SSE42_STRING_COMPARE
-                if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
-                    return (iterator)&this->table_[bucket];
-                }
-#else
-                if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                    return (iterator)&this->table_[bucket];
-                }
-#endif
-            }
 
-            // If first position is not found, search next bucket continue.
-            hash_type first_bucket = bucket;
-            do {
-                bucket = (bucket + 1) & this->mask_;
-                node = (node_type *)this->table_[bucket];
-                if (likely(node != nullptr)) {
-                    if (likely((node->hash + node->pair.first.size()) == (hash + key.size()))) {
-                        // If hash value and key sizes is equal, then compare the strings.
-#if USE_SSE42_STRING_COMPARE
-                        if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
-                            return (iterator)&this->table_[bucket];
-                        }
-#else
-                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                            return (iterator)&this->table_[bucket];
-                        }
-#endif
-                    }
-                }
-            } while (likely(bucket != first_bucket));
-        }
-#endif
         // Not found
         return this->end();
     }
