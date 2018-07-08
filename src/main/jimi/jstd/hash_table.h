@@ -54,7 +54,7 @@ std::size_t round_up_pow2(std::size_t n)
 }
 
 template <typename CharTy>
-bool string_compare(const CharTy * str1, const CharTy * str2, size_t length)
+bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
 {
     assert(str1 != nullptr && str2 != nullptr);
 
@@ -63,7 +63,6 @@ bool string_compare(const CharTy * str1, const CharTy * str2, size_t length)
     static const int kEqualEach = _SIDD_CHAR_OPS | _SIDD_CMP_EQUAL_EACH
                                 | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT;
 
-#if 1
     if (likely(length > 0)) {
         ssize_t nlength = (ssize_t)length;
         do {
@@ -85,29 +84,6 @@ bool string_compare(const CharTy * str1, const CharTy * str2, size_t length)
             }
         } while (nlength > 0);
     }
-#else
-    if (likely(length > 0)) {
-        int nlength = (int)length;
-        do {
-            __m128i __str1 = _mm_loadu_si128((const __m128i *)str1);
-            __m128i __str2 = _mm_loadu_si128((const __m128i *)str2);
-            int len = (nlength >= kMaxSize) ? kMaxSize : nlength;
-            assert(len > 0);
-            
-            int full_matched = _mm_cmpestrc(__str1, len, __str2, len, kEqualEach);
-            if (likely(full_matched == 0)) {
-                // Full matched, continue match next kMaxSize bytes.
-                str1 += kMaxSize;
-                str2 += kMaxSize;
-                nlength -= kMaxSize;
-            }
-            else {
-                // It's dismatched.
-                return false;
-            }
-        } while (nlength > 0);
-    }
-#endif
 
     // It's matched, or the length is equal 0, .
     return true;
@@ -316,7 +292,7 @@ public:
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(node->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(detail::string_compare(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                         return (iterator)&this->table_[bucket];
                     }
 #else
@@ -337,7 +313,7 @@ public:
                         // If hash value is equal, then compare the key sizes and the strings.
                         if (likely(node->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                            if (likely(detail::string_compare(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                            if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                                 return (iterator)&this->table_[bucket];
                             }
 #else
