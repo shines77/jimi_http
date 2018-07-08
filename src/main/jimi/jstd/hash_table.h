@@ -104,20 +104,11 @@ public:
     iterator begin() const { return &(this->table_[0]); }
     iterator end() const { return &(this->table_[this->buckets_]); }
 
-private:
-    void init(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        data_type * new_table = new data_type[new_buckets];
-        if (new_table != nullptr) {
-            memset(new_table, 0, sizeof(data_type) * new_buckets);
-            this->table_ = new_table;
-            this->mask_ = new_buckets - 1;
-            this->buckets_ = new_buckets;
-        }
-    }
+    size_type size() const { return this->size_; }
+    size_type mask() const { return this->mask_; }
+    size_type buckets() const { return this->buckets_; }
+    data_type * data() const { return this->table_; }
 
-public:
     void destroy() {
         if (likely(this->table_ != nullptr)) {
             for (size_type i = 0; i < this->size_; ++i) {
@@ -135,97 +126,118 @@ public:
         this->buckets_ = 0;
     }
 
+    void clear() {
+        this->destroy();
+    }
+
 private:
-    void rehash_insert(data_type * new_table, size_type new_buckets, data_type new_data) {
+    void init(size_type new_buckets) {
+        assert(new_buckets > 0);
+        assert((new_buckets & (new_buckets - 1)) == 0);
+        data_type * new_table = new data_type[new_buckets];
+        if (new_table != nullptr) {
+            memset(new_table, 0, sizeof(data_type) * new_buckets);
+            this->table_ = new_table;
+            this->mask_ = new_buckets - 1;
+            this->buckets_ = new_buckets;
+        }
+    }
+
+    void reserve_internal(size_type new_buckets) {
+        assert(new_buckets > 0);
+        assert((new_buckets & (new_buckets - 1)) == 0);
+        if (likely(new_buckets > this->buckets_)) {
+            data_type * new_table = new data_type[new_buckets];
+            if (new_table != nullptr) {
+                memset(new_table, 0, sizeof(data_type) * new_buckets);
+                if (likely(this->table_ != nullptr)) {
+                    delete[] this->table_;
+                }
+                this->table_ = new_table;
+                this->mask_ = new_buckets - 1;
+                this->buckets_ = new_buckets;
+            }
+        }
+    }
+
+    void inline rehash_insert(data_type * new_table, size_type new_buckets,
+                              data_type old_data) {
         assert(new_table != nullptr);
-        assert(new_data != nullptr);
+        assert(old_data != nullptr);
         assert(new_buckets > 1);
         size_type new_mask = new_buckets - 1;
 
-        const std::string & key = new_data->pair.first;
+        const std::string & key = old_data->pair.first;
         hash_type hash = jimi::crc32_x64(key.c_str(), key.size());
-        hash_type index = hash & new_mask;
+        hash_type bucket = hash & new_mask;
 
         // Update the hash value
-        new_data->hash = hash;
+        old_data->hash = hash;
 
-        if (likely(new_table[index] == nullptr)) {
-            new_table[index] = new_data;
+        if (likely(new_table[bucket] == nullptr)) {
+            new_table[bucket] = old_data;
         }
         else {
             do {
-                index = (index + 1) & new_mask;
-                if (likely(new_table[index] == nullptr)) {
-                    new_table[index] = new_data;
+                bucket = (bucket + 1) & new_mask;
+                if (likely(new_table[bucket] == nullptr)) {
+                    new_table[bucket] = old_data;
                     break;
                 }
             } while (1);
         }
     }
 
-    void rehash(data_type * new_table, size_type new_buckets) {
-        assert(new_table != nullptr);
-        assert(new_buckets > this->buckets_);
-        size_type new_size = 0;
+    void rehash_internal(size_type new_buckets) {
+        assert(new_buckets > 0);
+        assert((new_buckets & (new_buckets - 1)) == 0);
+        if (likely(new_buckets > this->buckets_)) {
+            data_type * new_table = new data_type[new_buckets];
+            if (new_table != nullptr) {
+                // Initialize new table.
+                memset(new_table, 0, sizeof(data_type) * new_buckets);
+                if (likely(this->table_ != nullptr)) {
+                    // Recalculate all hash values.
+                    {
+                        size_type new_size = 0;
 
-        for (size_type i = 0; i < this->buckets_; ++i) {
-            if (this->table_[i] != nullptr) {
-                this->rehash_insert(new_table, new_buckets, this->table_[i]);
-                ++new_size;
+                        for (size_type i = 0; i < this->buckets_; ++i) {
+                            if (this->table_[i] != nullptr) {
+                                // Insert the old buckets to the new buckets in the new table.
+                                this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                                ++new_size;
+                            }
+                        }
+                        assert(new_size == this->size_);
+                    }
+
+                    // Free old table data.
+                    delete[] this->table_;
+                }
+                this->table_ = new_table;
+                this->mask_ = new_buckets - 1;
+                this->buckets_ = new_buckets;
             }
         }
-        assert(new_size == this->size_);
+    }
+
+    void resize_internal(size_type new_buckets) {
+        assert(new_buckets > 0);
+        assert((new_buckets & (new_buckets - 1)) == 0);
+        rehash_internal(new_buckets);
     }
 
 public:
-    void reserve_fast(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        if (likely(new_buckets > this->buckets_)) {
-            data_type * new_table = new data_type[new_buckets];
-            if (new_table != nullptr) {
-                memset(new_table, 0, sizeof(data_type) * new_buckets);
-                if (likely(this->table_ != nullptr)) {
-                    delete[] this->table_;
-                }
-                this->table_ = new_table;
-                this->mask_ = new_buckets - 1;
-                this->buckets_ = new_buckets;
-            }
-        }
-    }
-
     void reserve(size_type new_buckets) {
         new_buckets = (new_buckets >= kBucketsInit) ? (new_buckets - 1) : (kBucketsInit - 1);
         size_type new_capacity = detail::round_up_pow2(new_buckets);
-        this->reserve_fast(new_capacity);
-    }
-
-    void resize_fast(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        if (likely(new_buckets > this->buckets_)) {
-            data_type * new_table = new data_type[new_buckets];
-            if (new_table != nullptr) {
-                memset(new_table, 0, sizeof(data_type) * new_buckets);
-                if (likely(this->table_ != nullptr)) {
-                    // Recalculate all hash value.
-                    this->rehash(new_table, new_buckets);
-
-                    // Free old data.
-                    delete[] this->table_;
-                }
-                this->table_ = new_table;
-                this->mask_ = new_buckets - 1;
-                this->buckets_ = new_buckets;
-            }
-        }
+        this->reserve_internal(new_capacity);
     }
 
     void resize(size_type new_buckets) {
         new_buckets = (new_buckets >= kBucketsInit) ? (new_buckets - 1) : (kBucketsInit - 1);
         size_type new_capacity = detail::round_up_pow2(new_buckets);
-        this->resize_fast(new_capacity);
+        this->resize_internal(new_capacity);
     }
 
     iterator find(const key_type & key) {
@@ -296,7 +308,7 @@ public:
         if (likely(iter == this->end())) {
             // Insert the new key.
             if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-                this->resize_fast(this->buckets_ * 2);
+                this->resize_internal(this->buckets_ * 2);
             }
 
             node_type * new_data = new node_type(key, value);
@@ -331,7 +343,7 @@ public:
         if (likely(iter == this->end())) {
             // Insert the new key.
             if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-                this->resize_fast(this->buckets_ * 2);
+                this->resize_internal(this->buckets_ * 2);
             }
 
             node_type * new_data = new node_type(std::forward<key_type>(key),
