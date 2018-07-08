@@ -16,7 +16,7 @@
 #include <map>
 #include <unordered_map>
 
-#define USE_SHA1_HASH           0
+#define USE_SHA1_HASH           1
 #define USE_PICO_HTTP_PARSER    0
 
 #if USE_PICO_HTTP_PARSER
@@ -504,6 +504,41 @@ void crc32_benchmark()
     }
 #endif
 
+#if USE_SHA1_HASH
+    {
+        StopWatch sw;
+        uint32_t hash32_sum = 0;
+        //alignas(16) uint32_t sha1_state[5];
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
+                hash32_sum += jimi::sha1_x86(jimi::s_sha1_state, crc32_data[j].c_str(), crc32_data[j].size());
+            }
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "jimi::sha1_x86()" << std::endl;
+        std::cout << std::endl;
+
+        //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
+
+        std::cout << "hash32       : ";
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << jimi::sha1_x86(jimi::s_sha1_state, crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
+        std::cout << "hash32_sum   : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << hash32_sum << std::endl;
+        std::cout << "elapsed time : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+#endif
+
     {
         StopWatch sw;
         uint32_t hash32_sum = 0;
@@ -714,6 +749,7 @@ void hashtable_benchmark()
     }
 #endif
 
+#if USE_SHA1_HASH
     {
         size_t count = 0;
         typedef jstd::hash_table_v2<std::string, std::string>::iterator iterator;
@@ -746,11 +782,12 @@ void hashtable_benchmark()
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
+#endif
 
     {
         size_t count = 0;
         typedef jstd::hash_table_v3<std::string, std::string>::iterator iterator;
-        jstd::hash_table_v2<std::string, std::string> table;
+        jstd::hash_table_v3<std::string, std::string> table;
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
 #ifdef _MSC_VER
@@ -775,6 +812,39 @@ void hashtable_benchmark()
         sw.stop();
 
         printf("jstd::hash_table_v3<std::string, std::string>\n\n");
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+
+    {
+        size_t count = 0;
+        typedef jstd::hash_table_v4<std::string, std::string>::iterator iterator;
+        jstd::hash_table_v4<std::string, std::string> table;
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            char buf[16];
+#ifdef _MSC_VER
+            _itoa_s((int)i, buf, 10);
+#else
+            sprintf(buf, "%d", (int)i);
+#endif
+            std::string index = buf;
+            table.insert(crc32_str[i], index);
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                iterator iter = table.find(crc32_str[j]);
+                if (iter != table.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("jstd::hash_table_v4<std::string, std::string>\n\n");
         printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");

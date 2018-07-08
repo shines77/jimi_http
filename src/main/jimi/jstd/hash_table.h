@@ -116,6 +116,7 @@ struct hash_table_node {
 
 enum hash_mode_t {
     Hash_CRC32C,
+    Hash_SHA1_MSG2,
     Hash_SHA1,
     Hash_Time31,
     Hash_Time31Std
@@ -129,9 +130,18 @@ struct hash_helper {
 };
 
 template <>
-struct hash_helper<Hash_SHA1> {
+struct hash_helper<Hash_SHA1_MSG2> {
     static uint32_t getHash(const char * data, size_t length) {
         return jimi::sha1_msg2(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_SHA1> {
+    static uint32_t getHash(const char * data, size_t length) {
+        //alignas(16) uint32_t sha1_state[5];
+        //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
+        return jimi::sha1_x86(jimi::s_sha1_state, data, length);
     }
 };
 
@@ -450,14 +460,19 @@ using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_table_v1 = basic_hash_table<Key, Value, Hash_SHA1>;
+using hash_table_v1 = basic_hash_table<Key, Value, Hash_SHA1_MSG2>;
+#endif
+
+#if USE_SHA1_HASH
+template <typename Key, typename Value>
+using hash_table_v2 = basic_hash_table<Key, Value, Hash_SHA1>;
 #endif
 
 template <typename Key, typename Value>
-using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31>;
+using hash_table_v3 = basic_hash_table<Key, Value, Hash_Time31>;
 
 template <typename Key, typename Value>
-using hash_table_v3 = basic_hash_table<Key, Value, Hash_Time31Std>;
+using hash_table_v4 = basic_hash_table<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 

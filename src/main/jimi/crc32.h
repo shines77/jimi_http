@@ -297,6 +297,7 @@ static uint32_t sha1_msg2_x86(const char * data, size_t length)
 static uint32_t sha1_msg2_x64(const char * data, size_t length)
 {
 #if USE_SHA1_HASH
+#if CRC32C_IS_X86_64
     assert(data != nullptr);
     static const ssize_t kMaxSize = 16;
     static const uint64_t kRestMask = (uint64_t)((kMaxSize / 2) - 1);
@@ -420,10 +421,11 @@ static uint32_t sha1_msg2_x64(const char * data, size_t length)
         __msg1 = _mm_sha1rnds4_epu32(__msg1, __msg2, 1);
         __msg1 = _mm_shuffle_epi32(__msg1, 0x1B);
 
-        uint64_t sha1 = _mm_cvtsi128_si32(__msg1);
+        uint64_t sha1 = _mm_cvtsi128_si64(__msg1);
         sha1 = (sha1 >> 32) ^ (sha1 & 0xFFFFFFFFU);
         return (uint32_t)sha1;
     }
+#endif // CRC32C_IS_X86_64
 #endif // USE_SHA1_HASH
 
     return 0;
@@ -435,6 +437,255 @@ static uint32_t sha1_msg2(const char * data, size_t length)
     return sha1_msg2_x64(data, length);
 #else
     return sha1_msg2_x86(data, length);
+#endif // CRC32C_IS_X86_64
+}
+
+//
+// See: https://github.com/noloader/SHA-Intrinsics/blob/master/sha1-x86.c
+//
+
+/* initial state */
+alignas(16)
+static uint32_t s_sha1_state[5] = { 0x67452301U, 0xEFCDAB89U, 0x98BADCFEU, 0x10325476U, 0xC3D2E1F0U };
+
+/* Process multiple blocks. The caller is responsible for setting the initial */
+/*  state, and the caller is responsible for padding the final block.        */
+
+static uint32_t sha1_x86(uint32_t state[5], const char * data, size_t length)
+{
+    __m128i ABCD, ABCD_SAVE, E0, E0_SAVE, E1;
+    __m128i MSG0, MSG1, MSG2, MSG3;
+    static const __m128i MASK = _mm_set_epi64x(0x0001020304050607ULL, 0x08090a0b0c0d0e0fULL);
+    alignas(16) char new_data[64];
+
+    /* Load initial values */
+    ABCD = _mm_load_si128((const __m128i *)state);
+    E0 = _mm_set_epi32(state[4], 0, 0, 0);
+    ABCD = _mm_shuffle_epi32(ABCD, 0x1B);
+
+    ssize_t remain = (ssize_t)length;
+
+    while (likely(remain > 0)) {
+        /* Save current state  */
+        ABCD_SAVE = ABCD;
+        E0_SAVE = E0;
+
+        /* Rounds 0-3 */
+        if (likely(remain < 16)) {
+            memcpy((void *)(new_data + 0), (const void *)(data + 0), remain * sizeof(char));
+            memset((void *)(new_data + remain), 0, (16 - remain) * sizeof(char));
+            MSG0 = _mm_load_si128((const __m128i *)(new_data + 0));
+        }
+        else {
+            MSG0 = _mm_loadu_si128((const __m128i *)(data + 0));
+        }
+        MSG0 = _mm_shuffle_epi8(MSG0, MASK);
+        E0 = _mm_add_epi32(E0, MSG0);
+        E1 = ABCD;
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 0);
+
+        /* Rounds 4-7 */
+        if (likely(remain <= 16)) {
+            MSG1 = _mm_setzero_si128();
+        }
+        else if (likely(remain < 32)) {
+            memcpy((void *)(new_data + 16), (const void *)(data + 16), (remain - 16) * sizeof(char));
+            memset((void *)(new_data + remain), 0, (32 - remain) * sizeof(char));
+            MSG1 = _mm_load_si128((const __m128i *)(new_data + 16));
+        }
+        else {
+            MSG1 = _mm_loadu_si128((const __m128i *)(data + 16));
+        }
+        MSG1 = _mm_shuffle_epi8(MSG1, MASK);
+        E1 = _mm_sha1nexte_epu32(E1, MSG1);
+        E0 = ABCD;
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 0);
+        MSG0 = _mm_sha1msg1_epu32(MSG0, MSG1);
+
+        /* Rounds 8-11 */
+        if (likely(remain <= 32)) {
+            MSG2 = _mm_setzero_si128();
+        }
+        else if (likely(remain < 48)) {
+            memcpy((void *)(new_data + 32), (const void *)(data + 32), (remain - 32) * sizeof(char));
+            memset((void *)(new_data + remain), 0, (48 - remain) * sizeof(char));
+            MSG2 = _mm_load_si128((const __m128i *)(new_data + 32));
+        }
+        else {
+            MSG2 = _mm_loadu_si128((const __m128i *)(data + 32));
+        }
+        MSG2 = _mm_shuffle_epi8(MSG2, MASK);
+        E0 = _mm_sha1nexte_epu32(E0, MSG2);
+        E1 = ABCD;
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 0);
+        MSG1 = _mm_sha1msg1_epu32(MSG1, MSG2);
+        MSG0 = _mm_xor_si128(MSG0, MSG2);
+
+        /* Rounds 12-15 */
+        if (likely(remain <= 48)) {
+            MSG3 = _mm_setzero_si128();
+        }
+        else if (likely(remain < 64)) {
+            memcpy((void *)(new_data + 48), (const void *)(data + 48), (remain - 48) * sizeof(char));
+            memset((void *)(new_data + remain), 0, (64 - remain) * sizeof(char));
+            MSG3 = _mm_load_si128((const __m128i *)(new_data + 48));
+        }
+        else {
+            MSG3 = _mm_loadu_si128((const __m128i *)(data + 48));
+        }
+        MSG3 = _mm_shuffle_epi8(MSG3, MASK);
+        E1 = _mm_sha1nexte_epu32(E1, MSG3);
+        E0 = ABCD;
+        MSG0 = _mm_sha1msg2_epu32(MSG0, MSG3);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 0);
+        MSG2 = _mm_sha1msg1_epu32(MSG2, MSG3);
+        MSG1 = _mm_xor_si128(MSG1, MSG3);
+
+        /* Rounds 16-19 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG0);
+        E1 = ABCD;
+        MSG1 = _mm_sha1msg2_epu32(MSG1, MSG0);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 0);
+        MSG3 = _mm_sha1msg1_epu32(MSG3, MSG0);
+        MSG2 = _mm_xor_si128(MSG2, MSG0);
+
+        /* Rounds 20-23 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG1);
+        E0 = ABCD;
+        MSG2 = _mm_sha1msg2_epu32(MSG2, MSG1);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 1);
+        MSG0 = _mm_sha1msg1_epu32(MSG0, MSG1);
+        MSG3 = _mm_xor_si128(MSG3, MSG1);
+
+        /* Rounds 24-27 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG2);
+        E1 = ABCD;
+        MSG3 = _mm_sha1msg2_epu32(MSG3, MSG2);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 1);
+        MSG1 = _mm_sha1msg1_epu32(MSG1, MSG2);
+        MSG0 = _mm_xor_si128(MSG0, MSG2);
+
+        /* Rounds 28-31 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG3);
+        E0 = ABCD;
+        MSG0 = _mm_sha1msg2_epu32(MSG0, MSG3);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 1);
+        MSG2 = _mm_sha1msg1_epu32(MSG2, MSG3);
+        MSG1 = _mm_xor_si128(MSG1, MSG3);
+
+        /* Rounds 32-35 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG0);
+        E1 = ABCD;
+        MSG1 = _mm_sha1msg2_epu32(MSG1, MSG0);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 1);
+        MSG3 = _mm_sha1msg1_epu32(MSG3, MSG0);
+        MSG2 = _mm_xor_si128(MSG2, MSG0);
+
+        /* Rounds 36-39 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG1);
+        E0 = ABCD;
+        MSG2 = _mm_sha1msg2_epu32(MSG2, MSG1);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 1);
+        MSG0 = _mm_sha1msg1_epu32(MSG0, MSG1);
+        MSG3 = _mm_xor_si128(MSG3, MSG1);
+
+        /* Rounds 40-43 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG2);
+        E1 = ABCD;
+        MSG3 = _mm_sha1msg2_epu32(MSG3, MSG2);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 2);
+        MSG1 = _mm_sha1msg1_epu32(MSG1, MSG2);
+        MSG0 = _mm_xor_si128(MSG0, MSG2);
+
+        /* Rounds 44-47 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG3);
+        E0 = ABCD;
+        MSG0 = _mm_sha1msg2_epu32(MSG0, MSG3);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 2);
+        MSG2 = _mm_sha1msg1_epu32(MSG2, MSG3);
+        MSG1 = _mm_xor_si128(MSG1, MSG3);
+
+        /* Rounds 48-51 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG0);
+        E1 = ABCD;
+        MSG1 = _mm_sha1msg2_epu32(MSG1, MSG0);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 2);
+        MSG3 = _mm_sha1msg1_epu32(MSG3, MSG0);
+        MSG2 = _mm_xor_si128(MSG2, MSG0);
+
+        /* Rounds 52-55 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG1);
+        E0 = ABCD;
+        MSG2 = _mm_sha1msg2_epu32(MSG2, MSG1);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 2);
+        MSG0 = _mm_sha1msg1_epu32(MSG0, MSG1);
+        MSG3 = _mm_xor_si128(MSG3, MSG1);
+
+        /* Rounds 56-59 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG2);
+        E1 = ABCD;
+        MSG3 = _mm_sha1msg2_epu32(MSG3, MSG2);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 2);
+        MSG1 = _mm_sha1msg1_epu32(MSG1, MSG2);
+        MSG0 = _mm_xor_si128(MSG0, MSG2);
+
+        /* Rounds 60-63 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG3);
+        E0 = ABCD;
+        MSG0 = _mm_sha1msg2_epu32(MSG0, MSG3);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 3);
+        MSG2 = _mm_sha1msg1_epu32(MSG2, MSG3);
+        MSG1 = _mm_xor_si128(MSG1, MSG3);
+
+        /* Rounds 64-67 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG0);
+        E1 = ABCD;
+        MSG1 = _mm_sha1msg2_epu32(MSG1, MSG0);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 3);
+        MSG3 = _mm_sha1msg1_epu32(MSG3, MSG0);
+        MSG2 = _mm_xor_si128(MSG2, MSG0);
+
+        /* Rounds 68-71 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG1);
+        E0 = ABCD;
+        MSG2 = _mm_sha1msg2_epu32(MSG2, MSG1);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 3);
+        MSG3 = _mm_xor_si128(MSG3, MSG1);
+
+        /* Rounds 72-75 */
+        E0 = _mm_sha1nexte_epu32(E0, MSG2);
+        E1 = ABCD;
+        MSG3 = _mm_sha1msg2_epu32(MSG3, MSG2);
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 3);
+
+        /* Rounds 76-79 */
+        E1 = _mm_sha1nexte_epu32(E1, MSG3);
+        E0 = ABCD;
+        ABCD = _mm_sha1rnds4_epu32(ABCD, E1, 3);
+
+        /* Combine state */
+        E0 = _mm_sha1nexte_epu32(E0, E0_SAVE);
+        ABCD = _mm_add_epi32(ABCD, ABCD_SAVE);
+
+        data += 64;
+        remain -= 64;
+    }
+
+    /* Save state */
+    ABCD = _mm_shuffle_epi32(ABCD, 0x1B);
+    //_mm_storeu_si128((__m128i *)state, ABCD);
+    //state[4] = _mm_extract_epi32(E0, 3);
+
+#if CRC32C_IS_X86_64 & 1
+    uint64_t sha1 = _mm_cvtsi128_si64(ABCD);
+    sha1 = (sha1 >> 32) ^ (sha1 & 0xFFFFFFFFU);
+    return (uint32_t)sha1;
+
+    //uint32_t sha1 = state[0] ^ state[1];
+    //uint32_t sha1 = state[0];
+#else
+    uint32_t sha1 = _mm_cvtsi128_si32(ABCD);
+    return sha1;
 #endif // CRC32C_IS_X86_64
 }
 
