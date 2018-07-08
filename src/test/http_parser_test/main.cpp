@@ -16,9 +16,12 @@
 #include <map>
 #include <unordered_map>
 
-#include <picohttpparser/picohttpparser.h>
+#define USE_SHA1_HASH           1
+#define USE_PICO_HTTP_PARSER    0
 
-#define USE_SHA1_HASH   1
+#if USE_PICO_HTTP_PARSER
+#include <picohttpparser/picohttpparser.h>
+#endif
 
 #include "jimi/http_all.h"
 #include "jimi/crc32.h"
@@ -913,6 +916,8 @@ void http_parser_ref_benchmark()
     std::cout << std::endl;
 }
 
+#if USE_PICO_HTTP_PARSER
+
 void pico_http_parser_benchmark()
 {
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
@@ -994,6 +999,8 @@ void pico_http_parser_benchmark()
     std::cout << std::endl;
 }
 
+#endif // USE_PICO_HTTP_PARSER
+
 int main(int argn, char * argv[])
 {
     std::cout << std::endl;
@@ -1020,10 +1027,12 @@ int main(int argn, char * argv[])
     crc32_benchmark();
     hashtable_benchmark();
 
-#if 1
+#if 0
     http_parser_benchmark();
     http_parser_ref_benchmark();
+#if USE_PICO_HTTP_PARSER
     pico_http_parser_benchmark();
+#endif // USE_PICO_HTTP_PARSER
 #endif
 
 #ifdef _WIN32

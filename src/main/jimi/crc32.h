@@ -205,7 +205,7 @@ static uint32_t intel_crc32_u32(const char * data, size_t length)
     return ~crc32;
 }
 
-static uint32_t sha1_msg2(const char * data, size_t length)
+static uint32_t sha1_msg2_x86(const char * data, size_t length)
 {
 #if USE_SHA1_HASH
     assert(data != nullptr);
@@ -224,21 +224,18 @@ static uint32_t sha1_msg2(const char * data, size_t length)
         do {
             if (likely(remain <= kMaxSize)) {
                 __m128i __data1 = _mm_loadu_si128((const __m128i *)(data + 0));
-                __m128i __mask1;
+                __m128i __mask1 = __ones;
 
-                uint64_t mask1 = kMaskOne;
                 uint64_t rest = (uint64_t)(kMaxSize - remain);
                 if (likely(rest <= kRestMask)) {
-                    mask1 = mask1 >> (rest * 8U);
-                    //__mask1 = _mm_cvtsi64_si128(mask1);
-                    __mask1 = _mm_set_epi64x(mask1, kMaskOne);
-                }
-                else if (likely(rest < kMaxSize)) {
-                    mask1 = mask1 >> ((rest & kRestMask) * 8U);
-                    __mask1 = _mm_set_epi64x(0, mask1);
+                    __m128i __rest = _mm_set_epi64x(0, rest * 8);
+                    __mask1 = _mm_srl_epi64(__mask1, __rest);
+                    __mask1 = _mm_unpackhi_epi64(__ones, __mask1);
                 }
                 else {
-                    __mask1 = __ones;
+                    __m128i __rest = _mm_set_epi64x(0, (rest * 8U - 64));
+                    __mask1 = _mm_srl_epi64(__mask1, __rest);
+                    __mask1 = _mm_move_epi64(__mask1);
                 }
 
                 __data1 = _mm_and_si128(__data1, __mask1);
@@ -256,16 +253,11 @@ static uint32_t sha1_msg2(const char * data, size_t length)
                 uint64_t rest = (uint64_t)(kMaxSize * 2 - remain);
                 if (likely(rest <= kRestMask)) {
                     __m128i __rest = _mm_set_epi64x(0, rest * 8);
-                    //__m128i __rest = _mm_cvtsi32_si128((int)(rest * 8));
                     __mask2 = _mm_srl_epi64(__mask2, __rest);
                     __mask2 = _mm_unpackhi_epi64(__ones, __mask2);
-
-                    //__m128d __mask2d = _mm_shuffle_pd(*(__m128d *)&__ones, *(__m128d *)&__mask2, 0b10);
-                    //__data2 = _mm_and_si128(__data2, *(__m128i *)&__mask2d);
                 }
                 else {
                     __m128i __rest = _mm_set_epi64x(0, (rest * 8U - 64));
-                    //__m128i __rest = _mm_cvtsi32_si128((int)(rest * 8U - 64));
                     __mask2 = _mm_srl_epi64(__mask2, __rest);
                     __mask2 = _mm_move_epi64(__mask2);
                 }
@@ -291,15 +283,159 @@ static uint32_t sha1_msg2(const char * data, size_t length)
         } while (likely(remain > 0));
 
         __msg1 = _mm_sha1msg1_epu32(__msg1, __msg2);
-        __msg1 = _mm_sha1rnds4_epu32(__msg1, __msg2, 3);
+        __msg1 = _mm_sha1rnds4_epu32(__msg1, __msg2, 1);
         __msg1 = _mm_shuffle_epi32(__msg1, 0x1B);
 
         uint32_t sha1 = _mm_cvtsi128_si32(__msg1);
         return sha1;
     }
-#endif
+#endif // USE_SHA1_HASH
 
     return 0;
+}
+
+static uint32_t sha1_msg2_x64(const char * data, size_t length)
+{
+#if USE_SHA1_HASH
+    assert(data != nullptr);
+    static const ssize_t kMaxSize = 16;
+    static const uint64_t kRestMask = (uint64_t)((kMaxSize / 2) - 1);
+    static const uint64_t kMaskOne = 0xFFFFFFFFFFFFFFFFULL;
+
+    if (likely(length > 0)) {
+        ssize_t remain = (ssize_t)length;
+
+        __m128i __ones = _mm_setzero_si128();
+        __m128i __msg1 = _mm_setzero_si128();
+        __m128i __msg2 = _mm_setzero_si128();
+        __ones = _mm_cmpeq_epi32(__ones, __ones);
+
+        do {
+            if (likely(remain <= kMaxSize)) {
+                __m128i __data1 = _mm_loadu_si128((const __m128i *)(data + 0));
+#if 1
+                __m128i __mask1;
+
+                uint64_t mask1 = kMaskOne;
+                uint64_t rest = (uint64_t)(kMaxSize - remain);
+                if (likely(rest <= kRestMask)) {
+                    mask1 = mask1 >> (rest * 8U);
+                    //__mask1 = _mm_cvtsi64_si128(mask1);
+                    __mask1 = _mm_set_epi64x(mask1, kMaskOne);
+                }
+                else if (likely(rest < kMaxSize)) {
+                    mask1 = mask1 >> ((rest & kRestMask) * 8U);
+                    __mask1 = _mm_set_epi64x(0, mask1);
+                }
+                else {
+                    __mask1 = __ones;
+                }
+#else
+                __m128i __mask1 = __ones;
+
+                uint64_t rest = (uint64_t)(kMaxSize - remain);
+                if (likely(rest <= kRestMask)) {
+                    __m128i __rest = _mm_set_epi64x(0, rest * 8);
+                    //__m128i __rest = _mm_cvtsi32_si128((int)(rest * 8));
+                    __mask1 = _mm_srl_epi64(__mask1, __rest);
+                    __mask1 = _mm_unpackhi_epi64(__ones, __mask1);
+
+                    //__m128d __mask2d = _mm_shuffle_pd(*(__m128d *)&__ones, *(__m128d *)&__mask1, 0b10);
+                    //__data1 = _mm_and_si128(__data1, *(__m128i *)&__mask1d);
+                }
+                else {
+                    __m128i __rest = _mm_set_epi64x(0, (rest * 8U - 64));
+                    //__m128i __rest = _mm_cvtsi32_si128((int)(rest * 8U - 64));
+                    __mask1 = _mm_srl_epi64(__mask1, __rest);
+                    __mask1 = _mm_move_epi64(__mask1);
+                }
+#endif
+                __data1 = _mm_and_si128(__data1, __mask1);
+                __msg1 = _mm_sha1msg2_epu32(__data1, __msg1);
+
+                remain -= kMaxSize;
+                break;
+            }
+            else if (likely(remain <= kMaxSize * 2)) {
+                __m128i __data1 = _mm_loadu_si128((const __m128i *)(data + 0));
+                __m128i __data2 = _mm_loadu_si128((const __m128i *)(data + kMaxSize));
+#if 1
+                __m128i __mask2;
+
+                uint64_t mask2 = kMaskOne;
+                uint64_t rest = (uint64_t)(kMaxSize * 2 - remain);
+                if (likely(rest <= kRestMask)) {
+                    mask2 = mask2 >> (rest * 8U);
+                    //__mask1 = _mm_cvtsi64_si128(mask2);
+                    __mask2 = _mm_set_epi64x(mask2, kMaskOne);
+                }
+                else if (likely(rest < kMaxSize)) {
+                    mask2 = mask2 >> ((rest & kRestMask) * 8U);
+                    __mask2 = _mm_set_epi64x(0, mask2);
+                }
+                else {
+                    __mask2 = __ones;
+                }
+#else
+                __m128i __mask2 = __ones;
+
+                uint64_t rest = (uint64_t)(kMaxSize * 2 - remain);
+                if (likely(rest <= kRestMask)) {
+                    __m128i __rest = _mm_set_epi64x(0, rest * 8);
+                    //__m128i __rest = _mm_cvtsi32_si128((int)(rest * 8));
+                    __mask2 = _mm_srl_epi64(__mask2, __rest);
+                    __mask2 = _mm_unpackhi_epi64(__ones, __mask2);
+
+                    //__m128d __mask2d = _mm_shuffle_pd(*(__m128d *)&__ones, *(__m128d *)&__mask2, 0b10);
+                    //__data2 = _mm_and_si128(__data2, *(__m128i *)&__mask2d);
+                }
+                else {
+                    __m128i __rest = _mm_set_epi64x(0, (rest * 8U - 64));
+                    //__m128i __rest = _mm_cvtsi32_si128((int)(rest * 8U - 64));
+                    __mask2 = _mm_srl_epi64(__mask2, __rest);
+                    __mask2 = _mm_move_epi64(__mask2);
+                }
+#endif
+                __data2 = _mm_and_si128(__data2, __mask2);
+
+                __msg1 = _mm_sha1msg2_epu32(__data1, __msg1);
+                __msg2 = _mm_sha1msg2_epu32(__data2, __msg2);
+
+                remain -= kMaxSize * 2;
+                break;
+            }
+            else {
+                __m128i __data1 = _mm_loadu_si128((const __m128i *)(data + 0));
+                __m128i __data2 = _mm_loadu_si128((const __m128i *)(data + kMaxSize));
+
+                __msg1 = _mm_sha1msg2_epu32(__data1, __msg1);
+                __msg2 = _mm_sha1msg2_epu32(__data2, __msg2);
+
+                data += kMaxSize * 2;
+                remain -= kMaxSize * 2;
+            }
+        } while (likely(remain > 0));
+
+        __msg1 = _mm_sha1msg1_epu32(__msg1, __msg2);
+        __msg1 = _mm_sha1rnds4_epu32(__msg1, __msg2, 1);
+        __msg1 = _mm_shuffle_epi32(__msg1, 0x1B);
+
+        uint64_t sha1 = _mm_cvtsi128_si32(__msg1);
+        sha1 = (sha1 >> 32) ^ (sha1 & 0xFFFFFFFFU);
+        return (uint32_t)sha1;
+    }
+#endif // USE_SHA1_HASH
+
+    return 0;
+}
+
+static uint32_t sha1_msg2(const char * data, size_t length)
+{
+#if CRC32C_IS_X86_64
+    return sha1_msg2_x64(data, length);
+#else
+    return sha1_msg2_x86(data, length);
+#endif // CRC32C_IS_X86_64
 }
 
 } // namespace jimi
