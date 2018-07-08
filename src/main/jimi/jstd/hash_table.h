@@ -73,7 +73,7 @@ bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
             __m128i __str2 = _mm_loadu_si128((const __m128i *)str2);
             int len = ((int)nlength >= kMaxSize) ? kMaxSize : (int)nlength;
             assert(len > 0);
-            
+
             int full_matched = _mm_cmpestrc(__str1, len, __str2, len, kEqualEach);
             if (likely(full_matched == 0)) {
                 // Full matched, continue match next kMaxSize bytes.
@@ -116,6 +116,7 @@ struct hash_table_node {
 
 enum hash_mode_t {
     Hash_CRC32C,
+    Hash_SHA1,
     Hash_Time31,
     Hash_Time31Std
 };
@@ -124,6 +125,13 @@ template <std::size_t Mode>
 struct hash_helper {
     static uint32_t getHash(const char * data, size_t length) {
         return jimi::crc32_x64(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_SHA1> {
+    static uint32_t getHash(const char * data, size_t length) {
+        return jimi::sha1_msg2(data, length);
     }
 };
 
@@ -441,10 +449,13 @@ template <typename Key, typename Value>
 using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
 
 template <typename Key, typename Value>
-using hash_table_v1 = basic_hash_table<Key, Value, Hash_Time31>;
+using hash_table_v1 = basic_hash_table<Key, Value, Hash_SHA1>;
 
 template <typename Key, typename Value>
-using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31Std>;
+using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31>;
+
+template <typename Key, typename Value>
+using hash_table_v3 = basic_hash_table<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 

@@ -477,6 +477,34 @@ void crc32_benchmark()
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                hash32_sum += jimi::sha1_msg2(crc32_data[j].c_str(), crc32_data[j].size());
+            }
+        }
+        sw.stop();
+
+        std::cout << std::endl;
+        std::cout << "jimi::sha1_msg2()" << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "hash32       : ";
+        std::cout << "0x";
+        std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+        std::cout << std::setiosflags(std::ios::uppercase);
+        std::cout << jimi::sha1_msg2(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
+        std::cout << "hash32_sum   : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::dec;
+        std::cout << hash32_sum << std::endl;
+        std::cout << "elapsed time : ";
+        std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
+        std::cout << sw.getMillisec() << " ms" << std::endl;
+    }
+
+    {
+        StopWatch sw;
+        uint32_t hash32_sum = 0;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 hash32_sum += TiStore::hash::Times31(crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
@@ -711,6 +739,41 @@ void hashtable_benchmark()
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
+
+    {
+        size_t count = 0;
+        typedef jstd::hash_table_v3<std::string, std::string>::iterator iterator;
+        jstd::hash_table_v2<std::string, std::string> table;
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            char buf[16];
+#ifdef _MSC_VER
+            _itoa_s((int)i, buf, 10);
+#else
+            sprintf(buf, "%d", (int)i);
+#endif
+            std::string index = buf;
+            table.insert(crc32_str[i], index);
+        }
+
+        StopWatch sw;
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                iterator iter = table.find(crc32_str[j]);
+                if (iter != table.end()) {
+                    count++;
+                }
+            }
+        }
+        sw.stop();
+
+        printf("jstd::hash_table_v3<std::string, std::string>\n\n");
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+
+    printf("\n");
 }
 
 void http_parser_benchmark()
@@ -722,23 +785,23 @@ void http_parser_benchmark()
 
     static const int kMaxLoop = 20;
     static std::atomic<int> loop_cnt(0);
-	auto request_len = ::strlen(http_header);
-	volatile int64_t count = 0;
+    auto request_len = ::strlen(http_header);
+    volatile int64_t count = 0;
     volatile int64_t dummy = 0;
-	std::thread counter([&] {
-		auto last_count = count;
-		auto count_ = count;
+    std::thread counter([&] {
+        auto last_count = count;
+        auto count_ = count;
         auto dummy_ = dummy;
-		do {
+        do {
             std::atomic_thread_fence(std::memory_order_acquire);
-			count_ = count;
+            count_ = count;
             dummy_ = dummy;
             std::atomic_thread_fence(std::memory_order_release);
 #if 1
             std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
             std::cout << (count_ - last_count);
             std::cout << ", ";
-			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
             std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
             std::cout << ",  ";
             std::cout << std::left << std::dec << request_len;
@@ -750,23 +813,23 @@ void http_parser_benchmark()
                    (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
                    request_len, dummy_);
 #endif
-			last_count = count_;
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            last_count = count_;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             loop_cnt++;
             if (loop_cnt > kMaxLoop) {
                 break;
             }
-		} while (1);
-	});
+        } while (1);
+    });
 
     http::Parser<1024> http_parser;
-	do {
+    do {
         int64_t dummy_tmp = http_parser.parseRequest(http_header, request_len);
         dummy_tmp += (int64_t)http_parser.getFieldSize();
         http_parser.reset();
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
-		count++;
+        count++;
         std::atomic_thread_fence(std::memory_order_release);
         if (loop_cnt > kMaxLoop) {
             if (counter.joinable()) {
@@ -774,8 +837,8 @@ void http_parser_benchmark()
             }
             break;
         }
-        
-	} while (1);
+
+    } while (1);
 
     std::cout << std::endl;
 }
@@ -789,23 +852,23 @@ void http_parser_ref_benchmark()
 
     static const int kMaxLoop = 20;
     static std::atomic<int> loop_cnt(0);
-	auto request_len = ::strlen(http_header);
-	volatile int64_t count = 0;
+    auto request_len = ::strlen(http_header);
+    volatile int64_t count = 0;
     volatile int64_t dummy = 0;
-	std::thread counter([&] {
-		auto last_count = count;
-		auto count_ = count;
+    std::thread counter([&] {
+        auto last_count = count;
+        auto count_ = count;
         auto dummy_ = dummy;
-		do {
+        do {
             std::atomic_thread_fence(std::memory_order_acquire);
-			count_ = count;
+            count_ = count;
             dummy_ = dummy;
             std::atomic_thread_fence(std::memory_order_release);
 #if 1
             std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
             std::cout << (count_ - last_count);
             std::cout << ", ";
-			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
             std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
             std::cout << ",  ";
             std::cout << std::left << std::dec << request_len;
@@ -817,23 +880,23 @@ void http_parser_ref_benchmark()
                    (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
                    request_len, dummy_);
 #endif
-			last_count = count_;
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            last_count = count_;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             loop_cnt++;
             if (loop_cnt > kMaxLoop) {
                 break;
             }
-		} while (1);
-	});
+        } while (1);
+    });
 
     http::ParserRef<1024> http_parser;
-	do {
+    do {
         int64_t dummy_tmp = http_parser.parseRequest(http_header, request_len);
         dummy_tmp += (int64_t)http_parser.getFieldSize();
         http_parser.reset();
         std::atomic_thread_fence(std::memory_order_acquire);
         dummy += dummy_tmp;
-		count++;
+        count++;
         std::atomic_thread_fence(std::memory_order_release);
         if (loop_cnt > kMaxLoop) {
             if (counter.joinable()) {
@@ -841,7 +904,7 @@ void http_parser_ref_benchmark()
             }
             break;
         }
-	} while (1);
+    } while (1);
 
     std::cout << std::endl;
 }
@@ -855,23 +918,23 @@ void pico_http_parser_benchmark()
 
     static const int kMaxLoop = 20;
     static std::atomic<int> loop_cnt(0);
-	auto request_len = ::strlen(http_header);
-	volatile int64_t count = 0;
+    auto request_len = ::strlen(http_header);
+    volatile int64_t count = 0;
     volatile int64_t dummy = 0;
-	std::thread counter([&] {
-		auto last_count = count;
-		auto count_ = count;
+    std::thread counter([&] {
+        auto last_count = count;
+        auto count_ = count;
         auto dummy_ = dummy;
-		do {
+        do {
             std::atomic_thread_fence(std::memory_order_acquire);
-			count_ = count;
+            count_ = count;
             dummy_ = dummy;
             std::atomic_thread_fence(std::memory_order_release);
 #if 1
             std::cout << std::right << std::setw(10) << std::setfill(' ') << std::dec;
             std::cout << (count_ - last_count);
             std::cout << ", ";
-			std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
+            std::cout << std::right << std::setw(9) << std::setfill(' ') << std::fixed << std::setprecision(3);
             std::cout << (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0 << " MB/Sec";
             std::cout << ",  ";
             std::cout << std::left << std::dec << request_len;
@@ -883,21 +946,21 @@ void pico_http_parser_benchmark()
                    (double)((count_ - last_count) * request_len) / 1024.0 / 1024.0,
                    request_len, dummy_);
 #endif
-			last_count = count_;
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            last_count = count_;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             loop_cnt++;
             if (loop_cnt > kMaxLoop) {
                 break;
             }
-		} while (1);
-	});
+        } while (1);
+    });
 
     char * method, * path;
     int pret, minor_version;
     struct phr_header headers[128];
     size_t buflen = request_len + 1, prevbuflen = 0, method_len, path_len, num_headers;
 
-	do {
+    do {
         /* Read the socket data */
 
         /* Parse the request */
@@ -908,7 +971,7 @@ void pico_http_parser_benchmark()
             /* successfully parsed the request */
             std::atomic_thread_fence(std::memory_order_acquire);
             dummy += (int64_t)num_headers;
-	        count++;
+            count++;
             std::atomic_thread_fence(std::memory_order_release);
         }
         else if (pret == -1) {
@@ -923,7 +986,7 @@ void pico_http_parser_benchmark()
             }
             break;
         }
-	} while (1);
+    } while (1);
 
     std::cout << std::endl;
 }
