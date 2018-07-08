@@ -453,6 +453,7 @@ static uint32_t s_sha1_state[5] = { 0x67452301U, 0xEFCDAB89U, 0x98BADCFEU, 0x103
 
 static uint32_t sha1_x86(uint32_t state[5], const char * data, size_t length)
 {
+#if USE_SHA1_HASH
     __m128i ABCD, ABCD_SAVE, E0, E0_SAVE, E1;
     __m128i MSG0, MSG1, MSG2, MSG3;
     static const __m128i MASK = _mm_set_epi64x(0x0001020304050607ULL, 0x08090a0b0c0d0e0fULL);
@@ -687,6 +688,10 @@ static uint32_t sha1_x86(uint32_t state[5], const char * data, size_t length)
     uint32_t sha1 = _mm_cvtsi128_si32(ABCD);
     return sha1;
 #endif // CRC32C_IS_X86_64
+
+#else
+    return 0;
+#endif // USE_SHA1_HASH
 }
 
 } // namespace jimi
