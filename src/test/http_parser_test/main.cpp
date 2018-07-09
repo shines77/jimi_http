@@ -769,7 +769,11 @@ template <typename AlgorithmTy>
 void hashtable_rehash_benchmark_impl()
 {
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef _NDEBUG
+    static const size_t kRepeatTimes = 2;
+#else
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
 
     std::string crc32_str[kHeaderFieldSize];
     StringRef crc32_data[kHeaderFieldSize];
@@ -801,8 +805,8 @@ void hashtable_rehash_benchmark_impl()
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             buckets = 128;
-            algorithm.shrink_to(buckets);
-#ifndef NDEBUG
+            algorithm.shrink_to(buckets - 1);
+#ifndef _NDEBUG
             if (algorithm.bucket_count() != buckets) {
                 size_t bucket_count = algorithm.bucket_count();
                 printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
@@ -812,8 +816,8 @@ void hashtable_rehash_benchmark_impl()
             count += algorithm.bucket_count();
             for (size_t j = 0; j < 7; ++j) {
                 buckets *= 2;
-                algorithm.rehash(buckets);
-#ifndef NDEBUG
+                algorithm.rehash(buckets - 1);
+#ifndef _NDEBUG
                 if (algorithm.bucket_count() != buckets) {
                     size_t bucket_count = algorithm.bucket_count();
                     printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
