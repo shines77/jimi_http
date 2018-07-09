@@ -220,7 +220,7 @@ public:
 
     size_type size() const { return this->size_; }
     size_type bucket_mask() const { return this->mask_; }
-    size_type bucket_size() const { return this->buckets_; }
+    size_type bucket_count() const { return this->buckets_; }
     data_type * data() const { return this->table_; }
 
     bool empty() const { return (this->size() == 0); }
@@ -294,13 +294,14 @@ private:
             new_table[bucket] = old_data;
         }
         else {
+            hash_type first_bucket = bucket;
             do {
                 bucket = (bucket + 1) & new_mask;
                 if (likely(new_table[bucket] == nullptr)) {
                     new_table[bucket] = old_data;
                     break;
                 }
-            } while (1);
+            } while (likely(bucket != first_bucket));
         }
     }
 
@@ -308,7 +309,7 @@ private:
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
         assert(new_buckets >= this->size_ * 2);
-        if (likely(new_buckets > this->buckets_ || (force_shrink && new_buckets < this->buckets_))) {
+        if (likely(new_buckets > this->buckets_) || unlikely(force_shrink && new_buckets < this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (new_table != nullptr) {
                 // Initialize new table.
@@ -316,18 +317,16 @@ private:
 
                 if (likely(this->table_ != nullptr)) {
                     // Recalculate all hash values.
-                    {
-                        size_type new_size = 0;
+                    size_type new_size = 0;
 
-                        for (size_type i = 0; i < this->buckets_; ++i) {
-                            if (likely(this->table_[i] != nullptr)) {
-                                // Insert the old buckets to the new buckets in the new table.
-                                this->rehash_insert(new_table, new_buckets, this->table_[i]);
-                                ++new_size;
-                            }
+                    for (size_type i = 0; i < this->buckets_; ++i) {
+                        if (likely(this->table_[i] != nullptr)) {
+                            // Insert the old buckets to the new buckets in the new table.
+                            this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                            ++new_size;
                         }
-                        assert(new_size == this->size_);
                     }
+                    assert(new_size == this->size_);
 
                     // Free old table data.
                     delete[] this->table_;

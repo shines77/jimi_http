@@ -580,6 +580,8 @@ public:
     size_type size() const { return this->map_.size(); }
     bool empty() const { return this->map_.empty(); }
 
+    size_type bucket_count() const { return this->map_.bucket_count(); }
+
     size_type count(const std::string & key) const { return this->map_.count(key); }
 
     void clear() { this->map_.clear(); }
@@ -650,6 +652,9 @@ public:
 
     size_type size() const { return this->map_.size(); }
     bool empty() const { return this->map_.empty(); }
+
+    size_type bucket_mask() const { return this->map_.bucket_mask(); }
+    size_type bucket_count() const { return this->map_.bucket_count(); }
 
     void clear() { this->map_.clear(); }
 
@@ -774,8 +779,6 @@ void hashtable_rehash_benchmark_impl()
     }   
 
     {
-        typedef typename AlgorithmTy::iterator iterator;
-
         size_t count = 0;
         size_t buckets = 128;
 
@@ -799,10 +802,11 @@ void hashtable_rehash_benchmark_impl()
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             buckets = 128;
             algorithm.shrink_to(buckets);
+            count += algorithm.bucket_count();
             for (size_t j = 0; j < 7; ++j) {
                 buckets *= 2;
                 algorithm.rehash(buckets);
-                count += algorithm.size();
+                count += algorithm.bucket_count();
             }
         }
         sw.stop();
