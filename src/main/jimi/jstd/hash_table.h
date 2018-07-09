@@ -260,11 +260,11 @@ private:
     }
 
     size_type calc_buckets(size_type new_buckets) {
-        // The minimum bucket is kBucketsInit = 64.
-        new_buckets = (new_buckets >= kBucketsInit) ? new_buckets : kBucketsInit;
         // If new_buckets is less than half of the current hash table size,
         // then double the hash table size.
         new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
+        // The minimum bucket is kBucketsInit = 64.
+        new_buckets = (new_buckets >= kBucketsInit) ? new_buckets : kBucketsInit;
         // Round up the new_buckets to power 2.
         new_buckets = detail::round_up_pow2(new_buckets);
         return new_buckets;
