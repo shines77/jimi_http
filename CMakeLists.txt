@@ -19,7 +19,7 @@ set(Boost_USE_STATIC_LIBS        BoostOption_USE_STATIC_LIBS)      # only find s
 set(Boost_USE_MULTITHREADED      BoostOption_USE_MULTITHREADED)
 set(Boost_USE_STATIC_RUNTIME     BoostOption_USE_STATIC_RUNTIME)
 
-find_package(Boost 1.55 COMPONENTS coroutine context system thread atomic chrono program_options REQUIRED)
+find_package(Boost 1.54 COMPONENTS system thread atomic chrono program_options REQUIRED)
 
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
