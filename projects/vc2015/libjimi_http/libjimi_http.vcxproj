@@ -27,7 +27,7 @@
     <ClInclude Include="..\..\..\src\main\jimi\basic\stddef.h" />
     <ClInclude Include="..\..\..\src\main\jimi\basic\stdint.h" />
     <ClInclude Include="..\..\..\src\main\jimi\basic\stdsize.h" />
-    <ClInclude Include="..\..\..\src\main\jimi\crc32.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\crc32c.h" />
     <ClInclude Include="..\..\..\src\main\jimi\Hash.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpCommon.h" />
     <ClInclude Include="..\..\..\src\main\jimi\HttpParser.h" />

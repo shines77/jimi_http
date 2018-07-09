@@ -15,7 +15,7 @@
 
 #include <nmmintrin.h>  // For SSE 4.2
 
-#include "jimi/crc32.h"
+#include "jimi/crc32c.h"
 #include "jimi/Hash.h"
 
 #include "jimi/support/SSEHelper.h"
@@ -125,7 +125,7 @@ enum hash_mode_t {
 template <std::size_t Mode>
 struct hash_helper {
     static uint32_t getHash(const char * data, size_t length) {
-        return jimi::crc32_x64(data, length);
+        return jimi::crc32c_x64(data, length);
     }
 };
 

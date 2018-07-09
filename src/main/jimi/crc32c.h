@@ -44,7 +44,7 @@
 
 namespace jimi {
 
-static uint32_t crc32_x86(const char * data, size_t length)
+static uint32_t crc32c_x86(const char * data, size_t length)
 {
     assert(data != nullptr);
 
@@ -82,7 +82,7 @@ static uint32_t crc32_x86(const char * data, size_t length)
     return ~crc32;
 }
 
-static uint32_t crc32_x64(const char * data, size_t length)
+static uint32_t crc32c_x64(const char * data, size_t length)
 {
 #if CRC32C_IS_X86_64
     assert(data != nullptr);
@@ -120,13 +120,13 @@ static uint32_t crc32_x64(const char * data, size_t length)
 
     return (uint32_t)~crc64;
 #else
-    return crc32_x86(data, length);
+    return crc32c_x86(data, length);
 #endif // CRC32C_IS_X86_64
 }
 
 #if CRC32C_IS_X86_64
 
-static uint32_t intel_crc32_u64(const char * data, size_t length)
+static uint32_t crc32c_hw_u64(const char * data, size_t length)
 {
     assert(data != nullptr);
     uint64_t crc64 = ~0;
@@ -154,7 +154,7 @@ static uint32_t intel_crc32_u64(const char * data, size_t length)
 
 #if CRC32C_IS_X86_64
 
-static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
+static uint32_t crc32c_hw_u64_v2(const char * data, size_t length)
 {
     assert(data != nullptr);
     uint64_t crc64 = ~0;
@@ -181,7 +181,7 @@ static uint32_t intel_crc32_u64_v2(const char * data, size_t length)
 
 #endif // CRC32C_IS_X86_64
 
-static uint32_t intel_crc32_u32(const char * data, size_t length)
+static uint32_t crc32c_hw_u32(const char * data, size_t length)
 {
     assert(data != nullptr);
     uint32_t crc32 = ~0;
