@@ -590,7 +590,7 @@ public:
         this->map_.reserve(max_count);
     }
 
-    size_type resize(size_type new_buckets) {
+    void resize(size_type new_buckets) {
         this->map_.rehash(new_buckets);
     }
 
