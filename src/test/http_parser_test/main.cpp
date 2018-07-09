@@ -913,11 +913,12 @@ void hashtable_insert_benchmark_impl()
 
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
-            //assert(algorithm.size() == 0);
-            //algorithm.clear();
-            //assert(algorithm.size() == 0);
-            //count += algorithm.size();
-
+#if 0
+            assert(algorithm.size() == 0);
+            algorithm.clear();
+            assert(algorithm.size() == 0);
+            count += algorithm.size();
+#endif
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 algorithm.insert(crc32_str[j], indexs[j]);
             }
