@@ -540,18 +540,26 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
+#if 0
     void insert(std::string && key, std::string && value) {
         this->map_.insert(std::make_pair(std::forward<std::string>(key),
                                          std::forward<std::string>(value)));
+    }
+#endif
+
+    void emplace(const std::string & key, const std::string & value) {
+        this->map_.emplace(std::make_pair(key, value));
     }
 
     void erase(const std::string & key) {
         this->map_.erase(key);
     }
 
+#if 0
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
+#endif
 };
 
 class std_unordered_map {
@@ -610,18 +618,26 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
+#if 0
     void insert(std::string && key, std::string && value) {
         this->map_.insert(std::make_pair(std::forward<std::string>(key),
                                          std::forward<std::string>(value)));
+    }
+#endif
+
+    void emplace(const std::string & key, const std::string & value) {
+        this->map_.emplace(std::make_pair(key, value));
     }
 
     void erase(const std::string & key) {
         this->map_.erase(key);
     }
 
+#if 0
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
+#endif
 };
 
 template <typename T>
@@ -682,18 +698,28 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
+#if 0
     void insert(key_type && key, value_type && value) {
         this->map_.insert(std::make_pair(std::forward<key_type>(key),
                                          std::forward<value_type>(value)));
     }
+#endif
+
+    void emplace(const std::string & key, const std::string & value) {
+        this->map_.emplace(std::make_pair(key, value));
+    }
 
     void erase(const std::string & key) {
+        if (key.size() <= 4)
+            iterator iter = this->map_.find(key);;
         this->map_.erase(key);
     }
 
+#if 0
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
+#endif
 };
 
 } // namespace test
@@ -709,7 +735,7 @@ void hashtable_find_benchmark_impl()
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
         crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
-    }   
+    }
 
     {
         typedef typename AlgorithmTy::iterator iterator;
@@ -780,7 +806,7 @@ void hashtable_rehash_benchmark_impl()
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
         crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
-    }   
+    }
 
     {
         size_t count = 0;
@@ -801,7 +827,7 @@ void hashtable_rehash_benchmark_impl()
         }
 
         StopWatch sw;
-        
+
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             buckets = 128;
@@ -854,10 +880,88 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 }
 
+template <typename AlgorithmTy>
+void hashtable_insert_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 100;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+    std::string crc32_str[kHeaderFieldSize];
+    std::string indexs[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        indexs[i] = buf;
+    }
+
+    {
+        size_t count = 0;
+        AlgorithmTy algorithm;
+
+        StopWatch sw;
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            //assert(algorithm.size() == 0);
+            //algorithm.clear();
+            //assert(algorithm.size() == 0);
+            //count += algorithm.size();
+
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.insert(crc32_str[j], indexs[j]);
+            }
+            count += algorithm.size();
+
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.erase(crc32_str[j]);
+            }
+            assert(algorithm.size() == 0);
+            count += algorithm.size();
+        }
+        sw.stop();
+
+        printf("%s\n\n", algorithm.name());
+        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+}
+
+void hashtable_insert_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_insert_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_insert_benchmark_impl<test::std_map>();
+    hashtable_insert_benchmark_impl<test::std_unordered_map>();
+
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
+#endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+}
+
 void hashtable_benchmark()
 {
     hashtable_find_benchmark();
     hashtable_rehash_benchmark();
+    hashtable_insert_benchmark();
 }
 
 void http_parser_benchmark()

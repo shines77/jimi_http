@@ -453,30 +453,30 @@ public:
 #endif
                 }
             }
+        }
 
-            // If first position is not found, search next bucket continue.
-            hash_type first_bucket = bucket;
-            do {
-                bucket = (bucket + 1) & this->mask_;
-                node = (node_type *)this->table_[bucket];
-                if (likely(node != nullptr)) {
-                    if (likely(node->hash == hash)) {
-                        // If hash value is equal, then compare the key sizes and the strings.
-                        if (likely(node->pair.first.size() == key.size())) {
+        // If first position is not found, search next bucket continue.
+        hash_type first_bucket = bucket;
+        do {
+            bucket = (bucket + 1) & this->mask_;
+            node = (node_type *)this->table_[bucket];
+            if (likely(node != nullptr)) {
+                if (likely(node->hash == hash)) {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(node->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                            if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
-                                return (iterator)&this->table_[bucket];
-                            }
-#else
-                            if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                                return (iterator)&this->table_[bucket];
-                            }
-#endif
+                        if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                            return (iterator)&this->table_[bucket];
                         }
+#else
+                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                            return (iterator)&this->table_[bucket];
+                        }
+#endif
                     }
                 }
-            } while (likely(bucket != first_bucket));
-        }
+            }
+        } while (likely(bucket != first_bucket));
 
         // Not found
         return this->end();
@@ -557,12 +557,44 @@ public:
         this->insert(pair.first, pair.second);
     }
 
-    void erase(const std::string & key) {
-        //
+    void emplace(const pair_type & pair) {
+        this->insert(pair.first, pair.second);
     }
 
-    void erase(std::string && key) {
-        //
+    void erase(const key_type & key) {
+        iterator iter = this->find(key);
+        if (likely(iter != this->end())) {
+            assert(this->size_ > 0);
+            if (likely(iter != nullptr)) {
+                if (likely(*iter != nullptr)) {
+                    delete *iter;
+                    *iter = nullptr;
+                    assert(this->size_ > 0);
+                    --(this->size_);
+                }
+            }
+        }
+        else {
+            // Not found the key
+        }
+    }
+
+    void erase(key_type && key) {
+        iterator iter = this->find(std::forward<key_type>(key));
+        if (likely(iter != this->end())) {
+            assert(this->size_ > 0);
+            if (likely(iter != nullptr)) {
+                if (likely(*iter != nullptr)) {
+                    delete *iter;
+                    *iter = nullptr;
+                    assert(this->size_ > 0);
+                    --(this->size_);
+                }
+            }
+        }
+        else {
+            // Not found the key
+        }
     }
 };
 
