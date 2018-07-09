@@ -188,11 +188,12 @@ private:
     size_type mask_;
     size_type buckets_;
 
-    static const size_type kBucketsInit = 64;
+    static const size_type kInitialBuckets = 128;
 
 public:
-    basic_hash_table() : table_(nullptr), size_(0), mask_(0), buckets_(0) {
-        this->init(kBucketsInit);
+    basic_hash_table() :
+        table_(nullptr), size_(0), mask_(0), buckets_(0) {
+        this->init(kInitialBuckets);
     }
     ~basic_hash_table() {
         this->destroy();
@@ -226,6 +227,7 @@ public:
     bool empty() const { return (this->size() == 0); }
 
     void destroy() {
+        // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
             for (size_type i = 0; i < this->size_; ++i) {
                 node_type * node = (node_type *)this->table_[i];
@@ -243,7 +245,17 @@ public:
     }
 
     void clear() {
-        this->destroy();
+        // Clear the data only, don't free the table.
+        if (likely(this->table_ != nullptr)) {
+            for (size_type i = 0; i < this->size_; ++i) {
+                node_type * node = (node_type *)this->table_[i];
+                if (likely(node != nullptr)) {
+                    delete node;
+                    this->table_[i] = nullptr;
+                }
+            }
+        }
+        this->size_ = 0;
     }
 
 private:
@@ -264,7 +276,7 @@ private:
         // then double the hash table size.
         new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
         // The minimum bucket is kBucketsInit = 64.
-        new_buckets = (new_buckets >= kBucketsInit) ? new_buckets : kBucketsInit;
+        new_buckets = (new_buckets >= kInitialBuckets) ? new_buckets : kInitialBuckets;
         // Round up the new_buckets to power 2.
         new_buckets = detail::round_up_pow2(new_buckets);
         return new_buckets;
@@ -315,12 +327,44 @@ private:
         }
     }
 
-    void rehash_internal(size_type new_buckets, bool force_shrink = false) {
+    void rehash_internal(size_type new_buckets) {
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
         assert(new_buckets >= this->size_ * 2);
-        if (likely(new_buckets > this->buckets_) ||
-            unlikely(force_shrink && (new_buckets < this->buckets_))) {
+        if (likely(new_buckets > this->buckets_)) {
+            data_type * new_table = new data_type[new_buckets];
+            if (likely(new_table != nullptr)) {
+                // Initialize new table.
+                memset(new_table, 0, sizeof(data_type) * new_buckets);
+
+                if (likely(this->table_ != nullptr)) {
+                    // Recalculate all hash values.
+                    size_type new_size = 0;
+
+                    for (size_type i = 0; i < this->buckets_; ++i) {
+                        if (likely(this->table_[i] != nullptr)) {
+                            // Insert the old buckets to the new buckets in the new table.
+                            this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                            ++new_size;
+                        }
+                    }
+                    assert(new_size == this->size_);
+
+                    // Free old table data.
+                    delete[] this->table_;
+                }
+                this->table_ = new_table;
+                this->mask_ = new_buckets - 1;
+                this->buckets_ = new_buckets;
+            }
+        }
+    }
+
+    void shrink_internal(size_type new_buckets) {
+        assert(new_buckets > 0);
+        assert((new_buckets & (new_buckets - 1)) == 0);
+        assert(new_buckets >= this->size_ * 2);
+        if (likely(new_buckets != this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (likely(new_table != nullptr)) {
                 // Initialize new table.
@@ -377,7 +421,7 @@ public:
     void shrink_to(size_type new_buckets) {
         // Recalculate the size of new_buckets.
         new_buckets = this->calc_buckets(new_buckets);
-        this->rehash_internal(new_buckets, true);
+        this->shrink_internal(new_buckets);
     }
 
     void shrink_to_fast(size_type new_buckets) {
@@ -385,7 +429,7 @@ public:
         // then double the hash table size.
         new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
         new_buckets = detail::round_up_pow2(new_buckets);
-        this->rehash_internal(new_buckets, true);
+        this->shrink_internal(new_buckets);
     }
 
     iterator find(const key_type & key) {
