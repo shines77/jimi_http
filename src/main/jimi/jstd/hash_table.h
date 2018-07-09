@@ -259,6 +259,17 @@ private:
         }
     }
 
+    size_type calc_buckets(size_type new_buckets) {
+        // The minimum bucket is kBucketsInit = 64.
+        new_buckets = (new_buckets >= kBucketsInit) ? new_buckets : kBucketsInit;
+        // If new_buckets is less than half of the current hash table size,
+        // then double the hash table size.
+        new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
+        // Round up the new_buckets to power 2.
+        new_buckets = detail::round_up_pow2(new_buckets);
+        return new_buckets;
+    }
+
     void reserve_internal(size_type new_buckets) {
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
@@ -309,9 +320,10 @@ private:
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
         assert(new_buckets >= this->size_ * 2);
-        if (likely(new_buckets > this->buckets_) || unlikely(force_shrink && new_buckets < this->buckets_)) {
+        if (likely(new_buckets > this->buckets_) ||
+            unlikely(force_shrink && (new_buckets < this->buckets_))) {
             data_type * new_table = new data_type[new_buckets];
-            if (new_table != nullptr) {
+            if (likely(new_table != nullptr)) {
                 // Initialize new table.
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
 
@@ -344,17 +356,6 @@ private:
         rehash_internal(new_buckets);
     }
 
-    size_type calc_buckets(size_type new_buckets) {
-        // The minimum bucket is kBucketsInit = 64.
-        new_buckets = likely(new_buckets >= kBucketsInit) ? new_buckets : kBucketsInit;
-        // If new_buckets is less than half of the current hash table size,
-        // then double the hash table size.
-        new_buckets = likely(new_buckets > this->size_ * 2) ? new_buckets : this->size_ * 2;
-        // Round up the new_buckets to power 2.
-        new_buckets = detail::round_up_pow2(new_buckets);
-        return new_buckets;
-    }
-
 public:
     void reserve(size_type new_buckets) {
 
@@ -376,7 +377,14 @@ public:
     void shrink_to(size_type new_buckets) {
         // Recalculate the size of new_buckets.
         new_buckets = this->calc_buckets(new_buckets);
-        this->rehash_internal(new_buckets, false);
+        this->rehash_internal(new_buckets, true);
+    }
+
+    void shrink_to_fast(size_type new_buckets) {
+        // If new_buckets is less than half of the current hash table size,
+        // then double the hash table size.
+        new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
+        this->rehash_internal(new_buckets, true);
     }
 
     iterator find(const key_type & key) {
