@@ -305,14 +305,13 @@ private:
             new_table[bucket] = old_data;
         }
         else {
-            hash_type first_bucket = bucket;
             do {
                 bucket = (bucket + 1) & new_mask;
                 if (likely(new_table[bucket] == nullptr)) {
                     new_table[bucket] = old_data;
                     break;
                 }
-            } while (likely(bucket != first_bucket));
+            } while (1);
         }
     }
 
