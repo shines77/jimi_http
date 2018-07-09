@@ -806,7 +806,7 @@ void hashtable_rehash_benchmark_impl()
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             buckets = 128;
             algorithm.shrink_to(buckets - 1);
-#ifndef _NDEBUG
+#ifndef NDEBUG
             if (algorithm.bucket_count() != buckets) {
                 size_t bucket_count = algorithm.bucket_count();
                 printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
@@ -817,7 +817,7 @@ void hashtable_rehash_benchmark_impl()
             for (size_t j = 0; j < 7; ++j) {
                 buckets *= 2;
                 algorithm.rehash(buckets - 1);
-#ifndef _NDEBUG
+#ifndef NDEBUG
                 if (algorithm.bucket_count() != buckets) {
                     size_t bucket_count = algorithm.bucket_count();
                     printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
