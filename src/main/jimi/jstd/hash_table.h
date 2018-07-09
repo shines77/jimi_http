@@ -28,8 +28,12 @@ namespace jstd {
 
 namespace detail {
 
+static inline
 std::size_t round_to_pow2(std::size_t n)
 {
+    assert(n >= 1);
+    if (n & (n - 1)) return n;
+
     unsigned long index;
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
  || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) \
@@ -42,22 +46,26 @@ std::size_t round_to_pow2(std::size_t n)
 #endif
 }
 
+static inline
 std::size_t round_up_pow2(std::size_t n)
 {
+    assert(n >= 1);
+    if (n & (n - 1)) return n;
+
     unsigned long index;
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
  || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) \
  || defined(_M_ARM64)
-    unsigned char nonZero = __BitScanReverse64(index, n);
+    unsigned char nonZero = __BitScanReverse64(index, n - 1);
     return (nonZero ? (1ULL << (index + 1)) : 2ULL);
 #else
-    unsigned char nonZero = __BitScanReverse(index, n);
+    unsigned char nonZero = __BitScanReverse(index, n - 1);
     return (nonZero ? (1UL << (index + 1)) : 2UL);
 #endif
 }
 
 template <typename CharTy>
-bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
+static bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
 {
     assert(str1 != nullptr && str2 != nullptr);
 
@@ -190,13 +198,32 @@ public:
         this->destroy();
     }
 
+    static const char * name() {
+        switch (Mode) {
+        case Hash_CRC32C:
+            return "jstd::hash_table<std::string, std::string>";
+        case Hash_SHA1_MSG2:
+            return "jstd::hash_table_v1<std::string, std::string>";
+        case Hash_SHA1:
+            return "jstd::hash_table_v2<std::string, std::string>";
+        case Hash_Time31:
+            return "jstd::hash_table_v3<std::string, std::string>";
+        case Hash_Time31Std:
+            return "jstd::hash_table_v4<std::string, std::string>";
+        default:
+            return "Unknown class name";
+        }
+    }
+
     iterator begin() const { return &(this->table_[0]); }
     iterator end() const { return &(this->table_[this->buckets_]); }
 
     size_type size() const { return this->size_; }
-    size_type mask() const { return this->mask_; }
-    size_type buckets() const { return this->buckets_; }
+    size_type bucket_mask() const { return this->mask_; }
+    size_type bucket_size() const { return this->buckets_; }
     data_type * data() const { return this->table_; }
+
+    bool empty() const { return (this->size() == 0); }
 
     void destroy() {
         if (likely(this->table_ != nullptr)) {
@@ -277,21 +304,23 @@ private:
         }
     }
 
-    void rehash_internal(size_type new_buckets) {
+    void rehash_internal(size_type new_buckets, bool force_shrink = false) {
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
-        if (likely(new_buckets > this->buckets_)) {
+        assert(new_buckets >= this->size_ * 2);
+        if (likely(new_buckets > this->buckets_ || (force_shrink && new_buckets < this->buckets_))) {
             data_type * new_table = new data_type[new_buckets];
             if (new_table != nullptr) {
                 // Initialize new table.
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
+
                 if (likely(this->table_ != nullptr)) {
                     // Recalculate all hash values.
                     {
                         size_type new_size = 0;
 
                         for (size_type i = 0; i < this->buckets_; ++i) {
-                            if (this->table_[i] != nullptr) {
+                            if (likely(this->table_[i] != nullptr)) {
                                 // Insert the old buckets to the new buckets in the new table.
                                 this->rehash_insert(new_table, new_buckets, this->table_[i]);
                                 ++new_size;
@@ -316,17 +345,39 @@ private:
         rehash_internal(new_buckets);
     }
 
+    size_type calc_buckets(size_type new_buckets) {
+        // The minimum bucket is kBucketsInit = 64.
+        new_buckets = likely(new_buckets >= kBucketsInit) ? new_buckets : kBucketsInit;
+        // If new_buckets is less than half of the current hash table size,
+        // then double the hash table size.
+        new_buckets = likely(new_buckets > this->size_ * 2) ? new_buckets : this->size_ * 2;
+        // Round up the new_buckets to power 2.
+        new_buckets = detail::round_up_pow2(new_buckets);
+        return new_buckets;
+    }
+
 public:
     void reserve(size_type new_buckets) {
-        new_buckets = (new_buckets >= kBucketsInit) ? (new_buckets - 1) : (kBucketsInit - 1);
-        size_type new_capacity = detail::round_up_pow2(new_buckets);
-        this->reserve_internal(new_capacity);
+
+        this->reserve_internal(new_buckets);
     }
 
     void resize(size_type new_buckets) {
-        new_buckets = (new_buckets >= kBucketsInit) ? (new_buckets - 1) : (kBucketsInit - 1);
-        size_type new_capacity = detail::round_up_pow2(new_buckets);
-        this->resize_internal(new_capacity);
+        // Recalculate the size of new_buckets.
+        new_buckets = this->calc_buckets(new_buckets);
+        this->resize_internal(new_buckets);
+    }
+
+    void rehash(size_type new_buckets) {
+        // Recalculate the size of new_buckets.
+        new_buckets = this->calc_buckets(new_buckets);
+        this->rehash_internal(new_buckets);
+    }
+
+    void shrink_to(size_type new_buckets) {
+        // Recalculate the size of new_buckets.
+        new_buckets = this->calc_buckets(new_buckets);
+        this->rehash_internal(new_buckets, true);
     }
 
     iterator find(const key_type & key) {
@@ -452,6 +503,14 @@ public:
 
     void insert(const pair_type & pair) {
         this->insert(pair.first, pair.second);
+    }
+
+    void erase(const std::string & key) {
+        //
+    }
+
+    void erase(std::string && key) {
+        //
     }
 };
 

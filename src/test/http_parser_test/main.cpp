@@ -331,7 +331,7 @@ void crc32c_debug_test()
 #endif // NDEBUG, For debug only
 }
 
-namespace crc32c {
+namespace test {
 
 #define CRC32C_ALGORITHM_IMPL(HashType, Name, Func)             \
     struct Name  {                                              \
@@ -386,7 +386,7 @@ CRC32C_ALGORITHM_IMPL_EX(uint32_t, sha1_x86, jimi::sha1_x86);
 CRC32C_ALGORITHM_IMPL(uint32_t, Times31, TiStore::hash::Times31);
 CRC32C_ALGORITHM_IMPL(uint32_t, Times31_std, TiStore::hash::Times31_std);
 
-} // namespace crc32c
+} // namespace test
 
 template <typename AlgorithmTy>
 void crc32c_benchmark_impl()
@@ -463,34 +463,239 @@ void crc32c_benchmark()
     }
 
 #if CRC32C_IS_X86_64
-    crc32c_benchmark_impl<crc32c::crc32c_x64>();
+    crc32c_benchmark_impl<test::crc32c_x64>();
 #endif
-    crc32c_benchmark_impl<crc32c::crc32c_x86>();
+    crc32c_benchmark_impl<test::crc32c_x86>();
 
 #if CRC32C_IS_X86_64
-    crc32c_benchmark_impl<crc32c::crc32c_hw_u64>();
-    crc32c_benchmark_impl<crc32c::crc32c_hw_u64_v2>();
+    crc32c_benchmark_impl<test::crc32c_hw_u64>();
+    crc32c_benchmark_impl<test::crc32c_hw_u64_v2>();
 #endif
-    crc32c_benchmark_impl<crc32c::crc32c_hw_u32>();
+    crc32c_benchmark_impl<test::crc32c_hw_u32>();
 
 #if USE_SHA1_HASH
-    crc32c_benchmark_impl<crc32c::sha1_msg2>();
-    crc32c_benchmark_impl<crc32c::sha1_x86>();
+    crc32c_benchmark_impl<test::sha1_msg2>();
+    crc32c_benchmark_impl<test::sha1_x86>();
 #endif
 
-    crc32c_benchmark_impl<crc32c::Times31>();
-    crc32c_benchmark_impl<crc32c::Times31_std>();
+    crc32c_benchmark_impl<test::Times31>();
+    crc32c_benchmark_impl<test::Times31_std>();
 
     std::cout << std::endl;
 }
 
-void hashtable_benchmark()
-{
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  hashtable_benchmark()" << std::endl;
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << std::endl;
+namespace test {
 
+class std_map {
+public:
+    typedef std::map<std::string, std::string> map_type;
+    typedef typename map_type::size_type size_type;
+    typedef typename map_type::iterator iterator;
+    typedef typename map_type::const_iterator const_iterator;
+
+private:
+    map_type map_;
+
+public:
+    std_map() {}
+    ~std_map() {}
+
+    const char * name() { return "std::map<std::string, std::string>"; }
+    bool is_hashtable() { return false; }
+
+    iterator begin() { return this->map_.begin(); }
+    iterator end() { return this->map_.end(); }
+
+    const_iterator begin() const { return this->map_.begin(); }
+    const_iterator end() const { return this->map_.end(); }
+
+    size_type size() const { return this->map_.size(); }
+    bool empty() const { return this->map_.empty(); }
+
+    size_type count(const std::string & key) const { return this->map_.count(key); }
+
+    void clear() { this->map_.clear(); }
+
+    void reserve(size_type new_capacity) {
+        // Not implemented
+    }
+
+    void resize(size_type new_capacity) {
+        // Not implemented
+    }
+
+    void rehash(size_type new_capacity) {
+        // Not implemented
+    }
+
+    void shrink_to(size_type new_capacity) {
+        // Not implemented
+    }
+
+    iterator find(const std::string & key) {
+        return this->map_.find(key);
+    }
+
+    void insert(const std::string & key, const std::string & value) {
+        this->map_.insert(std::make_pair(key, value));
+    }
+
+    void insert(std::string && key, std::string && value) {
+        this->map_.insert(std::make_pair(std::forward<std::string>(key),
+                                         std::forward<std::string>(value)));
+    }
+
+    void erase(const std::string & key) {
+        this->map_.erase(key);
+    }
+
+    void erase(std::string && key) {
+        this->map_.erase(std::forward<std::string>(key));
+    }
+};
+
+class std_unordered_map {
+public:
+    typedef std::unordered_map<std::string, std::string> map_type;
+    typedef typename map_type::size_type size_type;
+    typedef typename map_type::iterator iterator;
+    typedef typename map_type::const_iterator const_iterator;
+
+private:
+    map_type map_;
+
+public:
+    std_unordered_map() {}
+    ~std_unordered_map() {}
+
+    const char * name() { return "std::unordered_map<std::string, std::string>"; }
+    bool is_hashtable() { return true; }
+
+    iterator begin() { return this->map_.begin(); }
+    iterator end() { return this->map_.end(); }
+
+    const_iterator begin() const { return this->map_.begin(); }
+    const_iterator end() const { return this->map_.end(); }
+
+    size_type size() const { return this->map_.size(); }
+    bool empty() const { return this->map_.empty(); }
+
+    size_type count(const std::string & key) const { return this->map_.count(key); }
+
+    void clear() { this->map_.clear(); }
+
+    void reserve(size_type max_count) {
+        this->map_.reserve(max_count);
+    }
+
+    size_type resize(size_type new_buckets) {
+        this->map_.rehash(new_buckets);
+    }
+
+    void rehash(size_type new_buckets) {
+        this->map_.rehash(new_buckets);
+    }
+
+    void shrink_to(size_type new_buckets) {
+        this->map_.rehash(new_buckets);
+    }
+
+    iterator find(const std::string & key) {
+        return this->map_.find(key);
+    }
+
+    void insert(const std::string & key, const std::string & value) {
+        this->map_.insert(std::make_pair(key, value));
+    }
+
+    void insert(std::string && key, std::string && value) {
+        this->map_.insert(std::make_pair(std::forward<std::string>(key),
+                                         std::forward<std::string>(value)));
+    }
+
+    void erase(const std::string & key) {
+        this->map_.erase(key);
+    }
+
+    void erase(std::string && key) {
+        this->map_.erase(std::forward<std::string>(key));
+    }
+};
+
+template <typename T>
+class hash_table_impl {
+public:
+    typedef T map_type;
+    typedef typename map_type::key_type key_type;
+    typedef typename map_type::value_type value_type;
+    typedef typename map_type::size_type size_type;
+    typedef typename map_type::iterator iterator;
+    typedef typename map_type::const_iterator const_iterator;
+
+private:
+    map_type map_;
+
+public:
+    hash_table_impl() {}
+    ~hash_table_impl() {}
+
+    const char * name() { return map_type::name(); }
+    bool is_hashtable() { return true; }
+
+    iterator begin() { return this->map_.begin(); }
+    iterator end() { return this->map_.end(); }
+
+    const_iterator begin() const { return this->map_.begin(); }
+    const_iterator end() const { return this->map_.end(); }
+
+    size_type size() const { return this->map_.size(); }
+    bool empty() const { return this->map_.empty(); }
+
+    void clear() { this->map_.clear(); }
+
+    void reserve(size_type new_buckets) {
+        this->map_.reserve(new_buckets);
+    }
+
+    void resize(size_type new_buckets) {
+        this->map_.resize(new_buckets);
+    }
+
+    void rehash(size_type new_buckets) {
+        this->map_.rehash(new_buckets);
+    }
+
+    void shrink_to(size_type new_buckets) {
+        this->map_.shrink_to(new_buckets);
+    }
+
+    iterator find(const key_type & key) {
+        return this->map_.find(key);
+    }
+
+    void insert(const key_type & key, const value_type & value) {
+        this->map_.insert(std::make_pair(key, value));
+    }
+
+    void insert(key_type && key, value_type && value) {
+        this->map_.insert(std::make_pair(std::forward<key_type>(key),
+                                         std::forward<value_type>(value)));
+    }
+
+    void erase(const std::string & key) {
+        this->map_.erase(key);
+    }
+
+    void erase(std::string && key) {
+        this->map_.erase(std::forward<std::string>(key));
+    }
+};
+
+} // namespace test
+
+template <typename AlgorithmTy>
+void hashtable_find_benchmark_impl()
+{
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
@@ -499,12 +704,13 @@ void hashtable_benchmark()
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
         crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
-    }
+    }   
 
     {
+        typedef typename AlgorithmTy::iterator iterator;
+
         size_t count = 0;
-        typedef std::map<std::string, std::string>::iterator map_iterator;
-        std::map<std::string, std::string> map;
+        AlgorithmTy algorithm;
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
 #ifdef _MSC_VER
@@ -513,98 +719,69 @@ void hashtable_benchmark()
             sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
-            map.insert(std::make_pair(crc32_str[i], index));
+            algorithm.insert(crc32_str[i], index);
         }
 
         StopWatch sw;
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                map_iterator iter = map.find(crc32_str[j]);
-                if (iter != map.end()) {
+                iterator iter = algorithm.find(crc32_str[j]);
+                if (iter != algorithm.end()) {
                     count++;
                 }
             }
         }
         sw.stop();
 
-        printf("std::map<std::string, std::string>\n\n");
+        printf("%s\n\n", algorithm.name());
         printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
+}
 
-    {
-        size_t count = 0;
-        typedef std::unordered_map<std::string, std::string>::iterator map_iterator;
-        std::unordered_map<std::string, std::string> table;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
-#endif
-            std::string index = buf;
-            table.insert(std::make_pair(crc32_str[i], index));
-        }
+void hashtable_find_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_find_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
 
-        StopWatch sw;
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                map_iterator iter = table.find(crc32_str[j]);
-                if (iter != table.end()) {
-                    count++;
-                }
-            }
-        }
-        sw.stop();
+    hashtable_find_benchmark_impl<test::std_map>();
+    hashtable_find_benchmark_impl<test::std_unordered_map>();
 
-        printf("std::unordered_map<std::string, std::string>\n\n");
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-        printf("\n");
-    }
-
-    {
-        size_t count = 0;
-        typedef jstd::hash_table<std::string, std::string>::iterator iterator;
-        jstd::hash_table<std::string, std::string> table;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
-#endif
-            std::string index = buf;
-            table.insert(crc32_str[i], index);
-        }
-
-        StopWatch sw;
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                iterator iter = table.find(crc32_str[j]);
-                if (iter != table.end()) {
-                    count++;
-                }
-            }
-        }
-        sw.stop();
-
-        printf("jstd::hash_table<std::string, std::string>\n\n");
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-        printf("\n");
-    }
-
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
 #if USE_SHA1_HASH
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
+#endif
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+}
+
+template <typename AlgorithmTy>
+void hashtable_rehash_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+
+    std::string crc32_str[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+    }   
+
     {
+        typedef typename AlgorithmTy::iterator iterator;
+
         size_t count = 0;
-        typedef jstd::hash_table_v1<std::string, std::string>::iterator iterator;
-        jstd::hash_table_v1<std::string, std::string> table;
+        size_t buckets = 128;
+
+        AlgorithmTy algorithm;
+        algorithm.reserve(buckets);
+
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
 #ifdef _MSC_VER
@@ -613,130 +790,52 @@ void hashtable_benchmark()
             sprintf(buf, "%d", (int)i);
 #endif
             std::string index = buf;
-            table.insert(crc32_str[i], index);
+            algorithm.insert(crc32_str[i], index);
         }
 
         StopWatch sw;
+        
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                iterator iter = table.find(crc32_str[j]);
-                if (iter != table.end()) {
-                    count++;
-                }
+            buckets = 128;
+            algorithm.shrink_to(buckets);
+            for (size_t j = 0; j < 7; ++j) {
+                buckets *= 2;
+                algorithm.rehash(buckets);
+                count += algorithm.size();
             }
         }
         sw.stop();
 
-        printf("jstd::hash_table_v1<std::string, std::string>\n\n");
+        printf("%s\n\n", algorithm.name());
         printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
-#endif
+}
 
+void hashtable_rehash_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_rehash_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_rehash_benchmark_impl<test::std_unordered_map>();
+
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
 #if USE_SHA1_HASH
-    {
-        size_t count = 0;
-        typedef jstd::hash_table_v2<std::string, std::string>::iterator iterator;
-        jstd::hash_table_v2<std::string, std::string> table;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
 #endif
-            std::string index = buf;
-            table.insert(crc32_str[i], index);
-        }
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+}
 
-        StopWatch sw;
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                iterator iter = table.find(crc32_str[j]);
-                if (iter != table.end()) {
-                    count++;
-                }
-            }
-        }
-        sw.stop();
-
-        printf("jstd::hash_table_v2<std::string, std::string>\n\n");
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-        printf("\n");
-    }
-#endif
-
-    {
-        size_t count = 0;
-        typedef jstd::hash_table_v3<std::string, std::string>::iterator iterator;
-        jstd::hash_table_v3<std::string, std::string> table;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
-#endif
-            std::string index = buf;
-            table.insert(crc32_str[i], index);
-        }
-
-        StopWatch sw;
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                iterator iter = table.find(crc32_str[j]);
-                if (iter != table.end()) {
-                    count++;
-                }
-            }
-        }
-        sw.stop();
-
-        printf("jstd::hash_table_v3<std::string, std::string>\n\n");
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-        printf("\n");
-    }
-
-    {
-        size_t count = 0;
-        typedef jstd::hash_table_v4<std::string, std::string>::iterator iterator;
-        jstd::hash_table_v4<std::string, std::string> table;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
-#endif
-            std::string index = buf;
-            table.insert(crc32_str[i], index);
-        }
-
-        StopWatch sw;
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                iterator iter = table.find(crc32_str[j]);
-                if (iter != table.end()) {
-                    count++;
-                }
-            }
-        }
-        sw.stop();
-
-        printf("jstd::hash_table_v4<std::string, std::string>\n\n");
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-        printf("\n");
-    }
-
-    printf("\n");
+void hashtable_benchmark()
+{
+    hashtable_find_benchmark();
+    hashtable_rehash_benchmark();
 }
 
 void http_parser_benchmark()
