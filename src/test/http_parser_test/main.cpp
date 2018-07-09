@@ -671,7 +671,7 @@ public:
     }
 
     void shrink_to(size_type new_buckets) {
-        this->map_.shrink_to(new_buckets);
+        this->map_.shrink_to_fast(new_buckets);
     }
 
     iterator find(const key_type & key) {
@@ -769,7 +769,7 @@ template <typename AlgorithmTy>
 void hashtable_rehash_benchmark_impl()
 {
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+    static const size_t kRepeatTimes = 100;
 
     std::string crc32_str[kHeaderFieldSize];
     StringRef crc32_data[kHeaderFieldSize];
@@ -802,10 +802,20 @@ void hashtable_rehash_benchmark_impl()
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             buckets = 128;
             algorithm.shrink_to(buckets);
+            if (algorithm.bucket_count() != buckets) {
+                size_t bucket_count = algorithm.bucket_count();
+                printf("shrink_to(): buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                       buckets, bucket_count);
+            }
             count += algorithm.bucket_count();
             for (size_t j = 0; j < 7; ++j) {
                 buckets *= 2;
                 algorithm.rehash(buckets);
+                if (algorithm.bucket_count() != buckets) {
+                    size_t bucket_count = algorithm.bucket_count();
+                    printf("rehash(%u): buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                           (uint32_t)j, buckets, bucket_count);
+                }
                 count += algorithm.bucket_count();
             }
         }
