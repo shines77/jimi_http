@@ -357,7 +357,8 @@ private:
 
 public:
     void reserve(size_type new_buckets) {
-
+        // Recalculate the size of new_buckets.
+        new_buckets = this->calc_buckets(new_buckets);
         this->reserve_internal(new_buckets);
     }
 
@@ -383,6 +384,7 @@ public:
         // If new_buckets is less than half of the current hash table size,
         // then double the hash table size.
         new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
+        new_buckets = detail::round_up_pow2(new_buckets);
         this->rehash_internal(new_buckets, true);
     }
 
