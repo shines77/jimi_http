@@ -268,6 +268,69 @@ void http_parser_ref_test()
     std::cout << std::endl;
 }
 
+void crc32c_debug_test()
+{
+#ifndef NDEBUG
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  crc32c_debug_test()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+
+    std::string crc32_str[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+    }
+
+#if CRC32C_IS_X86_64
+    {
+        std::cout << std::endl;
+        std::cout << "crc32c_x64()" << std::endl;
+        std::cout << std::endl;
+
+        uint32_t crc32_sum = 0;
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            crc32_sum += crc32c_x64(crc32_data[i].c_str(), crc32_data[i].size());
+
+            std::cout << "crc32[";
+            std::cout << std::right << std::setw(2) << std::setfill(' ') << std::dec;
+            std::cout << i << "]: ";
+            std::cout << "0x";
+            std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+            std::cout << std::setiosflags(std::ios::uppercase);
+            std::cout << crc32c_x64(crc32_data[i].c_str(), crc32_data[i].size()) << std::endl;
+        }
+        std::cout << std::endl;
+    }
+#endif // CRC32C_IS_X86_64
+
+    {
+        std::cout << std::endl;
+        std::cout << "crc32c_x32()" << std::endl;
+        std::cout << std::endl;
+
+        uint32_t crc32_sum = 0;
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            crc32_sum += crc32c_x86(crc32_data[i].c_str(), crc32_data[i].size());
+
+            std::cout << "crc32[";
+            std::cout << std::right << std::setw(2) << std::setfill(' ') << std::dec;
+            std::cout << i << "]: ";
+            std::cout << "0x";
+            std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
+            std::cout << std::setiosflags(std::ios::uppercase);
+            std::cout << crc32c_x86(crc32_data[i].c_str(), crc32_data[i].size()) << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl;
+#endif // NDEBUG, For debug only
+}
+
 namespace crc32c {
 
 #define CRC32C_ALGORITHM_IMPL(HashType, Name, Func)             \
@@ -306,10 +369,15 @@ namespace crc32c {
         static const bool isSpecial = true;                     \
     }
 
+#if CRC32C_IS_X86_64
 CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_x64, jimi::crc32c_x64);
+#endif
 CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_x86, jimi::crc32c_x86);
+
+#if CRC32C_IS_X86_64
 CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_hw_u64, jimi::crc32c_hw_u64);
 CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_hw_u64_v2, jimi::crc32c_hw_u64_v2);
+#endif
 CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_hw_u32, jimi::crc32c_hw_u32);
 
 CRC32C_ALGORITHM_IMPL(uint32_t, sha1_msg2, jimi::sha1_msg2);
@@ -376,69 +444,6 @@ void crc32c_benchmark_impl()
     std::cout << "elapsed time : ";
     std::cout << std::left << std::setw(0) << std::setfill(' ') << std::setprecision(3) << std::fixed;
     std::cout << sw.getMillisec() << " ms" << std::endl;
-}
-
-void crc32c_debug_test()
-{
-#ifndef NDEBUG
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  crc32c_debug_test()" << std::endl;
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-
-    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
-
-    std::string crc32_str[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
-    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
-    }
-
-#if CRC32C_IS_X86_64
-    {
-        std::cout << std::endl;
-        std::cout << "crc32c_x64()" << std::endl;
-        std::cout << std::endl;
-
-        uint32_t crc32_sum = 0;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            crc32_sum += crc32c_x64(crc32_data[i].c_str(), crc32_data[i].size());
-
-            std::cout << "crc32[";
-            std::cout << std::right << std::setw(2) << std::setfill(' ') << std::dec;
-            std::cout << i << "]: ";
-            std::cout << "0x";
-            std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
-            std::cout << std::setiosflags(std::ios::uppercase);
-            std::cout << crc32c_x64(crc32_data[i].c_str(), crc32_data[i].size()) << std::endl;
-        }
-        std::cout << std::endl;
-    }
-#endif // CRC32C_IS_X86_64
-
-    {
-        std::cout << std::endl;
-        std::cout << "crc32c_x32()" << std::endl;
-        std::cout << std::endl;
-
-        uint32_t crc32_sum = 0;
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            crc32_sum += crc32c_x86(crc32_data[i].c_str(), crc32_data[i].size());
-
-            std::cout << "crc32[";
-            std::cout << std::right << std::setw(2) << std::setfill(' ') << std::dec;
-            std::cout << i << "]: ";
-            std::cout << "0x";
-            std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
-            std::cout << std::setiosflags(std::ios::uppercase);
-            std::cout << crc32c_x86(crc32_data[i].c_str(), crc32_data[i].size()) << std::endl;
-        }
-        std::cout << std::endl;
-    }
-
-    std::cout << std::endl;
-#endif // NDEBUG, For debug only
 }
 
 void crc32c_benchmark()
