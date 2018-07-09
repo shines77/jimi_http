@@ -769,7 +769,7 @@ template <typename AlgorithmTy>
 void hashtable_rehash_benchmark_impl()
 {
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-#ifndef _NDEBUG
+#ifndef NDEBUG
     static const size_t kRepeatTimes = 2;
 #else
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
