@@ -338,7 +338,7 @@ namespace test {
         typedef HashType hash_type;                             \
                                                                 \
         hash_type crc32c(const char * data, size_t length) {    \
-            return Func##(data, length);                        \
+            return Func(data, length);                          \
         }                                                       \
                                                                 \
         hash_type crc32c(uint32_t state[5], const char * data,  \
@@ -361,7 +361,7 @@ namespace test {
                                                                 \
         hash_type crc32c(uint32_t state[5], const char * data,  \
                          size_t length) {                       \
-            return Func##(state, data, length);                 \
+            return Func(state, data, length);                   \
         }                                                       \
                                                                 \
         const char * name() { return "" #Func "()"; }           \
