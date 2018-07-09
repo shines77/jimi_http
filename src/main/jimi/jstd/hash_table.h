@@ -376,7 +376,7 @@ public:
     void shrink_to(size_type new_buckets) {
         // Recalculate the size of new_buckets.
         new_buckets = this->calc_buckets(new_buckets);
-        this->rehash_internal(new_buckets, true);
+        this->rehash_internal(new_buckets, false);
     }
 
     iterator find(const key_type & key) {
