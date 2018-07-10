@@ -1119,16 +1119,17 @@ inline
 uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
 {
     uint32_t quotient32;
-    __asm__ (
-        "movl %1, %%ecx\n\t"
+    asm (
+        "movl %1, %%ebx\n\t"
         "movl %2, %%eax\n\t"
-        "mull %%ecx\n\t"
+        "mull %%ebx\n\t"
         "movl %3, %%ecx\n\t"
         "shrl %%cl, %%edx\n\t"
         "movl %%edx, %0"
         : "=r" (quotient32)
         : "r" (divisor), "r" (coeff_m), "r" (shift)
-        : "%eax", "%ecx", "%edx", "%cl");
+        : "%eax", "%ecx", "%edx", "%ebx", "%cl"
+    );
     return quotient32;
 }
 #elif defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
