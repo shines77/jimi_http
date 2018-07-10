@@ -1119,8 +1119,8 @@ inline
 uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
 {
     uint32_t quotient32;
-    asm volatile (          \
-        "pushl %ebx\n\t"    \
+    asm volatile (  \
+        "pushl %ebx\n\t" \
         "movl %1, %ebx\n\t" \
         "movl %2, %eax\n\t" \
         "mull %ebx\n\t"     \
@@ -1129,6 +1129,7 @@ uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
         "popl %ebx\n\t"     \
         : "=d" (quotient32) \
         : "r" (divisor), "r" (coeff_m), "r" (shift) \
+        :   \
     );
     return quotient32;
 }
