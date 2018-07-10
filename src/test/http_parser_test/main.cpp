@@ -1119,16 +1119,16 @@ inline
 uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
 {
     uint32_t quotient32;
-    asm ( \
-        "pushl %ebx\n\t" \
-        "movl %1, %ebx\n\t" \
-        "movl %2, %eax\n\t" \
-        "mull %ebx\n\t"     \
-        "movl %3, %ecx\n\t" \
-        "shrl %cl, %edx\n\t" \
-        "popl %ebx"     \
-        : "=d" (quotient32) \
-        : "r" (divisor), "r" (coeff_m), "r" (shift) \
+    asm (
+        "pushl %ebx"
+        "movl %1, %ebx"
+        "movl %2, %eax"
+        "mull %ebx"
+        "movl %3, %ecx"
+        "shrl %cl, %edx"
+        "popl %ebx"
+        : "=d" (quotient32)
+        : "r" (divisor), "r" (coeff_m), "r" (shift)
         : "cc");
     return quotient32;
 }
