@@ -965,6 +965,241 @@ void hashtable_benchmark()
     hashtable_insert_benchmark();
 }
 
+static uint32_t s_bitmap[65536 / 32 / 2 + 1];
+
+#define BITMAP_GET_U32(bitmap, num)     \
+    (uint32_t)(bitmap[(num) >> 6U])
+
+#define BITMAP_CHECK_BITS(bitmap, num)  \
+    (uint32_t)(bitmap[(num) >> 6U] & (uint32_t)(1U << (((num) >> 1U) & 0x1FU)))
+
+#define BITMAP_SET_BITS(bitmap, num)  \
+    bitmap[(num) >> 6U] |= (uint32_t)(1U << (((num) >> 1U) & 0x1FU))
+
+#define BITMAP_CLEAR_BITS(bitmap, num)  \
+    bitmap[(num) >> 6U] &= ~((uint32_t)(1U << (((num) >> 1U) & 0x1FU)))
+
+void generate_prime_65536()
+{
+    // Clear all bits
+    memset((void *)s_bitmap, 0, sizeof(s_bitmap));
+    // Set bit for num 1
+    s_bitmap[0] = 1;
+
+    for (uint32_t n = 3; n <= 65536; n += 2) {
+        //uint32_t unused = BITMAP_CHECK_BITS(s_bitmap, n);
+        uint32_t unused = (uint32_t)(s_bitmap[n >> 6U] & (1U << ((n >> 1U) & 0x1FU)));
+        if (unused == 0) {
+            for (uint32_t t = n * 3; t <= 65536; t += n * 2) {
+                assert((t & 1) != 0);
+                //BITMAP_SET_BITS(s_bitmap, t);
+                //s_bitmap[t >> 6U] &= ~((uint32_t)(1U << ((t >> 1U) & 0x1FU)));
+                s_bitmap[t >> 6U] |= (uint32_t)(1U << ((t >> 1U) & 0x1FU));
+            }
+        }
+    }
+}
+
+int is_prime_u32(uint32_t num) {
+    if (num == 2)
+        return num;
+
+    if ((num % 2U) == 0U)
+        return 0;
+
+    if (num <= 65536) {
+        uint32_t unused = BITMAP_CHECK_BITS(s_bitmap, num);
+        if (unused == 0)
+            return 1;
+        else
+            return 0;
+    }
+
+    if ((num % 3U) == 0U)
+        return 0;
+
+    if ((num % 5U) == 0U)
+        return 0;
+
+    if ((num % 7U) == 0U)
+        return 0;
+
+    if ((num % 11U) == 0U)
+        return 0;
+
+    if ((num % 13U) == 0U) {
+        return 0;
+    }
+    else {
+        uint32_t max_n = (uint32_t)(sqrt(num) + 1.0);
+        for (uint32_t n = 17U; n <= max_n; n += 2) {
+            assert(n <= 65536);
+            uint32_t unused = BITMAP_CHECK_BITS(s_bitmap, n);
+            if (unused == 0) {
+                if ((num % n) == 0) {
+                    if (n != num)
+                        return 0;
+                    else
+                        return 1;
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+
+uint32_t find_first_prime(uint32_t num)
+{
+    uint32_t prime = num;
+    if ((num & (num - 1)) == 0)
+        prime++;
+
+    do {
+        int isPrime = is_prime_u32(prime);
+        if (isPrime == 0)
+            prime++;
+        else
+            return prime;        
+    } while (1);
+
+    return 0;
+}
+
+uint32_t fast_div_coff(uint32_t dividend, uint32_t k)
+{
+    uint64_t coeff_m = (1ULL << (32 + k));
+    coeff_m = (coeff_m / dividend);
+    if ((coeff_m % dividend) != 0)
+        coeff_m++;
+    return (uint32_t)coeff_m;
+}
+
+//
+// See: https://stackoverflow.com/questions/5558492/divide-by-10-using-bit-shifts
+//
+inline
+uint32_t fast_div(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
+{
+    // divisor / dividend = quotient | (remainder)
+#if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
+ || defined(__amd64__) || defined(__x86_64__) || defined(__LP64__)
+    uint64_t quotient = (uint64_t)coeff_m;
+    quotient = (quotient * divisor) >> (32U + shift);
+    return (uint32_t)quotient;
+#else
+    uint64_t quotient = (uint64_t)coeff_m;
+    quotient = (quotient * divisor) >> 32U;
+    uint32_t quotient32 = ((uint32_t)quotient) >> shift;
+    return quotient32;
+#endif // __amd64__
+}
+
+inline
+uint32_t fast_div_remainder(uint32_t divisor, uint32_t dividend,
+                            uint32_t coeff_m, uint32_t shift)
+{
+    // divisor / dividend = quotient | (remainder)
+#if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
+ || defined(__amd64__) || defined(__x86_64__) || defined(__LP64__)
+    uint64_t quotient = (uint64_t)coeff_m;
+    quotient = (quotient * divisor) >> (32U + shift);
+    uint32_t quotient32 = (uint32_t)quotient;
+    assert(divisor >= (uint32_t)(dividend * quotient32));
+    return (uint32_t)(divisor - (uint32_t)(dividend * quotient32));
+#else
+  #if 0
+    uint64_t quotient = (uint64_t)coeff_m;
+    quotient = (quotient * divisor) >> 32U;
+    uint32_t quotient32 = ((uint32_t)quotient) >> shift;
+  #else
+    uint32_t quotient32 = fast_div(divisor, coeff_m, shift);
+  #endif
+    assert(divisor >= (uint32_t)(dividend * quotient32));
+    return (uint32_t)(divisor - (uint32_t)(dividend * quotient32));
+#endif // __amd64__
+}
+
+uint32_t unittest_fast_div(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
+{
+#if 1
+    uint32_t sum = 0;
+    for (uint32_t n = 1; n < (1 << 31); ++n) {
+        uint32_t n2 = fast_div(n, coeff_m, shift);
+        sum += n2;
+    }
+    return sum;
+#else
+    for (uint32_t n = 1; n < (1 << 31); ++n) {
+        uint32_t n1 = n / dividend;
+        uint32_t n2 = fast_div(n, coeff_m, shift);
+        assert(n1 == n2);
+        if (n1 != n2) {
+            printf("n = %u, n1 = %u, n2 = %u\n", n, n1, n2);
+            break;
+        }
+    }
+    return 0;
+#endif
+}
+
+uint32_t unittest_fast_div_remainder(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
+{
+#if 1
+    uint32_t sum = 0;
+    for (uint32_t n = 1; n < (1 << 31); ++n) {
+        uint32_t n2 = fast_div_remainder(n, dividend, coeff_m, shift);
+        sum += n2;
+    }
+    return sum;
+#else
+    for (uint32_t n = 1; n < (1 << 31); ++n) {
+        uint32_t n1 = n % dividend;
+        uint32_t n2 = fast_div_remainder(n, dividend, coeff_m, shift);
+        assert(n1 == n2);
+        if (n1 != n2) {
+            printf("n = %u, n1 = %u, n2 = %u\n", n, n1, n2);
+            break;
+        }
+    }
+    return 0;
+#endif
+}
+
+void find_power_2_near_prime()
+{
+    generate_prime_65536();
+    printf("\n");
+
+    uint32_t m = fast_div_coff(5, 2);
+
+    uint32_t num = 1;
+    for (uint32_t n = 0; n < 31; ++n) {
+        uint32_t prime = find_first_prime(num);
+        uint32_t m = fast_div_coff(prime, n);
+        printf("[%-2u]: num = 0x%08X, prime = %-10u, m = 0x%08X, shift = %u\n", n + 1, num, prime, m, n);
+#if 1
+        {
+            StopWatch sw;
+            sw.start();
+            uint32_t checksum = unittest_fast_div(prime, m, n);
+            sw.stop();
+            printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
+        }
+#endif
+        {
+            StopWatch sw;
+            sw.start();
+            uint32_t checksum = unittest_fast_div_remainder(prime, m, n);
+            sw.stop();
+            printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
+        }
+        num *= 2;
+    }
+
+    printf("\n");
+}
+
 void http_parser_benchmark()
 {
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
@@ -1208,7 +1443,9 @@ int main(int argn, char * argv[])
 
     crc32c_debug_test();
     crc32c_benchmark();
-    hashtable_benchmark();
+    //hashtable_benchmark();
+
+    find_power_2_near_prime();
 
 #if 0
     http_parser_benchmark();
