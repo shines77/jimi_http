@@ -1113,7 +1113,6 @@ div10 proc
     );
 */
 
-
 #if defined(__GNUC__) || defined(__clang__) || defined(__linux__)
 inline
 uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
@@ -1187,6 +1186,24 @@ uint32_t __cdecl fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift
     }
 }
 
+__declspec(naked)
+uint32_t __cdecl fast_mul_shift(uint32_t divisor, uint32_t coeff_m)
+{
+    __asm {
+#if defined(ARGS) && (ARGS > 0)
+        sub     esp, ARGS      // # Generate Stack Frame
+#endif
+        mov     ecx, ARG_1
+        mov     eax, ARG_2
+        mul     ecx
+        mov     eax, edx
+#if defined(ARGS) && (ARGS > 0)
+        add     esp, ARGS
+#endif
+        ret
+    }
+}
+
 #undef STACK
 #undef ARGS
 
@@ -1220,19 +1237,22 @@ uint32_t fast_div_remainder(uint32_t divisor, uint32_t dividend,
  || defined(__amd64__) || defined(__x86_64__) || defined(__LP64__)
     uint64_t quotient = (uint64_t)coeff_m;
     quotient = (quotient * divisor) >> (32U + shift);
-    uint32_t quotient32 = (uint32_t)quotient;
-    assert(divisor >= (uint32_t)(dividend * quotient32));
-    return (uint32_t)(divisor - (uint32_t)(dividend * quotient32));
+    assert((uint64_t)divisor >= (uint64_t)(quotient32 * dividend));
+    uint32_t quotient32 = (uint32_t)((uint64_t)divisor - (uint64_t)(quotient * dividend));
+    return quotient32;
 #else
   #if 0
+    uint32_t quotient32 = fast_mul_shift(divisor, coeff_m);
+    quotient32 >>= shift;
+  #elif 1
     uint64_t quotient = (uint64_t)coeff_m;
     quotient = (quotient * divisor) >> 32U;
     uint32_t quotient32 = ((uint32_t)quotient) >> shift;
   #else
     uint32_t quotient32 = fast_div(divisor, coeff_m, shift);
   #endif
-    assert(divisor >= (uint32_t)(dividend * quotient32));
-    return (uint32_t)(divisor - (uint32_t)(dividend * quotient32));
+    assert(divisor >= (uint32_t)(quotient32 * dividend));
+    return (uint32_t)(divisor - (uint32_t)(quotient32 * dividend));
 #endif // __amd64__
 }
 
@@ -1325,7 +1345,8 @@ void find_power_2_near_prime()
             sw.stop();
             printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
         }
-
+#endif
+#if 0
         {
             StopWatch sw;
             sw.start();
