@@ -1096,6 +1096,120 @@ uint32_t fast_div(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
 #endif // __amd64__
 }
 
+/*
+    x86: Only EAX, ECX, EDX is volatile.
+    x64: Only RAX£¬RCX£¬RDX£¬R8£¬R9£¬R10£¬R11 is volatile.
+
+div10 proc 
+    mov    edx,1999999Ah    ; load 1/10 * 2^32
+    imul   eax              ; edx:eax = dividend / 10 * 2 ^32
+    mov    eax,edx          ; eax = dividend / 10
+    ret
+    endp
+
+    __asm__("divl %2\n"
+        : "=d" (remainder), "=a" (quotient)
+        : "g" (modulus), "d" (high), "a" (low));
+*/
+
+
+#if defined(__GNUC__) || defined(__clang__) || defined(__linux__)
+inline
+uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
+{
+    uint32_t quotient32;
+    __asm__ volatile (
+        "pushl %ebx\n\t"
+        "movl %1, $ebx\n\t"
+        "movl %2, $eax\n\t"
+        "mull $ebx\n\t"
+        "movl %3, $ecx\n\t"
+        "shrl %cl, %edx\n\t"
+        "popl %ebx\n\t"
+        : "=d" (quotient32)
+        : "r" (divisor), "r" (coeff_m), "r" (shift)
+    );
+    return quotient32;
+}
+#elif defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
+   || defined(__amd64__) || defined(__x86_64__) || defined(__LP64__)
+inline uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
+{
+    return fast_div(divisor, coeff_m, shift);
+}
+#else // !x86 mode
+
+/* Local STACK = 12 bytes */
+#define STACK           0
+
+/* Local ARGS = 0 bytes */
+#define ARGS            0
+
+#define ARG_1           dword ptr [esp +  4 + STACK + ARGS]
+#define ARG_2           dword ptr [esp +  8 + STACK + ARGS]
+#define ARG_3           dword ptr [esp + 12 + STACK + ARGS]
+#define ARG_4           dword ptr [esp + 16 + STACK + ARGS]
+#define ARG_5           dword ptr [esp + 20 + STACK + ARGS]
+#define ARG_6           dword ptr [esp + 24 + STACK + ARGS]
+#define ARG_7           dword ptr [esp + 28 + STACK + ARGS]
+#define ARG_8           dword ptr [esp + 32 + STACK + ARGS]
+#define ARG_9           dword ptr [esp + 36 + STACK + ARGS]
+#define ARG_A           dword ptr [esp + 40 + STACK + ARGS]
+#define ARG_B           dword ptr [esp + 44 + STACK + ARGS]
+#define ARG_C           dword ptr [esp + 48 + STACK + ARGS]
+#define ARG_D           dword ptr [esp + 52 + STACK + ARGS]
+#define ARG_E           dword ptr [esp + 56 + STACK + ARGS]
+#define ARG_F           dword ptr [esp + 60 + STACK + ARGS]
+
+/* Local ARGS = 0 bytes */
+#define LOCAL_ARG1      dword ptr [esp +  0 + STACK]
+#define LOCAL_ARG2      dword ptr [esp +  4 + STACK]
+
+inline
+__declspec(naked)
+uint32_t __cdecl fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
+{
+    __asm {
+#if defined(ARGS) && (ARGS > 0)
+        sub     esp, ARGS      // # Generate Stack Frame
+#endif
+        mov     ecx, ARG_1
+        mov     eax, ARG_2
+        mul     ecx
+        mov     ecx, ARG_3
+        shr     edx, cl
+        mov     eax, edx
+#if defined(ARGS) && (ARGS > 0)
+        add     esp, ARGS
+#endif
+        ret
+    }
+}
+
+#undef STACK
+#undef ARGS
+
+#undef ARG_1
+#undef ARG_2
+#undef ARG_3
+#undef ARG_4
+#undef ARG_5
+#undef ARG_6
+#undef ARG_7
+#undef ARG_8
+#undef ARG_9
+#undef ARG_A
+#undef ARG_B
+#undef ARG_C
+#undef ARG_D
+#undef ARG_E
+#undef ARG_F
+
+#undef LOCAL_ARG1
+#undef LOCAL_ARG2
+
+#endif // x86 mode
+
 inline
 uint32_t fast_div_remainder(uint32_t divisor, uint32_t dividend,
                             uint32_t coeff_m, uint32_t shift)
@@ -1126,14 +1240,14 @@ uint32_t unittest_fast_div(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
 #if 1
     uint32_t sum = 0;
     for (uint32_t n = 1; n < (1U << 31U); ++n) {
-        uint32_t n2 = fast_div(n, coeff_m, shift);
+        uint32_t n2 = fast_div_asm(n, coeff_m, shift);
         sum += n2;
     }
     return sum;
 #else
     for (uint32_t n = 1; n < (1U << 31U); ++n) {
         uint32_t n1 = n / dividend;
-        uint32_t n2 = fast_div(n, coeff_m, shift);
+        uint32_t n2 = fast_div_asm(n, coeff_m, shift);
         assert(n1 == n2);
         if (n1 != n2) {
             printf("n = %u, n1 = %u, n2 = %u\n", n, n1, n2);
