@@ -1119,7 +1119,7 @@ inline
 uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
 {
     uint32_t quotient32;
-    asm (
+    __asm__ __volatile__ (
         "movl %1, %%ebx\n\t"
         "movl %2, %%eax\n\t"
         "mull %%ebx\n\t"
