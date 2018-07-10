@@ -5,6 +5,7 @@
 #include "jimi/basic/stdsize.h"
 #include "jimi/basic/inttypes.h"
 #include <string.h>
+#include <math.h>
 
 #include <sstream>
 #include <iostream>
@@ -986,11 +987,11 @@ void generate_prime_65536()
     // Set bit for num 1
     s_bitmap[0] = 1;
 
-    for (uint32_t n = 3; n <= 65536; n += 2) {
+    for (uint32_t n = 3; n <= 65536U; n += 2) {
         //uint32_t unused = BITMAP_CHECK_BITS(s_bitmap, n);
         uint32_t unused = (uint32_t)(s_bitmap[n >> 6U] & (1U << ((n >> 1U) & 0x1FU)));
         if (unused == 0) {
-            for (uint32_t t = n * 3; t <= 65536; t += n * 2) {
+            for (uint32_t t = n * 3; t <= 65536U; t += n * 2) {
                 assert((t & 1) != 0);
                 //BITMAP_SET_BITS(s_bitmap, t);
                 //s_bitmap[t >> 6U] &= ~((uint32_t)(1U << ((t >> 1U) & 0x1FU)));
@@ -1031,7 +1032,7 @@ int is_prime_u32(uint32_t num) {
         return 0;
     }
     else {
-        uint32_t max_n = (uint32_t)(sqrt(num) + 1.0);
+        uint32_t max_n = (uint32_t)floor((sqrt((double)num) + 1.0));
         for (uint32_t n = 17U; n <= max_n; n += 2) {
             assert(n <= 65536);
             uint32_t unused = BITMAP_CHECK_BITS(s_bitmap, n);
@@ -1124,13 +1125,13 @@ uint32_t unittest_fast_div(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
 {
 #if 1
     uint32_t sum = 0;
-    for (uint32_t n = 1; n < (1 << 31); ++n) {
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
         uint32_t n2 = fast_div(n, coeff_m, shift);
         sum += n2;
     }
     return sum;
 #else
-    for (uint32_t n = 1; n < (1 << 31); ++n) {
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
         uint32_t n1 = n / dividend;
         uint32_t n2 = fast_div(n, coeff_m, shift);
         assert(n1 == n2);
@@ -1147,13 +1148,13 @@ uint32_t unittest_fast_div_remainder(uint32_t dividend, uint32_t coeff_m, uint32
 {
 #if 1
     uint32_t sum = 0;
-    for (uint32_t n = 1; n < (1 << 31); ++n) {
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
         uint32_t n2 = fast_div_remainder(n, dividend, coeff_m, shift);
         sum += n2;
     }
     return sum;
 #else
-    for (uint32_t n = 1; n < (1 << 31); ++n) {
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
         uint32_t n1 = n % dividend;
         uint32_t n2 = fast_div_remainder(n, dividend, coeff_m, shift);
         assert(n1 == n2);
