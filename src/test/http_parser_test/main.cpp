@@ -1128,7 +1128,7 @@ uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
         "movl %%edx, %0"
         : "=r" (quotient32)
         : "r" (divisor), "r" (coeff_m), "r" (shift)
-        : "%eax", "%ecx", "%edx", "%ebx", "%cl");
+        : "%eax", "%ecx", "%edx", "%cl");
     return quotient32;
 }
 #elif defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
@@ -1240,6 +1240,29 @@ uint32_t unittest_fast_div(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
 #if 1
     uint32_t sum = 0;
     for (uint32_t n = 1; n < (1U << 31U); ++n) {
+        uint32_t n2 = fast_div(n, coeff_m, shift);
+        sum += n2;
+    }
+    return sum;
+#else
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
+        uint32_t n1 = n / dividend;
+        uint32_t n2 = fast_div(n, coeff_m, shift);
+        assert(n1 == n2);
+        if (n1 != n2) {
+            printf("n = %u, n1 = %u, n2 = %u\n", n, n1, n2);
+            break;
+        }
+    }
+    return 0;
+#endif
+}
+
+uint32_t unittest_fast_div_asm(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
+{
+#if 1
+    uint32_t sum = 0;
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
         uint32_t n2 = fast_div_asm(n, coeff_m, shift);
         sum += n2;
     }
@@ -1298,6 +1321,14 @@ void find_power_2_near_prime()
             StopWatch sw;
             sw.start();
             uint32_t checksum = unittest_fast_div(prime, m, n);
+            sw.stop();
+            printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
+        }
+
+        {
+            StopWatch sw;
+            sw.start();
+            uint32_t checksum = unittest_fast_div_asm(prime, m, n);
             sw.stop();
             printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
         }
