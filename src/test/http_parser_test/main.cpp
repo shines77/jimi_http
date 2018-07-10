@@ -1109,7 +1109,8 @@ div10 proc
 
     __asm__("divl %2\n"
         : "=d" (remainder), "=a" (quotient)
-        : "g" (modulus), "d" (high), "a" (low));
+        : "g" (modulus), "d" (high), "a" (low)
+    );
 */
 
 
@@ -1118,16 +1119,16 @@ inline
 uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
 {
     uint32_t quotient32;
-    asm volatile (
-        "pushl %ebx\n\t"
-        "movl %1, $ebx\n\t"
-        "movl %2, $eax\n\t"
-        "mull $ebx\n\t"
-        "movl %3, $ecx\n\t"
-        "shrl %cl, %edx\n\t"
-        "popl %ebx\n\t"
-        : "=d" (quotient32)
-        : "r" (divisor), "r" (coeff_m), "r" (shift)
+    asm volatile (          \
+        "pushl %ebx\n\t"    \
+        "movl %1, $ebx\n\t" \
+        "movl %2, $eax\n\t" \
+        "mull $ebx\n\t"     \
+        "movl %3, $ecx\n\t" \
+        "shrl %cl, %edx\n\t" \
+        "popl %ebx\n\t"     \
+        : "=d" (quotient32) \
+        : "r" (divisor), "r" (coeff_m), "r" (shift) \
     );
     return quotient32;
 }
