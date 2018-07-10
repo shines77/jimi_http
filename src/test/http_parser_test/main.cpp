@@ -1127,7 +1127,7 @@ uint32_t fast_div_asm(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
         "shrl %%cl, %%edx\n\t"
         "movl %%edx, %0"
         : "=r" (quotient32)
-        : "r" (divisor), "r" (coeff_m), "r" (shift)
+        : "g" (divisor), "g" (coeff_m), "g" (shift)
         : "%eax", "%ecx", "%edx", "%ebx", "%cl"
     );
     return quotient32;
