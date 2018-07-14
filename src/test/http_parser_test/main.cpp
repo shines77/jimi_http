@@ -688,7 +688,7 @@ public:
     }
 
     void shrink_to(size_type new_buckets) {
-        this->map_.shrink_to_fast(new_buckets);
+        this->map_.shrink_to(new_buckets);
     }
 
     iterator find(const key_type & key) {

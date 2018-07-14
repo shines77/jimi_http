@@ -1,13 +1,13 @@
 
-#ifndef JSTD_HASH_TABLE_H
-#define JSTD_HASH_TABLE_H
+#ifndef JSTD_HASH_MAP_H
+#define JSTD_HASH_MAP_H
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
 #endif
 
 #include "jimi/basic/stddef.h"
-#include "jimi/basic/stdint.h"
+#include "jimi/basic/stddef.h"
 
 #include <cstddef>
 #include <memory>
@@ -23,27 +23,30 @@
 namespace jstd {
 
 template <typename Key, typename Value>
-struct hash_table_node {
+struct hash_map_entry {
     typedef Key                         key_type;
     typedef Value                       value_type;
     typedef std::pair<Key, Value>       pair_type;
     typedef std::size_t                 size_type;
     typedef std::uint32_t               hash_type;
-    typedef hash_table_node<Key, Value> this_type;
+    typedef hash_map_entry<Key, Value>  this_type;
 
-    hash_type hash;
-    pair_type pair;
+    hash_type   hash;
+    this_type * next;
+    pair_type   pair;
 
-    hash_table_node() : hash(0) {}
-    hash_table_node(const key_type & key, const value_type & value, hash_type init_hash = 0)
-        : hash(init_hash), pair(key, value) {}
-    hash_table_node(key_type && key, value_type && value, hash_type init_hash = 0)
-        : hash(init_hash), pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
-    ~hash_table_node() {}
+    hash_map_entry() : hash(0), next(nullptr) {}
+    hash_map_entry(hash_type init_hash) : hash(init_hash), next(nullptr) {}
+    hash_map_entry(const key_type & key, const value_type & value, hash_type init_hash = 0)
+        : hash(init_hash), next(nullptr), pair(key, value) {}
+    hash_map_entry(key_type && key, value_type && value, hash_type init_hash = 0)
+        : hash(init_hash), next(nullptr),
+          pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
+    ~hash_map_entry() {}
 };
 
 template <typename Key, typename Value, std::size_t Mode = Hash_CRC32C>
-class basic_hash_table {
+class basic_hash_map {
 public:
     typedef Key                                 key_type;
     typedef Value                               value_type;
@@ -51,35 +54,35 @@ public:
     typedef std::size_t                         size_type;
     typedef std::uint32_t                       hash_type;
 
-    typedef hash_table_node<Key, Value>         node_type;
-    typedef hash_table_node<Key, Value> *       data_type;
+    typedef hash_map_entry<Key, Value>          node_type;
+    typedef hash_map_entry<Key, Value> *        data_type;
     typedef data_type *                         iterator;
     typedef const data_type *                   const_iterator;
-    typedef basic_hash_table<Key, Value, Mode>  this_type;
+    typedef basic_hash_map<Key, Value, Mode>    this_type;
 
 private:
-    data_type * table_;
+    size_type used_;
     size_type size_;
-    size_type mask_;
-    size_type buckets_;
+    size_type capacity_;
+    data_type * table_;
 
-    static const size_type kInitialBuckets = 128;
+    static const size_type kInitialCapacity = 64;
 
 public:
-    basic_hash_table() :
-        table_(nullptr), size_(0), mask_(0), buckets_(0) {
-        this->init(kInitialBuckets);
+    basic_hash_map() :
+        used_(0), size_(0), capacity_(0), table_(nullptr) {
+        this->init(kInitialCapacity);
     }
-    ~basic_hash_table() {
+    ~basic_hash_map() {
         this->destroy();
     }
 
     iterator begin() const { return &(this->table_[0]); }
-    iterator end() const { return &(this->table_[this->buckets_]); }
+    iterator end() const { return &(this->table_[this->capacity_]); }
 
     size_type size() const { return this->size_; }
-    size_type bucket_mask() const { return this->mask_; }
-    size_type bucket_count() const { return this->buckets_; }
+    size_type bucket_used() const { return this->used_; }
+    size_type bucket_count() const { return this->capacity_; }
     data_type * data() const { return this->table_; }
 
     bool empty() const { return (this->size() == 0); }
@@ -97,9 +100,9 @@ public:
             delete[] this->table_;
             this->table_ = nullptr;
         }
+        this->used_ = 0;
         this->size_ = 0;
-        this->mask_ = 0;
-        this->buckets_ = 0;
+        this->capacity_ = 0;
     }
 
     void clear() {
@@ -113,67 +116,68 @@ public:
                 }
             }
         }
+        this->used_ = 0;
         this->size_ = 0;
     }
 
 private:
-    void init(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        data_type * new_table = new data_type[new_buckets];
+    void init(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        data_type * new_table = new data_type[new_capacity];
         if (new_table != nullptr) {
-            memset(new_table, 0, sizeof(data_type) * new_buckets);
-            this->table_ = new_table;
+            memset(new_table, 0, sizeof(data_type) * new_capacity);
+            this->used_ = 0;
             this->size_ = 0;
-            this->mask_ = new_buckets - 1;
-            this->buckets_ = new_buckets;
+            this->capacity_ = new_capacity;
+            this->table_ = new_table;
         }
     }
 
-    inline size_type calc_buckets(size_type new_buckets) {
-        // If new_buckets is less than half of the current hash table size,
+    inline size_type calc_capacity(size_type new_capacity) {
+        // If new_capacity is less than half of the current hash table size,
         // then double the hash table size.
-        new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
+        new_capacity = (new_capacity > (this->size_ * 2)) ? new_capacity : (this->size_ * 2);
         // The minimum bucket is kBucketsInit = 64.
-        new_buckets = (new_buckets >= kInitialBuckets) ? new_buckets : kInitialBuckets;
-        // Round up the new_buckets to power 2.
-        new_buckets = jimi::detail::round_up_pow2(new_buckets);
-        return new_buckets;
+        new_capacity = (new_capacity >= kInitialCapacity) ? new_capacity : kInitialCapacity;
+        // Round up the new_capacity to power 2.
+        new_capacity = jimi::detail::round_up_pow2(new_capacity);
+        return new_capacity;
     }
 
-    inline size_type calc_buckets_fast(size_type new_buckets) {
-        // If new_buckets is less than half of the current hash table size,
+    inline size_type calc_capacity_fast(size_type new_capacity) {
+        // If new_capacity is less than half of the current hash table size,
         // then double the hash table size.
-        new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
-        // Round up the new_buckets to power 2.
-        new_buckets = jimi::detail::round_up_pow2(new_buckets);
-        return new_buckets;
+        new_capacity = (new_capacity > (this->size_ * 2)) ? new_capacity : (this->size_ * 2);
+        // Round up the new_capacity to power 2.
+        new_capacity = jimi::detail::round_up_pow2(new_capacity);
+        return new_capacity;
     }
 
-    void reserve_internal(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        if (likely(new_buckets > this->buckets_)) {
-            data_type * new_table = new data_type[new_buckets];
+    void reserve_internal(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        if (likely(new_capacity > this->capacity_)) {
+            data_type * new_table = new data_type[new_capacity];
             if (new_table != nullptr) {
-                memset(new_table, 0, sizeof(data_type) * new_buckets);
+                memset(new_table, 0, sizeof(data_type) * new_capacity);
                 if (likely(this->table_ != nullptr)) {
                     delete[] this->table_;
                 }
-                this->table_ = new_table;
+                this->used_ = 0;
                 this->size_ = 0;
-                this->mask_ = new_buckets - 1;
-                this->buckets_ = new_buckets;
+                this->capacity_ = new_capacity;
+                this->table_ = new_table;
             }
         }
     }
 
-    void inline rehash_insert(data_type * new_table, size_type new_buckets,
+    void inline rehash_insert(data_type * new_table, size_type new_capacity,
                               data_type old_data) {
         assert(new_table != nullptr);
         assert(old_data != nullptr);
-        assert(new_buckets > 1);
-        size_type new_mask = new_buckets - 1;
+        assert(new_capacity > 1);
+        size_type new_mask = new_capacity - 1;
 
         const std::string & key = old_data->pair.first;
         hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
@@ -196,24 +200,24 @@ private:
         }
     }
 
-    void rehash_internal(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        assert(new_buckets >= this->size_ * 2);
-        if (likely(new_buckets > this->buckets_)) {
-            data_type * new_table = new data_type[new_buckets];
+    void rehash_internal(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        assert(new_capacity >= this->size_ * 2);
+        if (likely(new_capacity > this->capacity_)) {
+            data_type * new_table = new data_type[new_capacity];
             if (likely(new_table != nullptr)) {
                 // Initialize new table.
-                memset(new_table, 0, sizeof(data_type) * new_buckets);
+                memset(new_table, 0, sizeof(data_type) * new_capacity);
 
                 if (likely(this->table_ != nullptr)) {
                     // Recalculate all hash values.
                     size_type new_size = 0;
 
-                    for (size_type i = 0; i < this->buckets_; ++i) {
+                    for (size_type i = 0; i < this->capacity_; ++i) {
                         if (likely(this->table_[i] != nullptr)) {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                            this->rehash_insert(new_table, new_capacity, this->table_[i]);
                             ++new_size;
                         }
                     }
@@ -223,30 +227,30 @@ private:
                     delete[] this->table_;
                 }
                 this->table_ = new_table;
-                this->mask_ = new_buckets - 1;
-                this->buckets_ = new_buckets;
+                this->used_ = 0;
+                this->capacity_ = new_capacity;
             }
         }
     }
 
-    void shrink_internal(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        assert(new_buckets >= this->size_ * 2);
-        if (likely(new_buckets != this->buckets_)) {
-            data_type * new_table = new data_type[new_buckets];
+    void shrink_internal(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        assert(new_capacity >= this->size_ * 2);
+        if (likely(new_capacity != this->capacity_)) {
+            data_type * new_table = new data_type[new_capacity];
             if (likely(new_table != nullptr)) {
                 // Initialize new table.
-                memset(new_table, 0, sizeof(data_type) * new_buckets);
+                memset(new_table, 0, sizeof(data_type) * new_capacity);
 
                 if (likely(this->table_ != nullptr)) {
                     // Recalculate all hash values.
                     size_type new_size = 0;
 
-                    for (size_type i = 0; i < this->buckets_; ++i) {
+                    for (size_type i = 0; i < this->capacity_; ++i) {
                         if (likely(this->table_[i] != nullptr)) {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                            this->rehash_insert(new_table, new_capacity, this->table_[i]);
                             ++new_size;
                         }
                     }
@@ -256,41 +260,41 @@ private:
                     delete[] this->table_;
                 }
                 this->table_ = new_table;
-                this->mask_ = new_buckets - 1;
-                this->buckets_ = new_buckets;
+                this->used_ = 0;
+                this->capacity_ = new_capacity;
             }
         }
     }
 
-    void resize_internal(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        rehash_internal(new_buckets);
+    void resize_internal(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        rehash_internal(new_capacity);
     }
 
 public:
-    void reserve(size_type new_buckets) {
-        // Recalculate the size of new_buckets.
-        new_buckets = this->calc_buckets(new_buckets);
-        this->reserve_internal(new_buckets);
+    void reserve(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity(new_capacity);
+        this->reserve_internal(new_capacity);
     }
 
-    void resize(size_type new_buckets) {
-        // Recalculate the size of new_buckets.
-        new_buckets = this->calc_buckets(new_buckets);
-        this->resize_internal(new_buckets);
+    void resize(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity(new_capacity);
+        this->resize_internal(new_capacity);
     }
 
-    void rehash(size_type new_buckets) {
-        // Recalculate the size of new_buckets.
-        new_buckets = this->calc_buckets(new_buckets);
-        this->rehash_internal(new_buckets);
+    void rehash(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity(new_capacity);
+        this->rehash_internal(new_capacity);
     }
 
-    void shrink_to(size_type new_buckets) {
-        // Recalculate the size of new_buckets.
-        new_buckets = this->calc_buckets_fast(new_buckets);
-        this->shrink_internal(new_buckets);
+    void shrink_to(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity_fast(new_capacity);
+        this->shrink_internal(new_capacity);
     }
 
     iterator find(const key_type & key) {
@@ -347,8 +351,8 @@ public:
         iterator iter = this->find(key);
         if (likely(iter == this->end())) {
             // Insert the new key.
-            if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-                this->resize_internal(this->buckets_ * 2);
+            if (unlikely(this->size_ >= (this->capacity_ * 3 / 4))) {
+                this->resize_internal(this->capacity_ * 2);
             }
 
             node_type * new_data = new node_type(key, value);
@@ -382,8 +386,8 @@ public:
         iterator iter = this->find(key);
         if (likely(iter == this->end())) {
             // Insert the new key.
-            if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-                this->resize_internal(this->buckets_ * 2);
+            if (unlikely(this->size_ >= (this->capacity_ * 3 / 4))) {
+                this->resize_internal(this->capacity_ * 2);
             }
 
             node_type * new_data = new node_type(std::forward<key_type>(key),
@@ -461,15 +465,15 @@ public:
     static const char * name() {
         switch (Mode) {
         case Hash_CRC32C:
-            return "jstd::hash_table<std::string, std::string>";
+            return "jstd::hash_map<std::string, std::string>";
         case Hash_SHA1_MSG2:
-            return "jstd::hash_table_v1<std::string, std::string>";
+            return "jstd::hash_map_v1<std::string, std::string>";
         case Hash_SHA1:
-            return "jstd::hash_table_v2<std::string, std::string>";
+            return "jstd::hash_map_v2<std::string, std::string>";
         case Hash_Time31:
-            return "jstd::hash_table_v3<std::string, std::string>";
+            return "jstd::hash_map_v3<std::string, std::string>";
         case Hash_Time31Std:
-            return "jstd::hash_table_v4<std::string, std::string>";
+            return "jstd::hash_map_v4<std::string, std::string>";
         default:
             return "Unknown class name";
         }
@@ -477,24 +481,24 @@ public:
 };
 
 template <typename Key, typename Value>
-using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
+using hash_map = basic_hash_map<Key, Value, Hash_CRC32C>;
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_table_v1 = basic_hash_table<Key, Value, Hash_SHA1_MSG2>;
+using hash_map_v1 = basic_hash_map<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_table_v2 = basic_hash_table<Key, Value, Hash_SHA1>;
+using hash_map_v2 = basic_hash_map<Key, Value, Hash_SHA1>;
 #endif
 
 template <typename Key, typename Value>
-using hash_table_v3 = basic_hash_table<Key, Value, Hash_Time31>;
+using hash_map_v3 = basic_hash_map<Key, Value, Hash_Time31>;
 
 template <typename Key, typename Value>
-using hash_table_v4 = basic_hash_table<Key, Value, Hash_Time31Std>;
+using hash_map_v4 = basic_hash_map<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 
-#endif // JSTD_HASH_TABLE_H
+#endif // JSTD_HASH_MAP_H
