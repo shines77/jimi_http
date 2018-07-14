@@ -22,7 +22,7 @@ enum hash_mode_t {
     Hash_Time31Std
 };
 
-template <std::size_t Mode>
+template <std::size_t HashFunc = Hash_CRC32C>
 struct hash_helper {
     static uint32_t getHash(const char * data, size_t length) {
         return jimi::crc32c_x64(data, length);

@@ -52,20 +52,20 @@ struct hash_map_entry {
     ~hash_map_entry() {}
 };
 
-template <typename Key, typename Value, std::size_t Mode = Hash_CRC32C>
+template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 class basic_hash_map {
 public:
-    typedef Key                                 key_type;
-    typedef Value                               value_type;
-    typedef std::pair<Key, Value>               pair_type;
-    typedef std::size_t                         size_type;
-    typedef std::uint32_t                       hash_type;
+    typedef Key                                     key_type;
+    typedef Value                                   value_type;
+    typedef std::pair<Key, Value>                   pair_type;
+    typedef std::size_t                             size_type;
+    typedef std::uint32_t                           hash_type;
 
-    typedef hash_map_entry<Key, Value>          node_type;
-    typedef hash_map_entry<Key, Value> *        data_type;
-    typedef data_type *                         iterator;
-    typedef const data_type *                   const_iterator;
-    typedef basic_hash_map<Key, Value, Mode>    this_type;
+    typedef hash_map_entry<Key, Value>              node_type;
+    typedef hash_map_entry<Key, Value> *            data_type;
+    typedef data_type *                             iterator;
+    typedef const data_type *                       const_iterator;
+    typedef basic_hash_map<Key, Value, HashFunc>    this_type;
 
 private:
     size_type used_;
@@ -186,7 +186,7 @@ private:
         assert(new_capacity > 1);
 
         const std::string & key = old_data->pair.first;
-        hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
         hash_type bucket = hash % new_capacity;
 
         // Update the hash value
@@ -304,7 +304,7 @@ public:
     }
 
     iterator find(const key_type & key) {
-        hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
         hash_type bucket = hash % this->capacity_;
         node_type * node = (node_type *)this->table_[bucket];
 
@@ -361,7 +361,7 @@ public:
                 this->resize_internal(this->capacity_ * 2);
             }
 
-            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
             node_type * new_data = new node_type(hash, key, value);
             if (likely(new_data != nullptr)) {
                 hash_type bucket = hash % this->capacity_;
@@ -395,7 +395,7 @@ public:
                 this->resize_internal(this->capacity_ * 2);
             }
 
-            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
             node_type * new_data = new node_type(hash, forward<key_type>(key),
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
@@ -467,7 +467,7 @@ public:
     }
 
     static const char * name() {
-        switch (Mode) {
+        switch (HashFunc) {
         case Hash_CRC32C:
             return "jstd::hash_map<std::string, std::string>";
         case Hash_SHA1_MSG2:

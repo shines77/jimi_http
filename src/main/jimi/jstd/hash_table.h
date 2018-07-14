@@ -35,33 +35,32 @@ struct hash_table_node {
     pair_type pair;
 
     hash_table_node() : hash(0) {}
-    hash_table_node(hash_type init_hash) : hash(init_hash), next(nullptr) {}
+    hash_table_node(hash_type init_hash) : hash(init_hash) {}
     hash_table_node(hash_type init_hash, const key_type & key, const value_type & value)
         : hash(init_hash), pair(key, value) {}
     hash_table_node(hash_type init_hash, key_type && key, value_type && value)
-        : hash(init_hash), pair(std::forward<key_type>(key), std::forward<value_type>(value) {}
+        : hash(init_hash), pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
     hash_table_node(const key_type & key, const value_type & value)
-        : hash(0), next(nullptr), pair(key, value) {}
+        : hash(0), pair(key, value) {}
     hash_table_node(key_type && key, value_type && value)
-        : hash(0), next(nullptr),
-          pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
+        : hash(0), pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
     ~hash_table_node() {}
 };
 
-template <typename Key, typename Value, std::size_t Mode = Hash_CRC32C>
+template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 class basic_hash_table {
 public:
-    typedef Key                                 key_type;
-    typedef Value                               value_type;
-    typedef std::pair<Key, Value>               pair_type;
-    typedef std::size_t                         size_type;
-    typedef std::uint32_t                       hash_type;
+    typedef Key                                     key_type;
+    typedef Value                                   value_type;
+    typedef std::pair<Key, Value>                   pair_type;
+    typedef std::size_t                             size_type;
+    typedef std::uint32_t                           hash_type;
 
-    typedef hash_table_node<Key, Value>         node_type;
-    typedef hash_table_node<Key, Value> *       data_type;
-    typedef data_type *                         iterator;
-    typedef const data_type *                   const_iterator;
-    typedef basic_hash_table<Key, Value, Mode>  this_type;
+    typedef hash_table_node<Key, Value>             node_type;
+    typedef hash_table_node<Key, Value> *           data_type;
+    typedef data_type *                             iterator;
+    typedef const data_type *                       const_iterator;
+    typedef basic_hash_table<Key, Value, HashFunc>  this_type;
 
 private:
     data_type * table_;
@@ -182,7 +181,7 @@ private:
         size_type new_mask = new_buckets - 1;
 
         const std::string & key = old_data->pair.first;
-        hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
         hash_type bucket = hash & new_mask;
 
         // Update the hash value
@@ -300,7 +299,7 @@ public:
     }
 
     iterator find(const key_type & key) {
-        hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
         hash_type bucket = hash & this->mask_;
         node_type * node = (node_type *)this->table_[bucket];
 
@@ -357,7 +356,7 @@ public:
                 this->resize_internal(this->buckets_ * 2);
             }
 
-            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
             node_type * new_data = new node_type(hash, key, value);
             if (likely(new_data != nullptr)) {
                 hash_type bucket = hash & this->mask_;
@@ -392,7 +391,7 @@ public:
                 this->resize_internal(this->buckets_ * 2);
             }
 
-            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
             node_type * new_data = new node_type(hash, std::forward<key_type>(key),
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
@@ -465,7 +464,7 @@ public:
     }
 
     static const char * name() {
-        switch (Mode) {
+        switch (HashFunc) {
         case Hash_CRC32C:
             return "jstd::hash_table<std::string, std::string>";
         case Hash_SHA1_MSG2:
