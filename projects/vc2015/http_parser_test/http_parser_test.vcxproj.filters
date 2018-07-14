@@ -11,9 +11,4 @@
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\src\test\http_parser_test\StopWatch.h">
-      <Filter>src</Filter>
-    </ClInclude>
-  </ItemGroup>
 </Project>

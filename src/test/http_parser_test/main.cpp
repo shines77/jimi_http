@@ -27,7 +27,7 @@
 #include "jimi/http_all.h"
 #include "jimi/crc32c.h"
 #include "jimi/Hash.h"
-#include "StopWatch.h"
+#include "jimi/support/StopWatch.h"
 
 #include "jimi/jstd/hash_table.h"
 
