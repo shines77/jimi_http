@@ -1611,9 +1611,9 @@ int main(int argn, char * argv[])
 
     crc32c_debug_test();
     crc32c_benchmark();
-    //hashtable_benchmark();
+    hashtable_benchmark();
 
-    find_power_2_near_prime();
+    //find_power_2_near_prime();
 
 #if 0
     http_parser_benchmark();
