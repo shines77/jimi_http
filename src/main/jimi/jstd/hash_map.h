@@ -43,7 +43,7 @@ struct hash_map_entry {
     hash_map_entry(hash_type init_hash, key_type && key,
                    value_type && value, this_type * next_entry = nullptr)
         : hash(init_hash), next(next_entry),
-          pair(std::forward<key_type>(key), std::forward<value_type>(value) {}
+          pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
     hash_map_entry(const key_type & key, const value_type & value)
         : hash(0), next(nullptr), pair(key, value) {}
     hash_map_entry(key_type && key, value_type && value)

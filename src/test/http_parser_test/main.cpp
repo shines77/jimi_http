@@ -30,6 +30,7 @@
 #include "jimi/support/StopWatch.h"
 
 #include "jimi/jstd/hash_table.h"
+#include "jimi/jstd/hash_map.h"
 
 using namespace jimi;
 using namespace jimi::http;
@@ -790,6 +791,14 @@ void hashtable_find_benchmark()
 #endif
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#endif
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
 }
 
 template <typename AlgorithmTy>
