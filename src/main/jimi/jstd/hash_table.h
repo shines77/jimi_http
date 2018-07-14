@@ -68,7 +68,7 @@ private:
     size_type mask_;
     size_type buckets_;
 
-    static const size_type kInitialBuckets = 128;
+    static const size_type kInitialBuckets = 64;
 
 public:
     basic_hash_table() :

@@ -1085,6 +1085,27 @@ uint32_t fast_div_coff(uint32_t dividend, uint32_t k)
     return (uint32_t)coeff_m;
 }
 
+inline
+uint32_t fast_mask_and(uint32_t divisor, uint32_t dividend, uint32_t coeff_m)
+{
+    uint32_t quotient = divisor & dividend;
+    return quotient;
+}
+
+inline
+uint32_t slow_div(uint32_t divisor, uint32_t dividend)
+{
+    uint32_t quotient = divisor / dividend;
+    return quotient;
+}
+
+inline
+uint32_t slow_div_remainder(uint32_t divisor, uint32_t dividend)
+{
+    uint32_t remainder = divisor % dividend;
+    return remainder;
+}
+
 //
 // See: https://stackoverflow.com/questions/5558492/divide-by-10-using-bit-shifts
 //
@@ -1247,8 +1268,8 @@ uint32_t fast_div_remainder(uint32_t divisor, uint32_t dividend,
     uint64_t quotient = (uint64_t)coeff_m;
     quotient = (quotient * divisor) >> (32U + shift);
     assert((uint64_t)divisor >= (uint64_t)(quotient32 * dividend));
-    uint32_t quotient32 = (uint32_t)((uint64_t)divisor - (uint64_t)(quotient * dividend));
-    return quotient32;
+    uint32_t remainder32 = (uint32_t)((uint64_t)divisor - (uint64_t)(quotient * dividend));
+    return remainder32;
 #else
   #if 0
     uint32_t quotient32 = fast_mul_shift(divisor, coeff_m);
@@ -1261,8 +1282,39 @@ uint32_t fast_div_remainder(uint32_t divisor, uint32_t dividend,
     uint32_t quotient32 = fast_div(divisor, coeff_m, shift);
   #endif
     assert(divisor >= (uint32_t)(quotient32 * dividend));
-    return (uint32_t)(divisor - (uint32_t)(quotient32 * dividend));
+    uint32_t remainder32 = (uint32_t)(divisor - (uint32_t)(quotient32 * dividend));
+    return remainder32;
 #endif // __amd64__
+}
+
+uint32_t unittest_mask_and(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
+{
+    uint32_t sum = 0;
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
+        uint32_t n2 = fast_mask_and(n, dividend, coeff_m);
+        sum += n2;
+    }
+    return sum;
+}
+
+uint32_t unittest_slow_div(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
+{
+    uint32_t sum = 0;
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
+        uint32_t n2 = slow_div(n, dividend);
+        sum += n2;
+    }
+    return sum;
+}
+
+uint32_t unittest_slow_div_remainder(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
+{
+    uint32_t sum = 0;
+    for (uint32_t n = 1; n < (1U << 31U); ++n) {
+        uint32_t n2 = slow_div_remainder(n, dividend);
+        sum += n2;
+    }
+    return sum;
 }
 
 uint32_t unittest_fast_div(uint32_t dividend, uint32_t coeff_m, uint32_t shift)
@@ -1346,22 +1398,29 @@ void find_power_2_near_prime()
         uint32_t prime = find_first_prime(num);
         uint32_t m = fast_div_coff(prime, n);
         printf("[%-2u]: num = 0x%08X, prime = %-10u, m = 0x%08X, shift = %u\n", n + 1, num, prime, m, n);
-#if 1
+
+        {
+            StopWatch sw;
+            sw.start();
+            uint32_t checksum = unittest_mask_and(prime, m, n);
+            sw.stop();
+            printf("checksum  = %-10u, time: %0.3f\n", checksum, sw.getMillisec());
+        }
+
         {
             StopWatch sw;
             sw.start();
             uint32_t checksum = unittest_fast_div(prime, m, n);
             sw.stop();
-            printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
+            printf("checksum  = %-10u, time: %0.3f\n", checksum, sw.getMillisec());
         }
-#endif
 #if 0
         {
             StopWatch sw;
             sw.start();
             uint32_t checksum = unittest_fast_div_asm(prime, m, n);
             sw.stop();
-            printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
+            printf("checksum  = %-10u, time: %0.3f\n", checksum, sw.getMillisec());
         }
 #endif
         {
@@ -1369,8 +1428,24 @@ void find_power_2_near_prime()
             sw.start();
             uint32_t checksum = unittest_fast_div_remainder(prime, m, n);
             sw.stop();
-            printf("checksum = %u, time: %0.3f\n", checksum, sw.getMillisec());
+            printf("checksum  = %-10u, time: %0.3f\n", checksum, sw.getMillisec());
         }
+#if 1
+        {
+            StopWatch sw;
+            sw.start();
+            uint32_t checksum = unittest_slow_div(prime, m, n);
+            sw.stop();
+            printf("checksum  = %-10u, time: %0.3f\n", checksum, sw.getMillisec());
+        }
+        {
+            StopWatch sw;
+            sw.start();
+            uint32_t checksum = unittest_slow_div_remainder(prime, m, n);
+            sw.stop();
+            printf("checksum  = %-10u, time: %0.3f\n", checksum, sw.getMillisec());
+        }
+#endif
         num *= 2;
     }
 
@@ -1620,9 +1695,9 @@ int main(int argn, char * argv[])
 
     crc32c_debug_test();
     crc32c_benchmark();
-    hashtable_benchmark();
+    //hashtable_benchmark();
 
-    //find_power_2_near_prime();
+    find_power_2_near_prime();
 
 #if 0
     http_parser_benchmark();
