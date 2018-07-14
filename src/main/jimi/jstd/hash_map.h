@@ -37,10 +37,17 @@ struct hash_map_entry {
 
     hash_map_entry() : hash(0), next(nullptr) {}
     hash_map_entry(hash_type init_hash) : hash(init_hash), next(nullptr) {}
-    hash_map_entry(const key_type & key, const value_type & value, hash_type init_hash = 0)
-        : hash(init_hash), next(nullptr), pair(key, value) {}
-    hash_map_entry(key_type && key, value_type && value, hash_type init_hash = 0)
-        : hash(init_hash), next(nullptr),
+    hash_map_entry(hash_type init_hash, const key_type & key,
+                   const value_type & value, this_type * next_entry = nullptr)
+        : hash(init_hash), next(next_entry), pair(key, value) {}
+    hash_map_entry(hash_type init_hash, key_type && key,
+                   value_type && value, this_type * next_entry = nullptr)
+        : hash(init_hash), next(next_entry),
+          pair(std::forward<key_type>(key), std::forward<value_type>(value) {}
+    hash_map_entry(const key_type & key, const value_type & value)
+        : hash(0), next(nullptr), pair(key, value) {}
+    hash_map_entry(key_type && key, value_type && value)
+        : hash(0), next(nullptr),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
     ~hash_map_entry() {}
 };
@@ -177,11 +184,10 @@ private:
         assert(new_table != nullptr);
         assert(old_data != nullptr);
         assert(new_capacity > 1);
-        size_type new_mask = new_capacity - 1;
 
         const std::string & key = old_data->pair.first;
         hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
-        hash_type bucket = hash & new_mask;
+        hash_type bucket = hash % new_capacity;
 
         // Update the hash value
         old_data->hash = hash;
@@ -191,7 +197,7 @@ private:
         }
         else {
             do {
-                bucket = (bucket + 1) & new_mask;
+                bucket = (bucket + 1) % new_capacity;
                 if (likely(new_table[bucket] == nullptr)) {
                     new_table[bucket] = old_data;
                     break;
@@ -299,7 +305,7 @@ public:
 
     iterator find(const key_type & key) {
         hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
-        hash_type bucket = hash & this->mask_;
+        hash_type bucket = hash % this->capacity_;
         node_type * node = (node_type *)this->table_[bucket];
 
         if (likely(node != nullptr)) {
@@ -323,7 +329,7 @@ public:
         // If first position is not found, search next bucket continue.
         hash_type first_bucket = bucket;
         do {
-            bucket = (bucket + 1) & this->mask_;
+            bucket = (bucket + 1) % this->capacity_;
             node = (node_type *)this->table_[bucket];
             if (likely(node != nullptr)) {
                 if (likely(node->hash == hash)) {
@@ -355,18 +361,17 @@ public:
                 this->resize_internal(this->capacity_ * 2);
             }
 
-            node_type * new_data = new node_type(key, value);
+            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            node_type * new_data = new node_type(hash, key, value);
             if (likely(new_data != nullptr)) {
-                hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
-                hash_type bucket = hash & this->mask_;
-                new_data->hash = hash;
+                hash_type bucket = hash % this->capacity_;
                 if (likely(this->table_[bucket] == nullptr)) {
                     this->table_[bucket] = (data_type)new_data;
                     ++(this->size_);
                 }
                 else {
                     do {
-                        bucket = (bucket + 1) & this->mask_;
+                        bucket = (bucket + 1) % this->capacity_;
                         if (likely(this->table_[bucket] == nullptr)) {
                             this->table_[bucket] = (data_type)new_data;
                             ++(this->size_);
@@ -390,19 +395,18 @@ public:
                 this->resize_internal(this->capacity_ * 2);
             }
 
-            node_type * new_data = new node_type(std::forward<key_type>(key),
+            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            node_type * new_data = new node_type(hash, forward<key_type>(key),
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
-                hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
-                hash_type bucket = hash & this->mask_;
-                new_data->hash = hash;
+                hash_type bucket = hash % this->capacity_;
                 if (likely(this->table_[bucket] == nullptr)) {
                     this->table_[bucket] = (data_type)new_data;
                     ++(this->size_);
                 }
                 else {
                     do {
-                        bucket = (bucket + 1) & this->mask_;
+                        bucket = (bucket + 1) % this->capacity_;
                         if (likely(this->table_[bucket] == nullptr)) {
                             this->table_[bucket] = (data_type)new_data;
                             ++(this->size_);

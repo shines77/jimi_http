@@ -35,10 +35,16 @@ struct hash_table_node {
     pair_type pair;
 
     hash_table_node() : hash(0) {}
-    hash_table_node(const key_type & key, const value_type & value, hash_type init_hash = 0)
+    hash_table_node(hash_type init_hash) : hash(init_hash), next(nullptr) {}
+    hash_table_node(hash_type init_hash, const key_type & key, const value_type & value)
         : hash(init_hash), pair(key, value) {}
-    hash_table_node(key_type && key, value_type && value, hash_type init_hash = 0)
-        : hash(init_hash), pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
+    hash_table_node(hash_type init_hash, key_type && key, value_type && value)
+        : hash(init_hash), pair(std::forward<key_type>(key), std::forward<value_type>(value) {}
+    hash_table_node(const key_type & key, const value_type & value)
+        : hash(0), next(nullptr), pair(key, value) {}
+    hash_table_node(key_type && key, value_type && value)
+        : hash(0), next(nullptr),
+          pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
     ~hash_table_node() {}
 };
 
@@ -351,9 +357,9 @@ public:
                 this->resize_internal(this->buckets_ * 2);
             }
 
-            node_type * new_data = new node_type(key, value);
+            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            node_type * new_data = new node_type(hash, key, value);
             if (likely(new_data != nullptr)) {
-                hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
                 hash_type bucket = hash & this->mask_;
                 new_data->hash = hash;
                 if (likely(this->table_[bucket] == nullptr)) {
@@ -386,10 +392,10 @@ public:
                 this->resize_internal(this->buckets_ * 2);
             }
 
-            node_type * new_data = new node_type(std::forward<key_type>(key),
+            hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
+            node_type * new_data = new node_type(hash, std::forward<key_type>(key),
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
-                hash_type hash = hash_helper<Mode>::getHash(key.c_str(), key.size());
                 hash_type bucket = hash & this->mask_;
                 new_data->hash = hash;
                 if (likely(this->table_[bucket] == nullptr)) {
