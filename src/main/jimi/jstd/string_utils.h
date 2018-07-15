@@ -16,6 +16,8 @@
 namespace jstd {
 namespace detail {
 
+#if 0
+
 template <typename CharTy>
 static inline
 bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
@@ -53,9 +55,11 @@ bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
     return true;
 }
 
+#else
+
 template <typename CharTy>
 static inline
-bool string_equal_v2(const CharTy * str1, const CharTy * str2, size_t length)
+bool string_equal(const CharTy * str1, const CharTy * str2, size_t length)
 {
     assert(str1 != nullptr && str2 != nullptr);
 
@@ -88,6 +92,8 @@ bool string_equal_v2(const CharTy * str1, const CharTy * str2, size_t length)
     // It's matched, or the length is equal 0, .
     return true;
 }
+
+#endif
 
 } // namespace detail
 } // namespace jstd

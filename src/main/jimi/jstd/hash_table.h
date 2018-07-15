@@ -92,7 +92,7 @@ public:
     void destroy() {
         // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
-            for (size_type i = 0; i < this->size_; ++i) {
+            for (size_type i = 0; i < this->buckets_; ++i) {
                 node_type * node = (node_type *)this->table_[i];
                 if (likely(node != nullptr)) {
                     delete node;
@@ -110,7 +110,7 @@ public:
     void clear() {
         // Clear the data only, don't free the table.
         if (likely(this->table_ != nullptr)) {
-            for (size_type i = 0; i < this->size_; ++i) {
+            for (size_type i = 0; i < this->buckets_; ++i) {
                 node_type * node = (node_type *)this->table_[i];
                 if (likely(node != nullptr)) {
                     delete node;
