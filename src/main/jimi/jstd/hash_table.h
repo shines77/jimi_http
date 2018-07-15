@@ -173,7 +173,7 @@ private:
         }
     }
 
-    void inline rehash_insert(data_type * new_table, size_type new_mask,
+    inline void rehash_insert(data_type * new_table, size_type new_mask,
                               data_type old_data) {
         assert(new_table != nullptr);
         assert(old_data != nullptr);
@@ -243,11 +243,12 @@ private:
                 if (likely(this->table_ != nullptr)) {
                     // Recalculate all hash values.
                     size_type new_size = 0;
+                    size_type new_mask = new_buckets - 1;
 
                     for (size_type i = 0; i < this->buckets_; ++i) {
                         if (likely(this->table_[i] != nullptr)) {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                            this->rehash_insert(new_table, new_mask, this->table_[i]);
                             ++new_size;
                         }
                     }

@@ -792,6 +792,7 @@ void hashtable_find_benchmark()
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
+#if 0
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
@@ -799,6 +800,7 @@ void hashtable_find_benchmark()
 #endif
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
 }
 
 template <typename AlgorithmTy>
@@ -1695,9 +1697,9 @@ int main(int argn, char * argv[])
 
     crc32c_debug_test();
     crc32c_benchmark();
-    //hashtable_benchmark();
+    hashtable_benchmark();
 
-    find_power_2_near_prime();
+    //find_power_2_near_prime();
 
 #if 0
     http_parser_benchmark();

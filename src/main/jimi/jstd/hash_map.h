@@ -211,6 +211,7 @@ private:
         }
     }
 
+#if 0
     inline size_type calc_capacity(size_type new_capacity) {
         // If new_capacity is less than half of the current hash table size,
         // then double the hash table size.
@@ -251,7 +252,7 @@ private:
         }
     }
 
-    void inline reinsert_list(list_type ** new_table, size_type new_capacity,
+    inline void reinsert_list(list_type ** new_table, size_type new_capacity,
                               list_type * old_list) {
         assert(new_table != nullptr);
         assert(old_list != nullptr);
@@ -576,6 +577,7 @@ public:
             // Not found the key
         }
     }
+#endif
 
     static const char * name() {
         switch (HashFunc) {
