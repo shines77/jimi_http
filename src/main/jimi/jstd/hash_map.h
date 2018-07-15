@@ -37,6 +37,7 @@ struct hash_map_entry {
 
     hash_map_entry() : hash(0), next(nullptr) {}
     hash_map_entry(hash_type init_hash) : hash(init_hash), next(nullptr) {}
+
     hash_map_entry(hash_type init_hash, const key_type & key,
                    const value_type & value, this_type * next_entry = nullptr)
         : hash(init_hash), next(next_entry), pair(key, value) {}
@@ -44,11 +45,13 @@ struct hash_map_entry {
                    value_type && value, this_type * next_entry = nullptr)
         : hash(init_hash), next(next_entry),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
+
     hash_map_entry(const key_type & key, const value_type & value)
         : hash(0), next(nullptr), pair(key, value) {}
     hash_map_entry(key_type && key, value_type && value)
         : hash(0), next(nullptr),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
+
     ~hash_map_entry() {}
 };
 
@@ -171,7 +174,7 @@ public:
             delete[] this->table_;
             this->table_ = nullptr;
         }
-        // Initialize
+        // Setting
         this->capacity_ = 0;
         this->size_ = 0;
         this->used_ = 0;
@@ -182,14 +185,14 @@ public:
         // Clear the data only, don't free the table.
         if (likely(this->table_ != nullptr)) {
             for (size_type i = 0; i < this->capacity_; ++i) {
-                entry_type * node = (entry_type *)this->table_[i];
-                if (likely(node != nullptr)) {
-                    delete node;
+                list_type * list = (list_type *)this->table_[i];
+                if (likely(list != nullptr)) {
+                    delete list;
                     this->table_[i] = nullptr;
                 }
             }
         }
-        // Initialize
+        // Setting
         this->size_ = 0;
         this->used_ = 0;
     }
@@ -202,7 +205,7 @@ private:
         if (new_table != nullptr) {
             // Reset the table data.
             memset(new_table, 0, sizeof(list_type *) * new_capacity);
-            // Initialize
+            // Setting
             this->table_ = new_table;
             this->capacity_ = new_capacity;
             this->size_ = 0;
@@ -232,6 +235,16 @@ private:
         return new_capacity;
     }
 
+    inline size_type index_for(hash_type hash, size_type capacity) {
+        size_type index = ((size_type)hash % capacity);
+        return index;
+    }
+
+    inline size_type next_index(size_type index, size_type capacity) {
+        index = ((index + 1) % capacity);
+        return index;
+    }
+
     void reserve_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
@@ -243,7 +256,7 @@ private:
                 if (likely(this->table_ != nullptr)) {
                     delete[] this->table_;
                 }
-                // Initialize
+                // Setting
                 this->used_ = 0;
                 this->size_ = 0;
                 this->capacity_ = new_capacity;
@@ -260,19 +273,19 @@ private:
 
         const std::string & key = old_list->pair.first;
         hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
-        hash_type bucket = hash % new_capacity;
+        size_type index = this->index_for(hash, new_capacity);
 
         // Update the hash value
         old_list->hash = hash;
 
-        if (likely(new_table[bucket] == nullptr)) {
-            new_table[bucket] = old_list;
+        if (likely(new_table[index] == nullptr)) {
+            new_table[index] = old_list;
         }
         else {
             do {
-                bucket = (bucket + 1) % new_capacity;
-                if (likely(new_table[bucket] == nullptr)) {
-                    new_table[bucket] = old_list;
+                index = this->next_index(index, new_capacity);
+                if (likely(new_table[index] == nullptr)) {
+                    new_table[index] = old_list;
                     break;
                 }
             } while (1);
@@ -286,7 +299,7 @@ private:
         if (likely(new_capacity > this->capacity_)) {
             list_type ** new_table = new list_type *[new_capacity];
             if (likely(new_table != nullptr)) {
-                // Initialize new table.
+                // Reset the new table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
 
                 if (likely(this->table_ != nullptr)) {
@@ -305,6 +318,7 @@ private:
                     // Free old table data.
                     delete[] this->table_;
                 }
+                // Setting
                 this->table_ = new_table;
                 this->used_ = 0;
                 this->capacity_ = new_capacity;
@@ -319,7 +333,7 @@ private:
         if (likely(new_capacity != this->capacity_)) {
             list_type ** new_table = new list_type *[new_capacity];
             if (likely(new_table != nullptr)) {
-                // Initialize new table.
+                // Reset the new table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
 
                 if (likely(this->table_ != nullptr)) {
@@ -329,7 +343,7 @@ private:
                     for (size_type i = 0; i < this->capacity_; ++i) {
                         if (likely(this->table_[i] != nullptr)) {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->rehash_insert(new_table, new_capacity, this->table_[i]);
+                            this->reinsert_list(new_table, new_capacity, this->table_[i]);
                             ++new_size;
                         }
                     }
@@ -338,6 +352,7 @@ private:
                     // Free old table data.
                     delete[] this->table_;
                 }
+                // Setting
                 this->table_ = new_table;
                 this->used_ = 0;
                 this->capacity_ = new_capacity;
@@ -353,7 +368,7 @@ private:
 
     iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
         hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
-        index = hash % this->capacity_;
+        index = this->index_for(hash, this->capacity_);
 
         list_type * list = (list_type *)this->table_[index];
         if (likely(list != nullptr)) {
@@ -390,16 +405,14 @@ public:
         this->reserve_internal(new_capacity);
     }
 
-    void resize(size_type new_capacity) {
-        // Recalculate the size of new_capacity.
-        new_capacity = this->calc_capacity(new_capacity);
-        this->resize_internal(new_capacity);
-    }
-
     void rehash(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity(new_capacity);
         this->rehash_internal(new_capacity);
+    }
+
+    void resize(size_type new_capacity) {
+        this->rehash(new_capacity);
     }
 
     void shrink_to(size_type new_capacity) {
@@ -410,7 +423,7 @@ public:
 
     iterator find(const key_type & key) {
         hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
-        size_type index = hash % this->capacity_;
+        size_type index = this->index_for(hash, this->capacity_);
         list_type * list = (list_type *)this->table_[index];
 
         if (likely(list != nullptr)) {
@@ -450,7 +463,7 @@ public:
                 // Resize the table
                 this->resize_internal(this->capacity_ * 2);
                 // Recalculate the index.
-                index = hash % this->capacity_;
+                index = this->index_for(hash, this->capacity_);
             }
             
             entry_type * new_entry = new entry_type(hash, key, value);
@@ -492,7 +505,7 @@ public:
                 // Resize the table
                 this->resize_internal(this->capacity_ * 2);
                 // Recalculate the index.
-                index = hash % this->capacity_;
+                index = this->index_for(hash, this->capacity_);
             }
             
             entry_type * new_entry = new entry_type(hash,
