@@ -92,7 +92,51 @@ public:
 
     bool empty() const { return (this->size() == 0); }
 
+    void clear() {
+        // Clear the data only, don't free the table.
+        if (likely(this->table_ != nullptr)) {
+            for (size_type i = 0; i < this->buckets_; ++i) {
+                node_type * node = (node_type *)this->table_[i];
+                if (likely(node != nullptr)) {
+                    delete node;
+                    this->table_[i] = nullptr;
+                }
+            }
+        }
+        // Setting status
+        this->size_ = 0;
+    }
+
+private:
+    void init(size_type new_buckets) {
+        assert(new_buckets > 0);
+        assert((new_buckets & (new_buckets - 1)) == 0);
+        data_type * new_table = new data_type[new_buckets];
+        if (new_table != nullptr) {
+            // Reset the table data.
+            memset(new_table, 0, sizeof(data_type) * new_buckets);
+            // Setting status
+            this->table_ = new_table;
+            this->size_ = 0;
+            this->mask_ = new_buckets - 1;
+            this->buckets_ = new_buckets;
+        }
+    }
+
     void destroy() {
+#ifdef NDEBUG
+        // Clear all data, and free the table.
+        if (likely(this->table_ != nullptr)) {
+            for (size_type i = 0; i < this->buckets_; ++i) {
+                node_type * node = (node_type *)this->table_[i];
+                if (likely(node != nullptr)) {
+                    delete node;
+                }
+            }
+            delete[] this->table_;
+            this->table_ = nullptr;
+        }
+#else
         // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
             for (size_type i = 0; i < this->buckets_; ++i) {
@@ -105,39 +149,11 @@ public:
             delete[] this->table_;
             this->table_ = nullptr;
         }
+        // Setting status
         this->size_ = 0;
         this->mask_ = 0;
         this->buckets_ = 0;
-    }
-
-    void clear() {
-        // Clear the data only, don't free the table.
-        if (likely(this->table_ != nullptr)) {
-            for (size_type i = 0; i < this->buckets_; ++i) {
-                node_type * node = (node_type *)this->table_[i];
-                if (likely(node != nullptr)) {
-                    delete node;
-                    this->table_[i] = nullptr;
-                }
-            }
-        }
-        this->size_ = 0;
-    }
-
-private:
-    void init(size_type new_buckets) {
-        assert(new_buckets > 0);
-        assert((new_buckets & (new_buckets - 1)) == 0);
-        data_type * new_table = new data_type[new_buckets];
-        if (new_table != nullptr) {
-            // Reset the table data.
-            memset(new_table, 0, sizeof(data_type) * new_buckets);
-            // Setting
-            this->table_ = new_table;
-            this->size_ = 0;
-            this->mask_ = new_buckets - 1;
-            this->buckets_ = new_buckets;
-        }
+#endif
     }
 
     inline size_type calc_buckets(size_type new_buckets) {
@@ -160,12 +176,14 @@ private:
         return new_buckets;
     }
 
-    inline size_type index_for(hash_type hash, size_type mask) {
+    static inline
+    size_type index_for(hash_type hash, size_type mask) {
         size_type index = ((size_type)hash & mask);
         return index;
     }
 
-    inline size_type next_index(size_type index, size_type mask) {
+    static inline
+    size_type next_index(size_type index, size_type mask) {
         index = ((index + 1) & mask);
         return index;
     }
@@ -181,7 +199,7 @@ private:
                 if (likely(this->table_ != nullptr)) {
                     delete[] this->table_;
                 }
-                // Setting
+                // Setting status
                 this->table_ = new_table;
                 this->size_ = 0;
                 this->mask_ = new_buckets - 1;
@@ -197,14 +215,14 @@ private:
         assert(new_mask >= 0);
 
         hash_type hash = old_data->hash;
-        size_type index = this->index_for(hash, new_mask);
+        size_type index = this_type::index_for(hash, new_mask);
 
         if (likely(new_table[index] == nullptr)) {
             new_table[index] = old_data;
         }
         else {
             do {
-                index = this->next_index(index, new_mask);
+                index = this_type::next_index(index, new_mask);
                 if (likely(new_table[index] == nullptr)) {
                     new_table[index] = old_data;
                     break;
@@ -240,7 +258,7 @@ private:
                     // Free old table data.
                     delete[] this->table_;
                 }
-                // Setting
+                // Setting status
                 this->table_ = new_table;
                 this->mask_ = new_buckets - 1;
                 this->buckets_ = new_buckets;
@@ -275,7 +293,7 @@ private:
                     // Free old table data.
                     delete[] this->table_;
                 }
-                // Setting
+                // Setting status
                 this->table_ = new_table;
                 this->mask_ = new_buckets - 1;
                 this->buckets_ = new_buckets;
@@ -291,49 +309,52 @@ private:
 
     iterator find_internal(const key_type & key, hash_type & hash) {
         hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
-        size_type index = this->index_for(hash, this->mask_);
-        node_type * node = (node_type *)this->table_[index];
+        size_type index = this_type::index_for(hash, this->mask_);
 
-        if (likely(node != nullptr)) {
-            // Found, next to check the hash value.
-            if (likely(node->hash == hash)) {
-                // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(node->pair.first.size() == key.size())) {
-#if USE_SSE42_STRING_COMPARE
-                    if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
-                        return (iterator)&this->table_[index];
-                    }
-#else
-                    if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                        return (iterator)&this->table_[index];
-                    }
-#endif
-                }
-            }
-        }
+        if (likely(this->table_ != nullptr)) {
+            node_type * node = (node_type *)this->table_[index];
 
-        // If first position is not found, search next bucket continue.
-        size_type first_index = index;
-        do {
-            index = this->next_index(index, this->mask_);
-            node = (node_type *)this->table_[index];
             if (likely(node != nullptr)) {
+                // Found, next to check the hash value.
                 if (likely(node->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(node->pair.first.size() == key.size())) {
-#if USE_SSE42_STRING_COMPARE
+    #if USE_SSE42_STRING_COMPARE
                         if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                             return (iterator)&this->table_[index];
                         }
-#else
+    #else
                         if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                             return (iterator)&this->table_[index];
                         }
-#endif
+    #endif
                     }
                 }
             }
-        } while (likely(index != first_index));
+
+            // If first position is not found, search next bucket continue.
+            size_type first_index = index;
+            do {
+                index = this_type::next_index(index, this->mask_);
+                node = (node_type *)this->table_[index];
+                if (likely(node != nullptr)) {
+                    if (likely(node->hash == hash)) {
+                        // If hash value is equal, then compare the key sizes and the strings.
+                        if (likely(node->pair.first.size() == key.size())) {
+    #if USE_SSE42_STRING_COMPARE
+                            if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                                return (iterator)&this->table_[index];
+                            }
+    #else
+                            if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                                return (iterator)&this->table_[index];
+                            }
+    #endif
+                        }
+                    }
+                }
+            } while (likely(index != first_index));
+        }
 
         // Not found
         return this->end();
@@ -364,49 +385,52 @@ public:
 
     iterator find(const key_type & key) {
         hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
-        size_type index = this->index_for(hash, this->mask_);
-        node_type * node = (node_type *)this->table_[index];
+        size_type index = this_type::index_for(hash, this->mask_);
 
-        if (likely(node != nullptr)) {
-            // Found, next to check the hash value.
-            if (likely(node->hash == hash)) {
-                // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(node->pair.first.size() == key.size())) {
-#if USE_SSE42_STRING_COMPARE
-                    if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
-                        return (iterator)&this->table_[index];
-                    }
-#else
-                    if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                        return (iterator)&this->table_[index];
-                    }
-#endif
-                }
-            }
-        }
+        if (likely(this->table_ != nullptr)) {
+            node_type * node = (node_type *)this->table_[index];
 
-        // If first position is not found, search next bucket continue.
-        size_type first_index = index;
-        do {
-            index = this->next_index(index, this->mask_);
-            node = (node_type *)this->table_[index];
             if (likely(node != nullptr)) {
+                // Found, next to check the hash value.
                 if (likely(node->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(node->pair.first.size() == key.size())) {
-#if USE_SSE42_STRING_COMPARE
+    #if USE_SSE42_STRING_COMPARE
                         if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                             return (iterator)&this->table_[index];
                         }
-#else
+    #else
                         if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                             return (iterator)&this->table_[index];
                         }
-#endif
+    #endif
                     }
                 }
             }
-        } while (likely(index != first_index));
+
+            // If first position is not found, search next bucket continue.
+            size_type first_index = index;
+            do {
+                index = this_type::next_index(index, this->mask_);
+                node = (node_type *)this->table_[index];
+                if (likely(node != nullptr)) {
+                    if (likely(node->hash == hash)) {
+                        // If hash value is equal, then compare the key sizes and the strings.
+                        if (likely(node->pair.first.size() == key.size())) {
+    #if USE_SSE42_STRING_COMPARE
+                            if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                                return (iterator)&this->table_[index];
+                            }
+    #else
+                            if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                                return (iterator)&this->table_[index];
+                            }
+    #endif
+                        }
+                    }
+                }
+            } while (likely(index != first_index));
+        }
 
         // Not found
         return this->end();
@@ -423,14 +447,14 @@ public:
 
             node_type * new_data = new node_type(hash, key, value);
             if (likely(new_data != nullptr)) {
-                size_type index = this->index_for(hash, this->mask_);
+                size_type index = this_type::index_for(hash, this->mask_);
                 if (likely(this->table_[index] == nullptr)) {
                     this->table_[index] = (data_type)new_data;
                     ++(this->size_);
                 }
                 else {
                     do {
-                        index = this->next_index(index, this->mask_);
+                        index = this_type::next_index(index, this->mask_);
                         if (likely(this->table_[index] == nullptr)) {
                             this->table_[index] = (data_type)new_data;
                             ++(this->size_);
@@ -459,14 +483,14 @@ public:
             node_type * new_data = new node_type(hash, std::forward<key_type>(key),
                                                  std::forward<value_type>(value));
             if (likely(new_data != nullptr)) {
-                size_type index = this->index_for(hash, this->mask_);
+                size_type index = this_type::index_for(hash, this->mask_);
                 if (likely(this->table_[index] == nullptr)) {
                     this->table_[index] = (data_type)new_data;
                     ++(this->size_);
                 }
                 else {
                     do {
-                        index = this->next_index(index, this->mask_);
+                        index = this_type::next_index(index, this->mask_);
                         if (likely(this->table_[index] == nullptr)) {
                             this->table_[index] = (data_type)new_data;
                             ++(this->size_);

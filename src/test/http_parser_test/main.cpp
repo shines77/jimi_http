@@ -1269,7 +1269,7 @@ uint32_t fast_div_remainder(uint32_t divisor, uint32_t dividend,
  || defined(__amd64__) || defined(__x86_64__) || defined(__LP64__)
     uint64_t quotient = (uint64_t)coeff_m;
     quotient = (quotient * divisor) >> (32U + shift);
-    assert((uint64_t)divisor >= (uint64_t)(quotient32 * dividend));
+    assert((uint64_t)divisor >= (uint64_t)(quotient * dividend));
     uint32_t remainder32 = (uint32_t)((uint64_t)divisor - (uint64_t)(quotient * dividend));
     return remainder32;
 #else
