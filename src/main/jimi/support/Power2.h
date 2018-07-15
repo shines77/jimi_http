@@ -19,7 +19,7 @@ static inline
 std::size_t round_to_pow2(std::size_t n)
 {
     assert(n >= 1);
-    if ((n & (n - 1)) == 0) return n;
+    if (likely((n & (n - 1)) == 0)) return n;
 
     unsigned long index;
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
@@ -37,7 +37,7 @@ static inline
 std::size_t round_up_pow2(std::size_t n)
 {
     assert(n >= 1);
-    if ((n & (n - 1)) == 0) return n;
+    if (likely((n & (n - 1)) == 0)) return n;
 
     unsigned long index;
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \

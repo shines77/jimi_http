@@ -173,19 +173,14 @@ private:
         }
     }
 
-    void inline rehash_insert(data_type * new_table, size_type new_buckets,
+    void inline rehash_insert(data_type * new_table, size_type new_mask,
                               data_type old_data) {
         assert(new_table != nullptr);
         assert(old_data != nullptr);
-        assert(new_buckets > 1);
-        size_type new_mask = new_buckets - 1;
+        assert(new_mask >= 0);
 
-        const std::string & key = old_data->pair.first;
-        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
+        hash_type hash = old_data->hash;
         hash_type bucket = hash & new_mask;
-
-        // Update the hash value
-        old_data->hash = hash;
 
         if (likely(new_table[bucket] == nullptr)) {
             new_table[bucket] = old_data;
@@ -212,13 +207,14 @@ private:
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
 
                 if (likely(this->table_ != nullptr)) {
-                    // Recalculate all hash values.
+                    // Recalculate all hash indexs.
                     size_type new_size = 0;
+                    size_type new_mask = new_buckets - 1;
 
                     for (size_type i = 0; i < this->buckets_; ++i) {
                         if (likely(this->table_[i] != nullptr)) {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->rehash_insert(new_table, new_buckets, this->table_[i]);
+                            this->rehash_insert(new_table, new_mask, this->table_[i]);
                             ++new_size;
                         }
                     }
@@ -379,6 +375,7 @@ public:
         }
         else {
             // Update the existed key's value.
+            assert(iter != nullptr && (*iter) != nullptr);
             (*iter)->pair.second = value;
         }
     }
@@ -415,6 +412,7 @@ public:
         }
         else {
             // Update the existed key's value.
+            assert(iter != nullptr && (*iter) != nullptr);
             (*iter)->pair.second = std::move(std::forward<value_type>(value));
         }
     }
