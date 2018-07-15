@@ -82,6 +82,8 @@ public:
         this->destroy();
     }
 
+    bool is_valid() const { return (this->table_ != nullptr); }
+
     iterator begin() const { return &(this->table_[0]); }
     iterator end() const { return &(this->table_[this->buckets_]); }
 
@@ -311,50 +313,48 @@ private:
         hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
         size_type index = this_type::index_for(hash, this->mask_);
 
-        if (likely(this->table_ != nullptr)) {
-            node_type * node = (node_type *)this->table_[index];
+        assert(this->table_ != nullptr);
+        node_type * node = (node_type *)this->table_[index];
+        if (likely(node != nullptr)) {
+            // Found, next to check the hash value.
+            if (likely(node->hash == hash)) {
+                // If hash value is equal, then compare the key sizes and the strings.
+                if (likely(node->pair.first.size() == key.size())) {
+#if USE_SSE42_STRING_COMPARE
+                    if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                        return (iterator)&this->table_[index];
+                    }
+#else
+                    if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                        return (iterator)&this->table_[index];
+                    }
+#endif
+                }
+            }
+        }
 
+        // If first position is not found, search next bucket continue.
+        size_type first_index = index;
+        do {
+            index = this_type::next_index(index, this->mask_);
+            node = (node_type *)this->table_[index];
             if (likely(node != nullptr)) {
-                // Found, next to check the hash value.
                 if (likely(node->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(node->pair.first.size() == key.size())) {
-    #if USE_SSE42_STRING_COMPARE
+#if USE_SSE42_STRING_COMPARE
                         if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                             return (iterator)&this->table_[index];
                         }
-    #else
+#else
                         if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
                             return (iterator)&this->table_[index];
                         }
-    #endif
+#endif
                     }
                 }
             }
-
-            // If first position is not found, search next bucket continue.
-            size_type first_index = index;
-            do {
-                index = this_type::next_index(index, this->mask_);
-                node = (node_type *)this->table_[index];
-                if (likely(node != nullptr)) {
-                    if (likely(node->hash == hash)) {
-                        // If hash value is equal, then compare the key sizes and the strings.
-                        if (likely(node->pair.first.size() == key.size())) {
-    #if USE_SSE42_STRING_COMPARE
-                            if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
-                                return (iterator)&this->table_[index];
-                            }
-    #else
-                            if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
-                                return (iterator)&this->table_[index];
-                            }
-    #endif
-                        }
-                    }
-                }
-            } while (likely(index != first_index));
-        }
+        } while (likely(index != first_index));
 
         // Not found
         return this->end();
@@ -389,7 +389,6 @@ public:
 
         if (likely(this->table_ != nullptr)) {
             node_type * node = (node_type *)this->table_[index];
-
             if (likely(node != nullptr)) {
                 // Found, next to check the hash value.
                 if (likely(node->hash == hash)) {
@@ -437,73 +436,77 @@ public:
     }
 
     void insert(const key_type & key, const value_type & value) {
-        hash_type hash;
-        iterator iter = this->find_internal(key, hash);
-        if (likely(iter == this->end())) {
-            // Insert the new key.
-            if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-                this->resize_internal(this->buckets_ * 2);
-            }
+        if (likely(this->table_ != nullptr)) {
+            hash_type hash;
+            iterator iter = this->find_internal(key, hash);
+            if (likely(iter == this->end())) {
+                // Insert the new key.
+                if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
+                    this->resize_internal(this->buckets_ * 2);
+                }
 
-            node_type * new_data = new node_type(hash, key, value);
-            if (likely(new_data != nullptr)) {
-                size_type index = this_type::index_for(hash, this->mask_);
-                if (likely(this->table_[index] == nullptr)) {
-                    this->table_[index] = (data_type)new_data;
-                    ++(this->size_);
-                }
-                else {
-                    do {
-                        index = this_type::next_index(index, this->mask_);
-                        if (likely(this->table_[index] == nullptr)) {
-                            this->table_[index] = (data_type)new_data;
-                            ++(this->size_);
-                            break;
-                        }
-                    } while (1);
+                node_type * new_data = new node_type(hash, key, value);
+                if (likely(new_data != nullptr)) {
+                    size_type index = this_type::index_for(hash, this->mask_);
+                    if (likely(this->table_[index] == nullptr)) {
+                        this->table_[index] = (data_type)new_data;
+                        ++(this->size_);
+                    }
+                    else {
+                        do {
+                            index = this_type::next_index(index, this->mask_);
+                            if (likely(this->table_[index] == nullptr)) {
+                                this->table_[index] = (data_type)new_data;
+                                ++(this->size_);
+                                break;
+                            }
+                        } while (1);
+                    }
                 }
             }
-        }
-        else {
-            // Update the existed key's value.
-            assert(iter != nullptr && (*iter) != nullptr);
-            (*iter)->pair.second = value;
+            else {
+                // Update the existed key's value.
+                assert(iter != nullptr && (*iter) != nullptr);
+                (*iter)->pair.second = value;
+            }
         }
     }
 
     void insert(key_type && key, value_type && value) {
-        hash_type hash;
-        iterator iter = this->find_internal(std::forward<key_type>(key), hash);
-        if (likely(iter == this->end())) {
-            // Insert the new key.
-            if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
-                this->resize_internal(this->buckets_ * 2);
-            }
+        if (likely(this->table_ != nullptr)) {
+            hash_type hash;
+            iterator iter = this->find_internal(std::forward<key_type>(key), hash);
+            if (likely(iter == this->end())) {
+                // Insert the new key.
+                if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
+                    this->resize_internal(this->buckets_ * 2);
+                }
 
-            node_type * new_data = new node_type(hash, std::forward<key_type>(key),
-                                                 std::forward<value_type>(value));
-            if (likely(new_data != nullptr)) {
-                size_type index = this_type::index_for(hash, this->mask_);
-                if (likely(this->table_[index] == nullptr)) {
-                    this->table_[index] = (data_type)new_data;
-                    ++(this->size_);
-                }
-                else {
-                    do {
-                        index = this_type::next_index(index, this->mask_);
-                        if (likely(this->table_[index] == nullptr)) {
-                            this->table_[index] = (data_type)new_data;
-                            ++(this->size_);
-                            break;
-                        }
-                    } while (1);
+                node_type * new_data = new node_type(hash, std::forward<key_type>(key),
+                                                     std::forward<value_type>(value));
+                if (likely(new_data != nullptr)) {
+                    size_type index = this_type::index_for(hash, this->mask_);
+                    if (likely(this->table_[index] == nullptr)) {
+                        this->table_[index] = (data_type)new_data;
+                        ++(this->size_);
+                    }
+                    else {
+                        do {
+                            index = this_type::next_index(index, this->mask_);
+                            if (likely(this->table_[index] == nullptr)) {
+                                this->table_[index] = (data_type)new_data;
+                                ++(this->size_);
+                                break;
+                            }
+                        } while (1);
+                    }
                 }
             }
-        }
-        else {
-            // Update the existed key's value.
-            assert(iter != nullptr && (*iter) != nullptr);
-            (*iter)->pair.second = std::move(std::forward<value_type>(value));
+            else {
+                // Update the existed key's value.
+                assert(iter != nullptr && (*iter) != nullptr);
+                (*iter)->pair.second = std::move(std::forward<value_type>(value));
+            }
         }
     }
 
@@ -512,7 +515,8 @@ public:
     }
 
     void insert(pair_type && pair) {
-        this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
+        this->insert(std::forward<key_type>(pair.first),
+                     std::forward<value_type>(pair.second));
     }
 
     void emplace(const pair_type & pair) {
@@ -520,42 +524,47 @@ public:
     }
 
     void emplace(pair_type && pair) {
-        this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
+        this->insert(std::forward<key_type>(pair.first),
+                     std::forward<value_type>(pair.second));
     }
 
     void erase(const key_type & key) {
-        iterator iter = this->find(key);
-        if (likely(iter != this->end())) {
-            assert(this->size_ > 0);
-            if (likely(iter != nullptr)) {
-                if (likely(*iter != nullptr)) {
-                    delete *iter;
-                    *iter = nullptr;
-                    assert(this->size_ > 0);
-                    --(this->size_);
+        if (likely(this->table_ != nullptr)) {
+            iterator iter = this->find(key);
+            if (likely(iter != this->end())) {
+                assert(this->size_ > 0);
+                if (likely(iter != nullptr)) {
+                    if (likely(*iter != nullptr)) {
+                        delete *iter;
+                        *iter = nullptr;
+                        assert(this->size_ > 0);
+                        --(this->size_);
+                    }
                 }
             }
-        }
-        else {
-            // Not found the key
+            else {
+                // Not found the key
+            }
         }
     }
 
     void erase(key_type && key) {
-        iterator iter = this->find(std::forward<key_type>(key));
-        if (likely(iter != this->end())) {
-            assert(this->size_ > 0);
-            if (likely(iter != nullptr)) {
-                if (likely(*iter != nullptr)) {
-                    delete *iter;
-                    *iter = nullptr;
-                    assert(this->size_ > 0);
-                    --(this->size_);
+        if (likely(this->table_ != nullptr)) {
+            iterator iter = this->find(std::forward<key_type>(key));
+            if (likely(iter != this->end())) {
+                assert(this->size_ > 0);
+                if (likely(iter != nullptr)) {
+                    if (likely(*iter != nullptr)) {
+                        delete *iter;
+                        *iter = nullptr;
+                        assert(this->size_ > 0);
+                        --(this->size_);
+                    }
                 }
             }
-        }
-        else {
-            // Not found the key
+            else {
+                // Not found the key
+            }
         }
     }
 
