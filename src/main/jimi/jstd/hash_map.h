@@ -69,11 +69,11 @@ private:
 public:
     hash_map_list() : head_(nullptr), size_(0) {}
     hash_map_list(entry_type * next) : head_(next), size_((next != nullptr) ? 1 : 0) {}
-    hash_map_list(const this_type & src) : head_(src.next_), size_(src.size_) {}
+    hash_map_list(const this_type & src) : head_(src.head_), size_(src.size_) {}
     hash_map_list(this_type && src) {
-        this->head_ = src.next_;
+        this->head_ = src.head_;
         this->size_ = src.size_;
-        src.next_ = nullptr;
+        src.head_ = nullptr;
         src.size_ = 0;
     }
     ~hash_map_list() {
@@ -83,6 +83,18 @@ public:
     entry_type * head() const { return this->head_; }
     size_type size() const { return this->size_; }
 
+    entry_type * front() const { return this->head(); }
+    entry_type * back() const {
+        entry_type * entry = this->head_;
+        while (likely(entry != nullptr)) {
+            if (likely(entry->next != nullptr))
+                entry = entry->next;
+            else
+                return entry;
+        }
+        return nullptr;
+    }
+
     void destroy() {
         entry_type * entry = this->head_;
         while (likely(entry != nullptr)) {
@@ -91,10 +103,12 @@ public:
             entry = next;
         }
         this->head_ = nullptr;
+#ifndef NDEBUG
         this->size_ = 0;
+#endif
     }
 
-    void push_back(entry_type * entry) {
+    void push_front(entry_type * entry) {
         assert(entry != nullptr);
         if (likely(this->head_ != nullptr)) {
             entry->next = this->head_;
@@ -103,12 +117,52 @@ public:
         ++(this->size_);
     }
 
+    void pop_front() {
+        entry_type * entry = this->head_;
+        if (likely(entry != nullptr)) {
+            this->head_ = entry->next;
+            delete entry;
+            --(this->size_);
+        }
+    }
+
+    void erase(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * entry = this->head_;
+            while (likely(entry != nullptr)) {
+                if (likely(entry != before)) {
+                    // It's not before
+                    if (likely(entry->next != nullptr))
+                        entry = entry->next;
+                    else
+                        return;
+                }
+                else {
+                    // Current entry is before
+                    if (likely(entry->next != nullptr)) {
+                        entry_type * target = entry->next;
+                        entry->next = target->next;
+                        delete target;
+                        --(this->size_);
+                    }
+                    else {
+                        // Error: no entry after [before]
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            pop_front();
+        }
+    }
+
     void swap(const this_type & src) {
-        entry_type * next_save = src.next_;
+        entry_type * head_save = src.head_;
         size_type size_save = src.size_;
-        src.next_ = this->head_;
+        src.head_ = this->head_;
         src.size_ = this->size_;
-        this->head_ = next_save;  
+        this->head_ = head_save;  
         this->size_ = size_save;
     }
 };
@@ -184,7 +238,7 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         list_type ** new_table = new list_type *[new_capacity];
-        if (new_table != nullptr) {
+        if (likely(new_table != nullptr)) {
             // Reset the table data.
             memset(new_table, 0, sizeof(list_type *) * new_capacity);
             // Setting status
@@ -230,7 +284,7 @@ private:
 #endif
     }
 
-#if 0
+#if 1
     inline size_type calc_capacity(size_type new_capacity) {
         // If new_capacity is less than half of the current hash table size,
         // then double the hash table size.
@@ -505,7 +559,7 @@ public:
                     else {
                         // Push the new entry to list back.
                         assert(list != nullptr);
-                        list->push_back(new_entry);
+                        list->push_front(new_entry);
                         ++(this->size_);
                     }
                 }
@@ -551,7 +605,7 @@ public:
                     else {
                         // Push the new entry to list back.
                         assert(list != nullptr);
-                        list->push_back(new_entry);
+                        list->push_front(new_entry);
                         ++(this->size_);
                     }
                 }

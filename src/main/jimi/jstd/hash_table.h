@@ -114,7 +114,7 @@ private:
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
         data_type * new_table = new data_type[new_buckets];
-        if (new_table != nullptr) {
+        if (likely(new_table != nullptr)) {
             // Reset the table data.
             memset(new_table, 0, sizeof(data_type) * new_buckets);
             // Setting status
