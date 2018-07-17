@@ -1094,7 +1094,7 @@ uint32_t find_first_prime(uint32_t num)
         if (isPrime == 0)
             prime++;
         else
-            return prime;        
+            return prime;
     } while (1);
 
     return 0;
@@ -1154,7 +1154,7 @@ uint32_t fast_div(uint32_t divisor, uint32_t coeff_m, uint32_t shift)
     x86: Only EAX, ECX, EDX is volatile.
     x64: Only RAX£¬RCX£¬RDX£¬R8£¬R9£¬R10£¬R11 is volatile.
 
-div10 proc 
+div10 proc
     mov    edx,1999999Ah    ; load 1/10 * 2^32
     imul   eax              ; edx:eax = dividend / 10 * 2 ^32
     mov    eax,edx          ; eax = dividend / 10
