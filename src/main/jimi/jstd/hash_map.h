@@ -297,7 +297,7 @@ private:
             this->size_ = 0;
             this->used_ = 0;
             assert(loadFactor > 0.0f);
-            this->threshold_ = (size_type)(new_capacity * abs(loadFactor));
+            this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
         }
     }
 
@@ -393,7 +393,7 @@ private:
                 this->size_ = 0;
                 this->used_ = 0;
                 assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * abs(this->loadFactor_));
+                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
             }
         }
     }
@@ -484,7 +484,7 @@ private:
                 this->table_ = new_table;
                 this->capacity_ = new_capacity;
                 assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * abs(this->loadFactor_));
+                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
             }
         }
     }
@@ -525,7 +525,7 @@ private:
                 this->table_ = new_table;
                 this->capacity_ = new_capacity;
                 assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * abs(this->loadFactor_));
+                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
             }
         }
     }
