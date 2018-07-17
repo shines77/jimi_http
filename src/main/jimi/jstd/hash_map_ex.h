@@ -633,7 +633,7 @@ private:
             entry_type * next_entry = old_entry->next;
 
             // Push the old entry to front of new list.
-            list_type * new_list = new_table + index;
+            list_type * new_list = &new_table[index];
             assert(new_list != nullptr);
             if (likely(new_list->head() != nullptr)) {
                 assert(new_list->head() != nullptr);
@@ -685,8 +685,10 @@ private:
                         else {
                             // Insert the old buckets to the new buckets in the new table.
                             this->reinsert_list(new_table_, new_capacity, old_list);
+#ifndef NDEBUG
                             // Set the old_list.head to nullptr.
                             old_list->reset();
+#endif
                             old_list++;
                         }
                     }
@@ -734,8 +736,10 @@ private:
                         else {
                             // Insert the old buckets to the new buckets in the new table.
                             this->reinsert_list(new_table_, new_capacity, old_list);
+#ifndef NDEBUG
                             // Set the old_list.head to nullptr.
                             old_list->reset();
+#endif
                             old_list++;
                         }
                     }
