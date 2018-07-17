@@ -741,7 +741,7 @@ void hashtable_find_benchmark_impl()
     {
         typedef typename AlgorithmTy::iterator iterator;
 
-        size_t count = 0;
+        size_t checksum = 0;
         AlgorithmTy algorithm;
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
             char buf[16];
@@ -760,14 +760,14 @@ void hashtable_find_benchmark_impl()
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 iterator iter = algorithm.find(crc32_str[j]);
                 if (iter != algorithm.end()) {
-                    count++;
+                    checksum++;
                 }
             }
         }
         sw.stop();
 
         printf("%s\n\n", algorithm.name());
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("checksum = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", checksum, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
@@ -830,7 +830,7 @@ void hashtable_rehash_benchmark_impl()
     }
 
     {
-        size_t count = 0;
+        size_t checksum = 0;
         size_t buckets = 128;
 
         AlgorithmTy algorithm;
@@ -860,7 +860,7 @@ void hashtable_rehash_benchmark_impl()
                        algorithm.size(), buckets, bucket_count);
             }
 #endif
-            count += algorithm.bucket_count();
+            checksum += algorithm.bucket_count();
             for (size_t j = 0; j < 7; ++j) {
                 buckets *= 2;
                 algorithm.rehash(buckets - 1);
@@ -871,13 +871,13 @@ void hashtable_rehash_benchmark_impl()
                            (uint32_t)j, algorithm.size(), buckets, bucket_count);
                 }
 #endif
-                count += algorithm.bucket_count();
+                checksum += algorithm.bucket_count();
             }
         }
         sw.stop();
 
         printf("%s\n\n", algorithm.name());
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("checksum = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", checksum, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }
@@ -949,7 +949,7 @@ void hashtable_insert_benchmark_impl()
     }
 
     {
-        size_t count = 0;
+        size_t checksum = 0;
         AlgorithmTy algorithm;
 
         StopWatch sw;
@@ -960,23 +960,23 @@ void hashtable_insert_benchmark_impl()
             assert(algorithm.size() == 0);
             algorithm.clear();
             assert(algorithm.size() == 0);
-            count += algorithm.size();
+            checksum += algorithm.size();
 #endif
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 algorithm.insert(crc32_str[j], indexs[j]);
             }
-            count += algorithm.size();
+            checksum += algorithm.size();
 
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
                 algorithm.erase(crc32_str[j]);
             }
             assert(algorithm.size() == 0);
-            count += algorithm.size();
+            checksum += algorithm.size();
         }
         sw.stop();
 
         printf("%s\n\n", algorithm.name());
-        printf("count = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", count, sw.getMillisec());
+        printf("checksum = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", checksum, sw.getMillisec());
         printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         printf("\n");
     }

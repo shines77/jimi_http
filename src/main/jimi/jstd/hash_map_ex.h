@@ -280,7 +280,7 @@ private:
 
 public:
     basic_hash_map_ex(size_type initialCapacity = kDefaultInitialCapacity,
-                   float loadFactor = kDefaultLoadFactor)
+                      float loadFactor = kDefaultLoadFactor)
         : table_(nullptr), capacity_(0), size_(0), used_(0),
           threshold_(0), loadFactor_(loadFactor) {
         this->init(initialCapacity, loadFactor);
