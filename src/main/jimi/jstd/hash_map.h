@@ -103,6 +103,15 @@ private:
         }
     }
 
+    inline void pop_front_fast() {
+        entry_type * entry = this->head_;
+        assert(entry != nullptr);
+        this->head_ = entry->next;
+        delete entry;
+        assert(this->size_ > 0);
+        --(this->size_);
+    }
+
 public:
     entry_type * front() const { return this->head(); }
     entry_type * back() const {
@@ -144,6 +153,7 @@ public:
         if (likely(entry != nullptr)) {
             this->head_ = entry->next;
             delete entry;
+            assert(this->size_ > 0);
             --(this->size_);
         }
     }
@@ -176,6 +186,37 @@ public:
         }
         else {
             pop_front();
+        }
+    }
+
+    void erase_fast(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * entry = this->head_;
+            while (likely(entry != nullptr)) {
+                if (likely(entry != before)) {
+                    // It's not before
+                    if (likely(entry->next != nullptr))
+                        entry = entry->next;
+                    else
+                        return;
+                }
+                else {
+                    // Current entry is before
+                    if (likely(entry->next != nullptr)) {
+                        entry_type * target = entry->next;
+                        entry->next = target->next;
+                        delete target;
+                        --(this->size_);
+                    }
+                    else {
+                        // Error: no entry after [before]
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            pop_front_fast();
         }
     }
 
@@ -246,7 +287,6 @@ private:
     void init(size_type new_capacity, float loadFactor) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        assert(loadFactor > 0.0f);
         list_type ** new_table = new list_type *[new_capacity];
         if (likely(new_table != nullptr)) {
             // Reset the table data.
@@ -256,6 +296,7 @@ private:
             this->capacity_ = new_capacity;
             this->size_ = 0;
             this->used_ = 0;
+            assert(loadFactor > 0.0f);
             this->threshold_ = (size_type)(new_capacity * abs(loadFactor));
         }
     }
@@ -347,10 +388,12 @@ private:
                     delete[] this->table_;
                 }
                 // Setting status
-                this->used_ = 0;
-                this->size_ = 0;
-                this->capacity_ = new_capacity;
                 this->table_ = new_table;
+                this->capacity_ = new_capacity;
+                this->size_ = 0;
+                this->used_ = 0;
+                assert(this->loadFactor_ > 0.0f);
+                this->threshold_ = (size_type)(new_capacity * abs(this->loadFactor_));
             }
         }
     }
@@ -372,32 +415,36 @@ private:
                 // Create the new list and push the new entry to front of new list.
                 list_type * new_list = new list_type(old_entry);
                 if (likely(new_list != nullptr)) {
-                    list = new_list;
                     assert(new_table[index] == nullptr);
                     new_table[index] = new_list;
+                    ++(this->size_);
+                    ++(this->used_);
                     // Save the value of old_entry->next.
                     next_entry = old_entry->next;
                     // Modify the value of old_entry->next.
                     old_entry->next = nullptr;
-                    ++(this->size_);
-                    ++(this->used_);
+                    // Scan next entry
+                    old_entry = next_entry;
+                }
+                else {
+                    // Error: out of memory
                 }
             }
             else {
                 // Push the new entry to front of old list.
                 assert(list != nullptr);
-                entry_type * front = list->front();
+                entry_type * old_front = list->front();
                 // Save the value of old_entry->next.
                 next_entry = old_entry->next;
                 // list->push_front(old_entry) will modify the value of old_entry->next.
                 list->push_front(old_entry);
                 ++(this->size_);
-                if (unlikely(front == nullptr)) {
+                if (unlikely(old_front == nullptr)) {
                     ++(this->used_);
                 }
+                // Scan next entry
+                old_entry = next_entry;
             }
-            // Scan next entry
-            old_entry = next_entry;
         }
     }
 
@@ -436,6 +483,8 @@ private:
                 // Setting status
                 this->table_ = new_table;
                 this->capacity_ = new_capacity;
+                assert(this->loadFactor_ > 0.0f);
+                this->threshold_ = (size_type)(new_capacity * abs(this->loadFactor_));
             }
         }
     }
@@ -475,6 +524,8 @@ private:
                 // Setting status
                 this->table_ = new_table;
                 this->capacity_ = new_capacity;
+                assert(this->loadFactor_ > 0.0f);
+                this->threshold_ = (size_type)(new_capacity * abs(this->loadFactor_));
             }
         }
     }
@@ -510,6 +561,43 @@ private:
                     }
                 }
                 // Scan next entry
+                entry = entry->next;
+            }
+        }
+
+        // Not found
+        return this->end();
+    }
+
+    iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
+        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
+        index = this_type::index_for(hash, this->capacity_);
+
+        assert(this->table_ != nullptr);
+        list_type * list = (list_type *)this->table_[index];
+        if (likely(list != nullptr)) {
+            entry_type * before = nullptr;
+            entry_type * entry = list->head();
+            while (likely(entry != nullptr)) {
+                // Found entry, next to check the hash value.
+                if (likely(entry->hash == hash)) {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(entry->pair.first.size() == key.size())) {
+#if USE_SSE42_STRING_COMPARE
+                        if (likely(detail::string_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                            before_out = before;
+                            return (iterator)entry;
+                        }
+#else
+                        if (likely(strcmp(entry->pair.first.c_str(), key.c_str()) == 0)) {
+                            before_out = before;
+                            return (iterator)entry;
+                        }
+#endif
+                    }
+                }
+                // Scan next entry
+                before = entry;
                 entry = entry->next;
             }
         }
@@ -623,10 +711,10 @@ public:
                     else {
                         // Push the new entry to front of old list.
                         assert(list != nullptr);
-                        entry_type * front = list->front();
+                        entry_type * old_front = list->front();
                         list->push_front(new_entry);
                         ++(this->size_);
-                        if (unlikely(front == nullptr)) {
+                        if (unlikely(old_front == nullptr)) {
                             ++(this->used_);
                         }
                     }
@@ -672,10 +760,10 @@ public:
                     else {
                         // Push the new entry to front of old list.
                         assert(list != nullptr);
-                        entry_type * front = list->front();
+                        entry_type * old_front = list->front();
                         list->push_front(new_entry);
                         ++(this->size_);
-                        if (unlikely(front == nullptr)) {
+                        if (unlikely(old_front == nullptr)) {
                             ++(this->used_);
                         }
                     }
@@ -707,17 +795,22 @@ public:
 
     void erase(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
-            iterator iter = this->find(key);
+            entry_type * before;
+            size_type index;
+            iterator iter = this->find_before(key, before, index);
             if (likely(iter != this->end())) {
+                entry_type * entry = (entry_type *)iter;
+                assert(entry != nullptr);
                 assert(this->size_ > 0);
-                if (likely(iter != nullptr)) {
-                    if (likely(*iter != nullptr)) {
-                        delete *iter;
-                        *iter = nullptr;
-                        assert(this->size_ > 0);
-                        --(this->size_);
-                    }
-                }
+
+                list_type * list = this->table_[index];
+                assert(list != nullptr);
+                assert((before != nullptr && entry != list->head()) ||
+                       (before == nullptr && entry == list->head()));
+                list->erase_fast(before);
+
+                assert(this->size_ > 0);
+                --(this->size_);
             }
             else {
                 // Not found the key
@@ -727,17 +820,22 @@ public:
 
     void erase(key_type && key) {
         if (likely(this->table_ != nullptr)) {
-            iterator iter = this->find(std::forward<key_type>(key));
+            entry_type * before;
+            size_type index;
+            iterator iter = this->find_before(std::forward<key_type>(key), before, index);
             if (likely(iter != this->end())) {
+                entry_type * entry = (entry_type *)iter;
+                assert(entry != nullptr);
                 assert(this->size_ > 0);
-                if (likely(iter != nullptr)) {
-                    if (likely(*iter != nullptr)) {
-                        delete *iter;
-                        *iter = nullptr;
-                        assert(this->size_ > 0);
-                        --(this->size_);
-                    }
-                }
+
+                list_type * list = this->table_[index];
+                assert(list != nullptr);
+                assert((before != nullptr && entry != list->head()) ||
+                       (before == nullptr && entry == list->head()));
+                list->erase_fast(before);
+
+                assert(this->size_ > 0);
+                --(this->size_);
             }
             else {
                 // Not found the key
