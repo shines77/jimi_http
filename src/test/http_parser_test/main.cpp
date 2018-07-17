@@ -31,6 +31,7 @@
 
 #include "jimi/jstd/hash_table.h"
 #include "jimi/jstd/hash_map.h"
+#include "jimi/jstd/hash_map_ex.h"
 
 using namespace jimi;
 using namespace jimi::http;
@@ -790,7 +791,7 @@ void hashtable_find_benchmark()
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
-#if TEST_JSTD_HASH_MAP
+#if USE_JSTD_HASH_MAP
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
@@ -798,7 +799,17 @@ void hashtable_find_benchmark()
 #endif
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif // TEST_JSTD_HASH_MAP
+#endif // USE_JSTD_HASH_MAP
+
+#if USE_JSTD_HASH_MAP_EX
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
+#endif
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif // USE_JSTD_HASH_MAP_EX
 }
 
 template <typename AlgorithmTy>
@@ -890,7 +901,7 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
 #if 0
-#if TEST_JSTD_HASH_MAP
+#if USE_JSTD_HASH_MAP
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
@@ -898,7 +909,7 @@ void hashtable_rehash_benchmark()
 #endif
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif // TEST_JSTD_HASH_MAP
+#endif // USE_JSTD_HASH_MAP
 #endif
 }
 
@@ -979,8 +990,7 @@ void hashtable_insert_benchmark()
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
-#if 1
-#if TEST_JSTD_HASH_MAP
+#if USE_JSTD_HASH_MAP
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
@@ -988,8 +998,17 @@ void hashtable_insert_benchmark()
 #endif
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif // TEST_JSTD_HASH_MAP
+#endif // USE_JSTD_HASH_MAP
+
+#if USE_JSTD_HASH_MAP_EX
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
 #endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif // USE_JSTD_HASH_MAP_EX
 }
 
 void hashtable_benchmark()

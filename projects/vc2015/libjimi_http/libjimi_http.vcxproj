@@ -43,6 +43,7 @@
     <ClInclude Include="..\..\..\src\main\jimi\InputStream.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_helper.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_map.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_map_ex.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_table.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\iterator.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\string_iterator.h" />
