@@ -620,7 +620,7 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
-#if 0
+#if 1
     void insert(std::string && key, std::string && value) {
         this->map_.insert(std::make_pair(std::forward<std::string>(key),
                                          std::forward<std::string>(value)));
@@ -635,7 +635,7 @@ public:
         this->map_.erase(key);
     }
 
-#if 0
+#if 1
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
@@ -700,7 +700,7 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
-#if 0
+#if 1
     void insert(key_type && key, value_type && value) {
         this->map_.insert(std::make_pair(std::forward<key_type>(key),
                                          std::forward<value_type>(value)));
@@ -715,7 +715,7 @@ public:
         this->map_.erase(key);
     }
 
-#if 0
+#if 1
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
