@@ -690,7 +690,7 @@ public:
                     list_type & list = this->table_[index];
                     if (likely(list.head() == nullptr)) {
                         // Push the new entry to front of list.
-                        list.push_first(old_entry);
+                        list.push_first(new_entry);
 
                         ++(this->size_);
                         ++(this->used_);
