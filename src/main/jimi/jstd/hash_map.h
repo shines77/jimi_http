@@ -7,7 +7,7 @@
 #endif
 
 #include "jimi/basic/stddef.h"
-#include "jimi/basic/stddef.h"
+#include "jimi/basic/stdint.h"
 
 #include <cstddef>
 #include <memory>
@@ -129,9 +129,7 @@ public:
 
     void clear() {
         this->destroy();
-#ifdef NDEBUG
         this->size_ = 0;
-#endif
     }
 
     void set_head(entry_type * entry) {
@@ -151,7 +149,6 @@ public:
         this->size_ = 1;
     }
 
-    inline
     void push_first_fast(entry_type * entry) {
         assert(entry != nullptr);
         assert(this->head_ == nullptr);
@@ -171,7 +168,6 @@ public:
         ++(this->size_);
     }
 
-    inline
     void push_front_fast(entry_type * entry) {
         assert(entry != nullptr);
         assert(this->head_ != nullptr);
@@ -191,7 +187,6 @@ public:
         }
     }
 
-    inline
     void pop_front_fast() {
         entry_type * entry = this->head_;
         assert(entry != nullptr);
@@ -682,8 +677,6 @@ public:
                 list_type * list = (list_type *)this->table_[i];
                 if (likely(list != nullptr)) {
                     list->clear();
-                    //delete list;
-                    //this->table_[i] = nullptr;
                 }
             }
         }

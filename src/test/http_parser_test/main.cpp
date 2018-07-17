@@ -823,38 +823,40 @@ void hashtable_rehash_benchmark_impl()
 #ifndef NDEBUG
     static const size_t kRepeatTimes = 2;
 #else
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
 #endif
 
     std::string crc32_str[kHeaderFieldSize];
+    std::string indexs[kHeaderFieldSize];
     StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
         crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        indexs[i] = buf;
     }
 
     {
         size_t checksum = 0;
-        size_t buckets = 128;
-
-        AlgorithmTy algorithm;
-        algorithm.reserve(buckets);
-
-        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
-#endif
-            std::string index = buf;
-            algorithm.insert(crc32_str[i], index);
-        }
+        size_t buckets;
 
         StopWatch sw;
 
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
+            AlgorithmTy algorithm;
+            for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+                algorithm.insert(crc32_str[i], indexs[i]);
+            }
+
+            checksum += algorithm.size();
+            checksum += algorithm.bucket_count();
+
             buckets = 128;
             algorithm.shrink_to(buckets - 1);
 #ifndef NDEBUG
@@ -864,7 +866,6 @@ void hashtable_rehash_benchmark_impl()
                        algorithm.size(), buckets, bucket_count);
             }
 #endif
-            checksum += algorithm.bucket_count();
             for (size_t j = 0; j < 7; ++j) {
                 buckets *= 2;
                 algorithm.rehash(buckets - 1);
@@ -876,6 +877,81 @@ void hashtable_rehash_benchmark_impl()
                 }
 #endif
                 checksum += algorithm.bucket_count();
+            }
+        }
+        sw.stop();
+
+        AlgorithmTy algorithm;
+        printf("%s\n\n", algorithm.name());
+        printf("checksum = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", checksum, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+}
+
+template <typename AlgorithmTy>
+void hashtable_rehash2_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 2;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+    std::string crc32_str[kHeaderFieldSize];
+    std::string indexs[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        indexs[i] = buf;
+    }
+
+    {
+        size_t checksum = 0;
+        size_t buckets = 128;
+
+        AlgorithmTy algorithm;
+        algorithm.reserve(buckets);
+
+        for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+            algorithm.insert(crc32_str[i], indexs[i]);
+        }
+
+        StopWatch sw;
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            checksum += algorithm.size();
+
+            buckets = 128;
+            algorithm.shrink_to(buckets - 1);
+            checksum += algorithm.bucket_count();
+#ifndef NDEBUG
+            if (algorithm.bucket_count() != buckets) {
+                size_t bucket_count = algorithm.bucket_count();
+                printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                       algorithm.size(), buckets, bucket_count);
+            }
+#endif
+            for (size_t j = 0; j < 7; ++j) {
+                buckets *= 2;
+                algorithm.rehash(buckets - 1);
+                checksum += algorithm.bucket_count();
+#ifndef NDEBUG
+                if (algorithm.bucket_count() != buckets) {
+                    size_t bucket_count = algorithm.bucket_count();
+                    printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                           (uint32_t)j, algorithm.size(), buckets, bucket_count);
+                }
+#endif          
             }
         }
         sw.stop();
@@ -916,7 +992,6 @@ void hashtable_rehash_benchmark()
 #endif // USE_JSTD_HASH_MAP
 #endif
 
-#if 1
 #if USE_JSTD_HASH_MAP_EX
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
 #if USE_SHA1_HASH
@@ -926,7 +1001,46 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
 #endif // USE_JSTD_HASH_MAP_EX
+}
+
+void hashtable_rehash2_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_rehash2_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_rehash2_benchmark_impl<test::std_unordered_map>();
+
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
 #endif
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+
+#if 1
+#if USE_JSTD_HASH_MAP
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#endif
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif // USE_JSTD_HASH_MAP
+#endif
+
+#if USE_JSTD_HASH_MAP_EX
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
+#endif
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif // USE_JSTD_HASH_MAP_EX
 }
 
 template <typename AlgorithmTy>
@@ -962,7 +1076,7 @@ void hashtable_insert_benchmark_impl()
 
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
-#if 1
+#if 0
             assert(algorithm.size() == 0);
             algorithm.clear();
             assert(algorithm.size() == 0);
@@ -1031,6 +1145,7 @@ void hashtable_benchmark()
 {
     hashtable_find_benchmark();
     hashtable_rehash_benchmark();
+    hashtable_rehash2_benchmark();
     hashtable_insert_benchmark();
 }
 
