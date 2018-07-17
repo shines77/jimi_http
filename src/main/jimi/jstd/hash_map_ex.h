@@ -162,6 +162,7 @@ public:
             entry->next = this->head_;
         }
         this->head_ = entry;
+        assert(this->size_ >= 1);
         ++(this->size_);
     }
 
@@ -436,15 +437,12 @@ private:
                 old_entry = next_entry;
             }
             else {
-                entry_type * old_front = list.front();
+                assert(list.front() != nullptr);
                 // Save the value of old_entry->next.
                 entry_type * next_entry = old_entry->next;
                 // Push the old entry to front of old list.
                 list.push_front(old_entry);
                 ++(this->size_);
-                if (unlikely(old_front == nullptr)) {
-                    ++(this->used_);
-                }
                 // Scan next entry
                 old_entry = next_entry;
             }
@@ -473,7 +471,7 @@ private:
                         list_type & old_list = this->table_[i];
                         // Insert the old buckets to the new buckets in the new table.
                         this->reinsert_list(new_table, new_capacity, old_list);
-                        // Set the old_list->head to nullptr.
+                        // Set the old_list.head to nullptr.
                         old_list.reset();
                     }
                     assert(this->size_ == old_size);
@@ -512,7 +510,7 @@ private:
                         list_type & old_list = this->table_[i];
                         // Insert the old buckets to the new buckets in the new table.
                         this->reinsert_list(new_table, new_capacity, old_list);
-                        // Set the old_list->head to nullptr.
+                        // Set the old_list.head to nullptr.
                         old_list.reset();
                     }
                     assert(this->size_ == old_size);
@@ -697,14 +695,10 @@ public:
                     }
                     else {
                         // Push the new entry to front of list.
-                        assert(list != nullptr);
-                        entry_type * old_front = list.front();
-                        list->push_front(new_entry);
+                        assert(list.front() != nullptr);
+                        list.push_front(new_entry);
 
                         ++(this->size_);
-                        if (unlikely(old_front == nullptr)) {
-                            ++(this->used_);
-                        }
                     }
                 }
             }
@@ -744,13 +738,10 @@ public:
                     }
                     else {
                         // Push the new entry to front of list.
-                        entry_type * old_front = list.front();
+                        assert(list.front() != nullptr);
                         list.push_front(new_entry);
 
                         ++(this->size_);
-                        if (unlikely(old_front == nullptr)) {
-                            ++(this->used_);
-                        }
                     }
                 }
             }
@@ -813,8 +804,8 @@ public:
                 assert(this->size_ > 0);
 
                 list_type & list = this->table_[index];
-                assert((before != nullptr && entry != list->head()) ||
-                       (before == nullptr && entry == list->head()));
+                assert((before != nullptr && entry != list.head()) ||
+                       (before == nullptr && entry == list.head()));
                 list.erase_fast(before);
 
                 assert(this->size_ > 0);

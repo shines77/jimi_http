@@ -900,7 +900,6 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
-#if 0
 #if USE_JSTD_HASH_MAP
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
@@ -910,6 +909,17 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
 #endif // USE_JSTD_HASH_MAP
+
+#if 1
+#if USE_JSTD_HASH_MAP_EX
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
+#endif
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif // USE_JSTD_HASH_MAP_EX
 #endif
 }
 
@@ -946,7 +956,7 @@ void hashtable_insert_benchmark_impl()
 
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
-#if 0
+#if 1
             assert(algorithm.size() == 0);
             algorithm.clear();
             assert(algorithm.size() == 0);

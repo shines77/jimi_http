@@ -139,12 +139,28 @@ public:
 #endif
     }
 
+    void set_head(entry_type * entry) {
+        this->head_ = entry;
+    }
+
+    void set_size(size_type size) {
+        this->size_ = size;
+    }
+
+    void push_first(entry_type * entry) {
+        assert(entry != nullptr);
+        this->head_ = entry;
+        assert(this->size_ == 0);
+        this->size_ = 1;
+    }
+
     void push_front(entry_type * entry) {
         assert(entry != nullptr);
         if (likely(this->head_ != nullptr)) {
             entry->next = this->head_;
         }
         this->head_ = entry;
+        assert(this->size_ >= 1);
         ++(this->size_);
     }
 
@@ -473,6 +489,8 @@ private:
                             this->reinsert_list(new_table, new_capacity, old_list);
                             // Set the old_list->head to nullptr.
                             old_list->reset();
+                            // Destory the old list.
+                            delete old_list;
                         }
                     }
                     assert(this->size_ == old_size);
