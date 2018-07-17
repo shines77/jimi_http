@@ -1,4 +1,8 @@
 
+#ifdef _MSC_VER
+#include <vld.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "jimi/basic/stdint.h"
@@ -900,6 +904,7 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
+#if 1
 #if USE_JSTD_HASH_MAP
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
@@ -909,6 +914,7 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
 #endif // USE_JSTD_HASH_MAP
+#endif
 
 #if 1
 #if USE_JSTD_HASH_MAP_EX

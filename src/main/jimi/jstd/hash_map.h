@@ -54,7 +54,11 @@ struct hash_map_entry {
         : hash(0), next(nullptr),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
 
-    ~hash_map_entry() {}
+    ~hash_map_entry() {
+#ifndef NDEBUG
+        this->next = nullptr;
+#endif
+    }
 };
 
 template <typename Key, typename Value>
@@ -103,15 +107,6 @@ private:
         }
     }
 
-    inline void pop_front_fast() {
-        entry_type * entry = this->head_;
-        assert(entry != nullptr);
-        this->head_ = entry->next;
-        delete entry;
-        assert(this->size_ > 0);
-        --(this->size_);
-    }
-
 public:
     entry_type * front() const { return this->head(); }
     entry_type * back() const {
@@ -149,7 +144,19 @@ public:
 
     void push_first(entry_type * entry) {
         assert(entry != nullptr);
+        assert(this->head_ == nullptr);
         this->head_ = entry;
+        entry->next = nullptr;
+        assert(this->size_ == 0);
+        this->size_ = 1;
+    }
+
+    inline
+    void push_first_fast(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ == nullptr);
+        this->head_ = entry;
+        assert(entry->next == nullptr);
         assert(this->size_ == 0);
         this->size_ = 1;
     }
@@ -164,6 +171,16 @@ public:
         ++(this->size_);
     }
 
+    inline
+    void push_front_fast(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ != nullptr);
+        entry->next = this->head_;
+        this->head_ = entry;
+        assert(this->size_ >= 1);
+        ++(this->size_);
+    }
+
     void pop_front() {
         entry_type * entry = this->head_;
         if (likely(entry != nullptr)) {
@@ -172,6 +189,16 @@ public:
             assert(this->size_ > 0);
             --(this->size_);
         }
+    }
+
+    inline
+    void pop_front_fast() {
+        entry_type * entry = this->head_;
+        assert(entry != nullptr);
+        this->head_ = entry->next;
+        delete entry;
+        assert(this->size_ > 0);
+        --(this->size_);
     }
 
     void erase(entry_type * before) {
@@ -422,7 +449,6 @@ private:
 
         entry_type * old_entry = old_list->head();
         while (likely(old_entry != nullptr)) {
-            entry_type * next_entry;
             hash_type hash = old_entry->hash;
             size_type index = this_type::index_for(hash, new_capacity);
 
@@ -435,31 +461,45 @@ private:
                     new_table[index] = new_list;
                     ++(this->size_);
                     ++(this->used_);
+
                     // Save the value of old_entry->next.
-                    next_entry = old_entry->next;
+                    entry_type * next_entry = old_entry->next;
                     // Modify the value of old_entry->next.
                     old_entry->next = nullptr;
+
                     // Scan next entry
                     old_entry = next_entry;
                 }
                 else {
                     // Error: out of memory
+                    printf("Error: out of memory !\n");
                 }
             }
             else {
-                // Push the old entry to front of old list.
+                // Push the old entry to front of new list.
                 assert(list != nullptr);
-                entry_type * old_front = list->front();
                 // Save the value of old_entry->next.
-                next_entry = old_entry->next;
-                // list->push_front(old_entry) will modify the value of old_entry->next.
-                list->push_front(old_entry);
-                ++(this->size_);
-                if (unlikely(old_front == nullptr)) {
-                    ++(this->used_);
+                entry_type * next_entry = old_entry->next;
+
+                // Push the old entry to front of new list.
+                entry_type * head = list->head();
+                if (likely(head != nullptr)) {
+                    assert(list->head() != nullptr);
+                    list->push_front_fast(old_entry);
+                    ++(this->size_);
+
+                    // Scan next entry
+                    old_entry = next_entry;
                 }
-                // Scan next entry
-                old_entry = next_entry;
+                else {
+                    assert(list->head() == nullptr);
+                    list->push_first(old_entry);
+                    ++(this->size_);
+                    ++(this->used_);
+
+                    // Scan next entry
+                    old_entry = next_entry;
+                }
             }
         }
     }
@@ -491,6 +531,10 @@ private:
                             old_list->reset();
                             // Destory the old list.
                             delete old_list;
+#ifndef NDEBUG
+                            // Set to nullptr.
+                            this->table_[i] = nullptr;
+#endif
                         }
                     }
                     assert(this->size_ == old_size);
@@ -532,6 +576,12 @@ private:
                             this->reinsert_list(new_table, new_capacity, old_list);
                             // Set the old_list->head to nullptr.
                             old_list->reset();
+                            // Destory the old list.
+                            delete old_list;
+#ifndef NDEBUG
+                            // Set to nullptr.
+                            this->table_[i] = nullptr;
+#endif
                         }
                     }
                     assert(this->size_ == old_size);
@@ -719,7 +769,6 @@ public:
                         // Create new list and push the new entry to front of new list.
                         list_type * new_list = new list_type(new_entry);
                         if (likely(new_list != nullptr)) {
-                            list = new_list;
                             assert(this->table_[index] == nullptr);
                             this->table_[index] = new_list;
                             ++(this->size_);
@@ -727,12 +776,18 @@ public:
                         }
                     }
                     else {
-                        // Push the new entry to front of old list.
+                        // Push the new entry to front of new list.
                         assert(list != nullptr);
-                        entry_type * old_front = list->front();
-                        list->push_front(new_entry);
-                        ++(this->size_);
-                        if (unlikely(old_front == nullptr)) {
+                        entry_type * head = list->head();
+                        if (likely(head != nullptr)) {
+                            assert(list->head() != nullptr);
+                            list->push_front_fast(new_entry);
+                            ++(this->size_);
+                        }
+                        else {
+                            assert(list->head() == nullptr);
+                            list->push_first_fast(new_entry);
+                            ++(this->size_);
                             ++(this->used_);
                         }
                     }
@@ -776,12 +831,18 @@ public:
                         }
                     }
                     else {
-                        // Push the new entry to front of old list.
+                        // Push the new entry to front of new list.
                         assert(list != nullptr);
-                        entry_type * old_front = list->front();
-                        list->push_front(new_entry);
-                        ++(this->size_);
-                        if (unlikely(old_front == nullptr)) {
+                        entry_type * head = list->head();
+                        if (likely(head != nullptr)) {
+                            assert(list->head() != nullptr);
+                            list->push_front_fast(new_entry);
+                            ++(this->size_);
+                        }
+                        else {
+                            assert(list->head() == nullptr);
+                            list->push_first_fast(new_entry);
+                            ++(this->size_);
                             ++(this->used_);
                         }
                     }

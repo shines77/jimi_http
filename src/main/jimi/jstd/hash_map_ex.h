@@ -43,10 +43,10 @@ struct hash_map_ex_entry {
     hash_map_ex_entry(hash_type init_hash) : hash(init_hash), next(nullptr) {}
 
     hash_map_ex_entry(hash_type init_hash, const key_type & key,
-                   const value_type & value, this_type * next_entry = nullptr)
+                      const value_type & value, this_type * next_entry = nullptr)
         : hash(init_hash), next(next_entry), pair(key, value) {}
     hash_map_ex_entry(hash_type init_hash, key_type && key,
-                   value_type && value, this_type * next_entry = nullptr)
+                      value_type && value, this_type * next_entry = nullptr)
         : hash(init_hash), next(next_entry),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
 
@@ -56,9 +56,192 @@ struct hash_map_ex_entry {
         : hash(0), next(nullptr),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
 
-    ~hash_map_ex_entry() {}
+    ~hash_map_ex_entry() {
+#ifndef NDEBUG_
+        this->next = nullptr;
+#endif
+    }
 };
 
+#if 1
+template <typename Key, typename Value>
+class hash_map_ex_list {
+public:
+    typedef hash_map_ex_entry<Key, Value>   entry_type;
+    typedef typename entry_type::size_type  size_type;
+    typedef hash_map_ex_list<Key, Value>    this_type;
+
+private:
+    entry_type * head_;
+
+public:
+    hash_map_ex_list() : head_(nullptr) {}
+    hash_map_ex_list(entry_type * entry) : head_(entry) {}
+    hash_map_ex_list(const this_type & src) : head_(src.head_) {}
+    hash_map_ex_list(this_type && src) {
+        this->head_ = src.head_;
+        src.head_ = nullptr;
+    }
+    ~hash_map_ex_list() {
+        this->destroy();
+    }
+
+    entry_type * head() const { return this->head_; }
+
+private:
+    void destroy() {
+        entry_type * head = this->head_;
+        if (likely(head != nullptr)) {
+            entry_type * entry = head->next;
+            delete head;
+            while (likely(entry != nullptr)) {
+                entry_type * next = entry->next;
+                delete entry;
+                entry = next;
+            }
+            this->head_ = nullptr;
+        }
+    }
+
+public:
+    entry_type * front() const { return this->head(); }
+    entry_type * back() const {
+        entry_type * entry = this->head_;
+        while (likely(entry != nullptr)) {
+            if (likely(entry->next != nullptr))
+                entry = entry->next;
+            else
+                return entry;
+        }
+        return nullptr;
+    }
+
+    void reset() {
+        this->head_ = nullptr;
+    }
+
+    void clear() {
+        this->destroy();
+    }
+
+    void set_head(entry_type * entry) {
+        this->head_ = entry;
+    }
+
+    void push_first(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ == nullptr);
+        this->head_ = entry;
+        entry->next = nullptr;
+    }
+
+    inline
+    void push_first_fast(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ == nullptr);
+        this->head_ = entry;
+        assert(entry->next == nullptr);
+    }
+
+    void push_front(entry_type * entry) {
+        assert(entry != nullptr);
+        if (likely(this->head_ != nullptr)) {
+            entry->next = this->head_;
+        }
+        this->head_ = entry;
+    }
+
+    inline
+    void push_front_fast(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ != nullptr);
+        entry->next = this->head_;
+        this->head_ = entry;
+    }
+
+    void pop_front() {
+        entry_type * entry = this->head_;
+        if (likely(entry != nullptr)) {
+            this->head_ = entry->next;
+            delete entry;
+        }
+    }
+
+    inline
+    void pop_front_fast() {
+        entry_type * entry = this->head_;
+        assert(entry != nullptr);
+        this->head_ = entry->next;
+        delete entry;
+    }
+
+    void erase(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * entry = this->head_;
+            while (likely(entry != nullptr)) {
+                if (likely(entry != before)) {
+                    // It's not before
+                    if (likely(entry->next != nullptr))
+                        entry = entry->next;
+                    else
+                        return;
+                }
+                else {
+                    // Current entry is before
+                    if (likely(entry->next != nullptr)) {
+                        entry_type * target = entry->next;
+                        entry->next = target->next;
+                        delete target;
+                    }
+                    else {
+                        // Error: no entry after [before]
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            pop_front();
+        }
+    }
+
+    void erase_fast(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * entry = this->head_;
+            while (likely(entry != nullptr)) {
+                if (likely(entry != before)) {
+                    // It's not before
+                    if (likely(entry->next != nullptr))
+                        entry = entry->next;
+                    else
+                        return;
+                }
+                else {
+                    // Current entry is before
+                    if (likely(entry->next != nullptr)) {
+                        entry_type * target = entry->next;
+                        entry->next = target->next;
+                        delete target;
+                    }
+                    else {
+                        // Error: no entry after [before]
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            pop_front_fast();
+        }
+    }
+
+    void swap(const this_type & src) {
+        entry_type * head_save = src.head_;
+        src.head_ = this->head_;
+        this->head_ = head_save;
+    }
+};
+#else
 template <typename Key, typename Value>
 class hash_map_ex_list {
 public:
@@ -105,15 +288,6 @@ private:
         }
     }
 
-    inline void pop_front_fast() {
-        entry_type * entry = this->head_;
-        assert(entry != nullptr);
-        this->head_ = entry->next;
-        delete entry;
-        assert(this->size_ > 0);
-        --(this->size_);
-    }
-
 public:
     entry_type * front() const { return this->head(); }
     entry_type * back() const {
@@ -151,7 +325,19 @@ public:
 
     void push_first(entry_type * entry) {
         assert(entry != nullptr);
+        assert(this->head_ == nullptr);
         this->head_ = entry;
+        entry->next = nullptr;
+        assert(this->size_ == 0);
+        this->size_ = 1;
+    }
+
+    inline
+    void push_first_fast(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ == nullptr);
+        this->head_ = entry;
+        assert(entry->next == nullptr);
         assert(this->size_ == 0);
         this->size_ = 1;
     }
@@ -166,6 +352,16 @@ public:
         ++(this->size_);
     }
 
+    inline
+    void push_front_fast(entry_type * entry) {
+        assert(entry != nullptr);
+        assert(this->head_ != nullptr);
+        entry->next = this->head_;
+        this->head_ = entry;
+        assert(this->size_ >= 1);
+        ++(this->size_);
+    }
+
     void pop_front() {
         entry_type * entry = this->head_;
         if (likely(entry != nullptr)) {
@@ -174,6 +370,16 @@ public:
             assert(this->size_ > 0);
             --(this->size_);
         }
+    }
+
+    inline
+    void pop_front_fast() {
+        entry_type * entry = this->head_;
+        assert(entry != nullptr);
+        this->head_ = entry->next;
+        delete entry;
+        assert(this->size_ > 0);
+        --(this->size_);
     }
 
     void erase(entry_type * before) {
@@ -247,6 +453,7 @@ public:
         this->size_ = size_save;
     }
 };
+#endif
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 class basic_hash_map_ex {
@@ -421,28 +628,25 @@ private:
             hash_type hash = old_entry->hash;
             size_type index = this_type::index_for(hash, new_capacity);
 
-            list_type & list = new_table[index];
-            if (likely(list.head() == nullptr)) {
-                // Push the old entry to front of list.
-                list.push_first(old_entry);
+            // Save the value of old_entry->next.
+            entry_type * next_entry = old_entry->next;
 
+            // Push the old entry to front of new list.
+            list_type & new_list = new_table[index];
+            if (likely(new_list.head() != nullptr)) {
+                assert(new_list.head() != nullptr);
+                new_list.push_front_fast(old_entry);
                 ++(this->size_);
-                ++(this->used_);
 
-                // Save the value of old_entry->next.
-                entry_type * next_entry = old_entry->next;
-                // Modify the value of old_entry->next.
-                old_entry->next = nullptr;
                 // Scan next entry
                 old_entry = next_entry;
             }
             else {
-                assert(list.front() != nullptr);
-                // Save the value of old_entry->next.
-                entry_type * next_entry = old_entry->next;
-                // Push the old entry to front of old list.
-                list.push_front(old_entry);
+                assert(new_list.head() == nullptr);
+                new_list.push_first(old_entry);
                 ++(this->size_);
+                ++(this->used_);
+
                 // Scan next entry
                 old_entry = next_entry;
             }
@@ -686,19 +890,20 @@ public:
                 entry_type * new_entry = new entry_type(hash, key, value);
                 if (likely(new_entry != nullptr)) {
                     list_type & list = this->table_[index];
-                    if (likely(list.head() == nullptr)) {
+                    if (likely(list.head() != nullptr)) {
                         // Push the new entry to front of list.
+                        assert(list.head() != nullptr);
+                        list.push_front_fast(new_entry);
+
+                        ++(this->size_);
+                    }
+                    else {
+                        // Push the new entry to first of list.
+                        assert(list.head() == nullptr);
                         list.push_first(new_entry);
 
                         ++(this->size_);
                         ++(this->used_);
-                    }
-                    else {
-                        // Push the new entry to front of list.
-                        assert(list.front() != nullptr);
-                        list.push_front(new_entry);
-
-                        ++(this->size_);
                     }
                 }
             }
@@ -729,19 +934,20 @@ public:
                                                         std::forward<value_type>(value));
                 if (likely(new_entry != nullptr)) {
                     list_type & list = this->table_[index];
-                    if (likely(list.head() == nullptr)) {
+                    if (likely(list.head() != nullptr)) {
                         // Push the new entry to front of list.
+                        assert(list.head() != nullptr);
+                        list.push_front_fast(new_entry);
+
+                        ++(this->size_);
+                    }
+                    else {
+                        // Push the new entry to first of list.
+                        assert(list.head() == nullptr);
                         list.push_first(new_entry);
 
                         ++(this->size_);
                         ++(this->used_);
-                    }
-                    else {
-                        // Push the new entry to front of list.
-                        assert(list.front() != nullptr);
-                        list.push_front(new_entry);
-
-                        ++(this->size_);
                     }
                 }
             }
