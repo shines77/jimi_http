@@ -792,7 +792,7 @@ void hashtable_find_benchmark()
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
 
-#if 0
+#if TEST_JSTD_HASH_MAP
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
 #if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
@@ -800,7 +800,7 @@ void hashtable_find_benchmark()
 #endif
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif
+#endif // TEST_JSTD_HASH_MAP
 }
 
 template <typename AlgorithmTy>
@@ -890,6 +890,16 @@ void hashtable_rehash_benchmark()
 #endif
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+
+#if TEST_JSTD_HASH_MAP
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#endif
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif // TEST_JSTD_HASH_MAP
 }
 
 template <typename AlgorithmTy>
@@ -925,7 +935,7 @@ void hashtable_insert_benchmark_impl()
 
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
-#if 0
+#if 1
             assert(algorithm.size() == 0);
             algorithm.clear();
             assert(algorithm.size() == 0);
@@ -968,6 +978,18 @@ void hashtable_insert_benchmark()
 #endif
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+
+#if 0
+#if TEST_JSTD_HASH_MAP
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif // TEST_JSTD_HASH_MAP
+#endif
 }
 
 void hashtable_benchmark()

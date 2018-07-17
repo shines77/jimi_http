@@ -441,7 +441,7 @@ public:
             iterator iter = this->find_internal(key, hash);
             if (likely(iter == this->end())) {
                 // Insert the new key.
-                if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
+                if (likely(this->size_ >= (this->buckets_ * 3 / 4))) {
                     this->resize_internal(this->buckets_ * 2);
                 }
 
@@ -478,7 +478,7 @@ public:
             iterator iter = this->find_internal(std::forward<key_type>(key), hash);
             if (likely(iter == this->end())) {
                 // Insert the new key.
-                if (unlikely(this->size_ >= (this->buckets_ * 3 / 4))) {
+                if (likely(this->size_ >= (this->buckets_ * 3 / 4))) {
                     this->resize_internal(this->buckets_ * 2);
                 }
 
