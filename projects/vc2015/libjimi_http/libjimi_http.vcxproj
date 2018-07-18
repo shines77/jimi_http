@@ -41,6 +41,7 @@
     <ClInclude Include="..\..\..\src\main\jimi\http\Version.h" />
     <ClInclude Include="..\..\..\src\main\jimi\http_all.h" />
     <ClInclude Include="..\..\..\src\main\jimi\InputStream.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\char_traits.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_helper.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_map.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_map_ex.h" />

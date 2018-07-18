@@ -179,6 +179,11 @@ private:
     }
 
     static inline
+    hash_type hash(const char * key, size_type length) {
+        return detail::hash_helper<HashFunc>::getHash(key, length);
+    }
+
+    static inline
     size_type index_for(hash_type hash, size_type mask) {
         size_type index = ((size_type)hash & mask);
         return index;
@@ -310,7 +315,7 @@ private:
     }
 
     iterator find_internal(const key_type & key, hash_type & hash) {
-        hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
+        hash = this_type::hash(key.c_str(), key.size());
         size_type index = this_type::index_for(hash, this->mask_);
 
         assert(this->table_ != nullptr);
@@ -384,7 +389,7 @@ public:
     }
 
     iterator find(const key_type & key) {
-        hash_type hash = hash_helper<HashFunc>::getHash(key.c_str(), key.size());
+        hash_type hash = this_type::hash(key.c_str(), key.size());
         size_type index = this_type::index_for(hash, this->mask_);
 
         if (likely(this->table_ != nullptr)) {

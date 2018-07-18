@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "jimi/basic/stddef.h"
 #include "jimi/basic/stdint.h"
 #include "jimi/basic/stdsize.h"
 
@@ -12,6 +13,7 @@
 #include <string>
 
 #include "jimi/Slice.h"
+#include "jimi/jstd/char_traits.h"
 
 //
 // See: https://sourceforge.net/p/predef/wiki/Architectures/
@@ -106,40 +108,50 @@ static bool kLittleEndian = true;
 
 namespace hash {
 
-static inline uint32_t DecodeFixed32(const char* ptr) {
+template <typename CharTy>
+static inline
+uint32_t DecodeFixed32(const CharTy * ptr) {
     if (port::kLittleEndian) {
         // Load the raw bytes
         uint32_t result;
-        ::memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
+        // gcc optimizes this to a plain load
+        memcpy((void *)&result, (const void *)ptr, sizeof(result));
         return result;
     }
     else {
         return ((static_cast<uint32_t>(static_cast<unsigned char>(ptr[0])))
-            | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[1])) << 8)
-            | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[2])) << 16)
-            | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[3])) << 24));
+              | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[1])) << 8)
+              | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[2])) << 16)
+              | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[3])) << 24));
     }
 }
 
-static inline uint64_t DecodeFixed64(const char* ptr) {
+template <typename CharTy>
+static inline
+uint64_t DecodeFixed64(const CharTy * ptr) {
     if (port::kLittleEndian) {
         // Load the raw bytes
         uint64_t result;
-        ::memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
+        // gcc optimizes this to a plain load
+        memcpy((void *)&result, (const void *)ptr, sizeof(result));
         return result;
     }
     else {
         uint64_t lo = DecodeFixed32(ptr);
         uint64_t hi = DecodeFixed32(ptr + 4);
-        return (hi << 32) | lo;
+        return (hi << 32) | (lo & 0xFFFFFFFFFULL);
     }
 }
 
-static uint32_t Hash(const char * data, size_t n, uint32_t seed) {
+template <typename CharTy>
+static uint32_t Hash(const CharTy * data, size_t n, uint32_t seed) {
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+    typedef typename jstd::schar_traits<CharTy>::type SCharTy;
+
     // Similar to murmur hash
     static const uint32_t m = 0xc6a4a793;
     static const uint32_t r = 24;
-    const char * limit = data + n;
+    const CharTy * limit = data + n;
     uint32_t h = static_cast<uint32_t>(seed ^ (n * m));
 
     // Pick up four bytes at a time
@@ -166,13 +178,13 @@ static uint32_t Hash(const char * data, size_t n, uint32_t seed) {
         // signed char 11111010 -> int 11111111111111111111111111111010
         // unsigned char 11111010 -> int 00000000000000000000000011111010
     case 3:
-        h += static_cast<uint32_t>(static_cast<signed char>(data[2]) << 16);
+        h += static_cast<uint32_t>(static_cast<SCharTy>(data[2]) << 16);
         // fall through
     case 2:
-        h += static_cast<uint32_t>(static_cast<signed char>(data[1]) << 8);
+        h += static_cast<uint32_t>(static_cast<SCharTy>(data[1]) << 8);
         // fall through
     case 1:
-        h += static_cast<uint32_t>(static_cast<signed char>(data[0]));
+        h += static_cast<uint32_t>(static_cast<SCharTy>(data[0]));
         h *= m;
         h ^= (h >> r);
         break;
@@ -185,8 +197,8 @@ static uint32_t Hash(const char * data, size_t n, uint32_t seed) {
 
 namespace TiStore {
 
-static const std::size_t   kDefaultHashSeed   = (std::size_t)0x43D1F9CBBC9F1D34ULL;
 static const std::uint32_t kDefaultHashSeed32 = 0xBC9F1D34UL;
+static const std::uint64_t kDefaultHashSeed64 = (std::uint64_t)0x43D1F9CBBC9F1D34ULL;
 
 static const std::size_t   kHashInitValue_M   = (std::size_t)0x397A4A6CC6A4A793ULL;
 
@@ -195,6 +207,7 @@ static const std::size_t   kHashInitValue_M   = (std::size_t)0x397A4A6CC6A4A793U
     About hash algorithm
 
 See:
+
     BKDRHash, APHash, JSHash, RSHash, SDBMHash, PJWHash, ELFHash
     http://blog.csdn.net/icefireelf/article/details/5796529
 
@@ -214,14 +227,18 @@ See:
 namespace hash {
 
 // This string hash function is from OpenSSL.
-static std::uint32_t OpenSSL_Hash(const char * key, std::size_t len)
+template <typename CharTy>
+static std::uint32_t OpenSSL_Hash(const CharTy * key, std::size_t len)
 {
-    register const unsigned char * src = (const unsigned char *)key;
-    register const unsigned char * end = src + len;
-    std::uint32_t hash = 0;
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
 
-    register const unsigned char * limit = src + (len & std::size_t(~(std::size_t)1U));
-    register std::uint32_t i = 0;
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
+    
+    const UCharTy * limit = src + (len & std::size_t(~(std::size_t)1U));
+
+    std::uint32_t hash = 0;
+    std::uint32_t i = 0;
     while (src < limit) {
         hash ^= ((std::uint32_t)(*(unsigned short *)src) << (i & 0x0FU));
         i++;
@@ -241,21 +258,25 @@ static std::uint32_t OpenSSL_Hash(const char * key, std::size_t len)
 //
 //   hash = hash * seed^4 + a * seed^3 + b * seed^2 + c * seed + d;
 //
-static std::uint32_t BKDRHash(const char * key, std::size_t len)
+template <typename CharTy>
+static std::uint32_t BKDRHash(const CharTy * key, std::size_t len)
 {
     static const std::uint32_t seed = 131U;   // 31, 33, 131, 1313, 13131, 131313, etc ...
     static const std::uint32_t seed_2 = seed * seed;
     static const std::uint32_t seed_3 = seed_2 * seed;
     static const std::uint32_t seed_4 = seed_2 * seed_2;
 
-    register const unsigned char * src = (const unsigned char *)key;
-    register const unsigned char * end = src + len;
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
     std::uint32_t hash = 0;
 
 #if 1
-    register const unsigned char * limit = src + (len & std::size_t(~(std::size_t)3U));
+    const UCharTy * limit = src + (len & std::size_t(~(std::size_t)3U));
     while (src != limit) {
-        hash = hash * seed_4 + src[0] * seed_3 + src[1] * seed_2 + src[2] * seed + src[3];
+        hash = hash * seed_4 + (std::uint32_t)src[0] * seed_3 + (std::uint32_t)src[1] * seed_2
+                + (std::uint32_t)src[2] * seed + (std::uint32_t)src[3];
         src += 4;
     }
 #endif
@@ -272,21 +293,25 @@ static std::uint32_t BKDRHash(const char * key, std::size_t len)
 //
 //   hash = hash * seed^4 + a * seed^3 + b * seed^2 + c * seed + d;
 //
-static std::uint32_t BKDRHash_31(const char * key, std::size_t len)
+template <typename CharTy>
+static std::uint32_t BKDRHash_31(const CharTy * key, std::size_t len)
 {
     static const std::uint32_t seed = 31U;   // 31, 33, 131, 1313, 13131, 131313, etc ...
     static const std::uint32_t seed_2 = seed * seed;
     static const std::uint32_t seed_3 = seed_2 * seed;
     static const std::uint32_t seed_4 = seed_2 * seed_2;
 
-    register const unsigned char * src = (const unsigned char *)key;
-    register const unsigned char * end = src + len;
-    register std::uint32_t hash = 0;
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
+    std::uint32_t hash = 0;
 
 #if 1
-    register const unsigned char * limit = src + (len & std::size_t(~(std::size_t)3U));
+    const UCharTy * limit = src + (len & std::size_t(~(std::size_t)3U));
     while (src < limit) {
-        hash = hash * seed_4 + src[0] * seed_3 + src[1] * seed_2 + src[2] * seed + src[3];
+        hash = hash * seed_4 + (std::uint32_t)src[0] * seed_3 + (std::uint32_t)src[1] * seed_2
+                + (std::uint32_t)src[2] * seed + (std::uint32_t)src[3];
         src += 4;
     }
 #endif
@@ -303,13 +328,16 @@ static std::uint32_t BKDRHash_31(const char * key, std::size_t len)
 //
 //   hash = hash * seed^4 + a * seed^3 + b * seed^2 + c * seed + d;
 //
-static std::uint32_t BKDRHash_31_std(const char * key, std::size_t len)
+template <typename CharTy>
+static std::uint32_t BKDRHash_31_std(const CharTy * key, std::size_t len)
 {
     static const std::uint32_t seed = 31U;   // 31, 33, 131, 1313, 13131, 131313, etc ...
 
-    register const unsigned char * src = (const unsigned char *)key;
-    register const unsigned char * end = src + len;
-    register std::uint32_t hash = 0;
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
+    std::uint32_t hash = 0;
 
     while (src != end) {
         hash = hash * seed + (std::uint32_t)(*src);
@@ -322,7 +350,9 @@ static std::uint32_t BKDRHash_31_std(const char * key, std::size_t len)
 //
 // Times31, BKDR Hash Function (seed = 31) -- Often use in Java string hash.
 //
-static inline std::uint32_t Times31(const char * key, std::size_t len)
+template <typename CharTy>
+static inline
+std::uint32_t Times31(const CharTy * key, std::size_t len)
 {
     return BKDRHash_31(key, len);
 }
@@ -330,7 +360,9 @@ static inline std::uint32_t Times31(const char * key, std::size_t len)
 //
 // Times31, BKDR Hash Function (seed = 31) -- Often use in Java string hash.
 //
-static inline std::uint32_t Times31_std(const char * key, std::size_t len)
+template <typename CharTy>
+static inline
+std::uint32_t Times31_std(const CharTy * key, std::size_t len)
 {
     return BKDRHash_31_std(key, len);
 }
@@ -338,15 +370,18 @@ static inline std::uint32_t Times31_std(const char * key, std::size_t len)
 //
 // APHash Hash Function
 //
-static std::uint32_t APHash(const char * key, std::size_t len)
+template <typename CharTy>
+static std::uint32_t APHash(const CharTy * key, std::size_t len)
 {
-    const unsigned char * src = (const unsigned char *)key;
-    const unsigned char * end = src + len;
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
 
     std::uint32_t hash = 0;
 
 #if 1
-    const unsigned char * limit = src + (len & std::size_t(~(std::size_t)3U));
+    const UCharTy * limit = src + (len & std::size_t(~(std::size_t)3U));
     while (src != limit) {
         //if (*src == '\0')
         //    break;
@@ -359,7 +394,7 @@ static std::uint32_t APHash(const char * key, std::size_t len)
 #endif
     std::uint32_t i = 0;
     while (src != end) {
-        //if (*src == '\0')
+        //if (*src == CharTy('\0'))
         //    break;
         if ((i & 1) == 0)
             hash ^=   ((hash <<  7U) ^ ((std::uint32_t)(*src)) ^ (hash >> 3U));
@@ -374,15 +409,19 @@ static std::uint32_t APHash(const char * key, std::size_t len)
 //
 // DJB Hash Function
 //
-static std::uint32_t DJBHash(const char * key, std::size_t len)
+template <typename CharTy>
+static std::uint32_t DJBHash(const CharTy * key, std::size_t len)
 {
     std::uint32_t hash = 5381U;
-    const unsigned char * src = (const unsigned char *)key;
-    const unsigned char * end = src + len;
+
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
 
     while (src != end) {
-        if (*src == '\0')
-            break;
+        //if (*src == UCharTy('\0'))
+        //    break;
         hash += (hash << 5U) + (std::uint32_t)(*src);
         src++;
     }
@@ -656,7 +695,7 @@ public:
 #if 1
         if (M != 0) {
             value = ((*(hash_type *)(data - M) & (mask >> (M * 8))) << (M * 8))
-                   | (*(hash_type *)(data + (N - M)) & (mask >> (((N - M) % N) * 8 )));
+                   | (*(hash_type *)(data + (N - M)) & (mask >> (((N - M) % N) * 8)));
         }
         else {
             value = *(hash_type *)(data);
@@ -679,7 +718,7 @@ public:
         return value;
     }
 
-    hash_type primaryHash_align(const char * key, std::size_t len, std::size_t seed) const {
+    hash_type primaryHash_aligned(const char * key, std::size_t len, std::size_t seed) const {
         // Similar to murmur hash
         static const std::size_t _m = kHashInitValue_M;
         static const std::uint32_t half_bits = sizeof(hash_type) * 8 / 2;
@@ -716,7 +755,7 @@ public:
     }
 
     template <std::uint32_t MissAlign>
-    hash_type primaryHash_unalign(const char * key, std::size_t len, std::size_t seed) const {
+    hash_type primaryHash_unaligned(const char * key, std::size_t len, std::size_t seed) const {
         // Similar to murmur hash
         static const std::size_t _m = kHashInitValue_M;
         static const std::uint32_t half_bits = sizeof(hash_type) * 8 / 2;
@@ -762,7 +801,7 @@ public:
         //return hash::Times31(key, len);
 
 #if defined(_IS_X86_64_) || defined(_IS_X86_32_)
-        return primaryHash_align(key, len, seed);
+        return primaryHash_aligned(key, len, seed);
 #else
         std::uint32_t missalign =
             static_cast<std::uint32_t>(reinterpret_cast<std::size_t>(key)) & align_mask;
@@ -810,34 +849,34 @@ public:
         static const std::uint32_t align_mask = sizeof(hash_type) - 1;
 
 #if defined(_IS_X86_64_) || defined(_IS_X86_32_)
-        return primaryHash_align(key, len, seed);
+        return primaryHash_aligned(key, len, seed);
 #else
         std::uint32_t missalign = static_cast<std::uint32_t>(reinterpret_cast<std::size_t>(key)) & align_mask;
         if (missalign == 0) {
-            return primaryHash_align(key, len, seed);
+            return primaryHash_aligned(key, len, seed);
         }
         else if (missalign == 1) {
-            return primaryHash_unalign<1>(key, len, seed);
+            return primaryHash_unaligned<1>(key, len, seed);
         }
         else if (missalign == 2) {
-            return primaryHash_unalign<2>(key, len, seed);
+            return primaryHash_unaligned<2>(key, len, seed);
         }
         else if (missalign == 3) {
-            return primaryHash_unalign<3>(key, len, seed);
+            return primaryHash_unaligned<3>(key, len, seed);
         }
         else {
             if (N > 4) {
                 if (missalign == 4) {
-                    return primaryHash_unalign<4>(key, len, seed);
+                    return primaryHash_unaligned<4>(key, len, seed);
                 }
                 else if (missalign == 5) {
-                    return primaryHash_unalign<5>(key, len, seed);
+                    return primaryHash_unaligned<5>(key, len, seed);
                 }
                 else if (missalign == 6) {
-                    return primaryHash_unalign<6>(key, len, seed);
+                    return primaryHash_unaligned<6>(key, len, seed);
                 }
                 else if (missalign == 7) {
-                    return primaryHash_unalign<7>(key, len, seed);
+                    return primaryHash_unaligned<7>(key, len, seed);
                 }
             }
             else {

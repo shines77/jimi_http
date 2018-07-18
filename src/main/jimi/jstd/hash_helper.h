@@ -22,6 +22,8 @@ enum hash_mode_t {
     Hash_Time31Std
 };
 
+namespace detail {
+
 template <std::size_t HashFunc = Hash_CRC32C>
 struct hash_helper {
     static uint32_t getHash(const char * data, size_t length) {
@@ -58,6 +60,8 @@ struct hash_helper<Hash_Time31Std> {
         return TiStore::hash::Times31_std(data, length);
     }
 };
+
+} // namespace detail
 
 } // namespace jstd
 
