@@ -145,7 +145,6 @@ uint64_t DecodeFixed64(const CharTy * ptr) {
 
 template <typename CharTy>
 static uint32_t Hash(const CharTy * data, size_t n, uint32_t seed) {
-    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
     typedef typename jstd::schar_traits<CharTy>::type SCharTy;
 
     // Similar to murmur hash
