@@ -931,13 +931,13 @@ public:
         switch (HashFunc) {
         case Hash_CRC32C:
             return "jstd::hash_map<std::string, std::string>";
-        case Hash_SHA1_MSG2:
-            return "jstd::hash_map_v1<std::string, std::string>";
-        case Hash_SHA1:
-            return "jstd::hash_map_v2<std::string, std::string>";
         case Hash_Time31:
-            return "jstd::hash_map_v3<std::string, std::string>";
+            return "jstd::hash_map_v1<std::string, std::string>";
         case Hash_Time31Std:
+            return "jstd::hash_map_v2<std::string, std::string>";
+        case Hash_SHA1_MSG2:
+            return "jstd::hash_map_v3<std::string, std::string>";
+        case Hash_SHA1:
             return "jstd::hash_map_v4<std::string, std::string>";
         default:
             return "Unknown class name";
