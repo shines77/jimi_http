@@ -788,109 +788,36 @@ void hashtable_find_benchmark()
     hashtable_find_benchmark_impl<test::std_unordered_map>();
 
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
 
 #if USE_JSTD_HASH_MAP
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP
 
 #if USE_JSTD_HASH_MAP_EX
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP_EX
 }
 
 template <typename AlgorithmTy>
 void hashtable_rehash_benchmark_impl()
-{
-    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-#ifndef NDEBUG
-    static const size_t kRepeatTimes = 2;
-#else
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
-#endif
-
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
-    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
-        char buf[16];
-#ifdef _MSC_VER
-        _itoa_s((int)i, buf, 10);
-#else
-        sprintf(buf, "%d", (int)i);
-#endif
-        indexs[i] = buf;
-    }
-
-    {
-        size_t checksum = 0;
-        size_t buckets;
-
-        StopWatch sw;
-
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            AlgorithmTy algorithm;
-            for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-                algorithm.insert(crc32_str[i], indexs[i]);
-            }
-
-            checksum += algorithm.size();
-            checksum += algorithm.bucket_count();
-
-            buckets = 128;
-            algorithm.shrink_to(buckets - 1);
-#ifndef NDEBUG
-            if (algorithm.bucket_count() != buckets) {
-                size_t bucket_count = algorithm.bucket_count();
-                printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
-                       algorithm.size(), buckets, bucket_count);
-            }
-#endif
-            for (size_t j = 0; j < 7; ++j) {
-                buckets *= 2;
-                algorithm.rehash(buckets - 1);
-#ifndef NDEBUG
-                if (algorithm.bucket_count() != buckets) {
-                    size_t bucket_count = algorithm.bucket_count();
-                    printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
-                           (uint32_t)j, algorithm.size(), buckets, bucket_count);
-                }
-#endif
-                checksum += algorithm.bucket_count();
-            }
-        }
-        sw.stop();
-
-        AlgorithmTy algorithm;
-        printf("%s\n\n", algorithm.name());
-        printf("checksum = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", checksum, sw.getMillisec());
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-        printf("\n");
-    }
-}
-
-template <typename AlgorithmTy>
-void hashtable_rehash2_benchmark_impl()
 {
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
 #ifndef NDEBUG
@@ -963,6 +890,79 @@ void hashtable_rehash2_benchmark_impl()
     }
 }
 
+template <typename AlgorithmTy>
+void hashtable_rehash2_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 2;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
+#endif
+
+    std::string crc32_str[kHeaderFieldSize];
+    std::string indexs[kHeaderFieldSize];
+    StringRef crc32_data[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        crc32_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        indexs[i] = buf;
+    }
+
+    {
+        size_t checksum = 0;
+        size_t buckets;
+
+        StopWatch sw;
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            AlgorithmTy algorithm;
+            for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+                algorithm.insert(crc32_str[i], indexs[i]);
+            }
+
+            checksum += algorithm.size();
+            checksum += algorithm.bucket_count();
+
+            buckets = 128;
+            algorithm.shrink_to(buckets - 1);
+#ifndef NDEBUG
+            if (algorithm.bucket_count() != buckets) {
+                size_t bucket_count = algorithm.bucket_count();
+                printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                       algorithm.size(), buckets, bucket_count);
+            }
+#endif
+            for (size_t j = 0; j < 7; ++j) {
+                buckets *= 2;
+                algorithm.rehash(buckets - 1);
+#ifndef NDEBUG
+                if (algorithm.bucket_count() != buckets) {
+                    size_t bucket_count = algorithm.bucket_count();
+                    printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                           (uint32_t)j, algorithm.size(), buckets, bucket_count);
+                }
+#endif
+                checksum += algorithm.bucket_count();
+            }
+        }
+        sw.stop();
+
+        AlgorithmTy algorithm;
+        printf("%s\n\n", algorithm.name());
+        printf("checksum = %" PRIuPTR ", elapsed time: %0.3f ms\n\n", checksum, sw.getMillisec());
+        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+        printf("\n");
+    }
+}
+
 void hashtable_rehash_benchmark()
 {
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
@@ -973,33 +973,33 @@ void hashtable_rehash_benchmark()
     hashtable_rehash_benchmark_impl<test::std_unordered_map>();
 
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
 
 #if 1
 #if USE_JSTD_HASH_MAP
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP
 #endif
 
 #if USE_JSTD_HASH_MAP_EX
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP_EX
 }
 
@@ -1013,33 +1013,33 @@ void hashtable_rehash2_benchmark()
     hashtable_rehash2_benchmark_impl<test::std_unordered_map>();
 
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
 
 #if 1
 #if USE_JSTD_HASH_MAP
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP
 #endif
 
 #if USE_JSTD_HASH_MAP_EX
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP_EX
 }
 
@@ -1113,39 +1113,41 @@ void hashtable_insert_benchmark()
     hashtable_insert_benchmark_impl<test::std_unordered_map>();
 
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
 
 #if USE_JSTD_HASH_MAP
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP
 
 #if USE_JSTD_HASH_MAP_EX
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#endif
+#if USE_SHA1_HASH
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
 #endif // USE_JSTD_HASH_MAP_EX
 }
 
 void hashtable_benchmark()
 {
     hashtable_find_benchmark();
+
     hashtable_rehash_benchmark();
     hashtable_rehash2_benchmark();
+
     hashtable_insert_benchmark();
 }
 
@@ -1869,6 +1871,7 @@ int main(int argn, char * argv[])
 
     crc32c_debug_test();
     crc32c_benchmark();
+
     hashtable_benchmark();
 
     //find_power_2_near_prime();

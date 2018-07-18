@@ -594,21 +594,21 @@ public:
 template <typename Key, typename Value>
 using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
 
+template <typename Key, typename Value>
+using hash_table_v1 = basic_hash_table<Key, Value, Hash_Time31>;
+
+template <typename Key, typename Value>
+using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31Std>;
+
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_table_v1 = basic_hash_table<Key, Value, Hash_SHA1_MSG2>;
+using hash_table_v3 = basic_hash_table<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_table_v2 = basic_hash_table<Key, Value, Hash_SHA1>;
+using hash_table_v4 = basic_hash_table<Key, Value, Hash_SHA1>;
 #endif
-
-template <typename Key, typename Value>
-using hash_table_v3 = basic_hash_table<Key, Value, Hash_Time31>;
-
-template <typename Key, typename Value>
-using hash_table_v4 = basic_hash_table<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 

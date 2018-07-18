@@ -89,6 +89,14 @@ public:
     entry_type * head() const { return this->head_; }
     size_type size() const { return this->size_; }
 
+    void set_head(entry_type * entry) {
+        this->head_ = entry;
+    }
+
+    void set_size(size_type size) {
+        this->size_ = size;
+    }
+
 private:
     void destroy() {
         entry_type * head = this->head_;
@@ -130,14 +138,6 @@ public:
     void clear() {
         this->destroy();
         this->size_ = 0;
-    }
-
-    void set_head(entry_type * entry) {
-        this->head_ = entry;
-    }
-
-    void set_size(size_type size) {
-        this->size_ = size;
     }
 
     void push_first(entry_type * entry) {
@@ -472,7 +472,7 @@ private:
                 }
                 else {
                     // Error: out of memory
-                    printf("Error: out of memory !\n");
+                    //printf("Error: out of memory !\n");
                 }
             }
             else {
@@ -514,8 +514,8 @@ private:
                 // Reset the new table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
 
+                // Recalculate the bucket of all keys.
                 if (likely(this->table_ != nullptr)) {
-                    // Recalculate all hash values.
                     size_type old_used = this->used_;
                     size_type old_size = this->size_;
 
@@ -561,8 +561,8 @@ private:
                 // Reset the new table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
 
+                // Recalculate the bucket of all keys.
                 if (likely(this->table_ != nullptr)) {
-                    // Recalculate all hash values.
                     size_type old_used = this->used_;
                     size_type old_size = this->size_;
 
@@ -609,7 +609,7 @@ private:
         index = this_type::index_for(hash, this->capacity_);
 
         assert(this->table_ != nullptr);
-        list_type * list = (list_type *)this->table_[index];
+        list_type * list = this->table_[index];
         if (likely(list != nullptr)) {
             entry_type * entry = list->head();
             while (likely(entry != nullptr)) {
@@ -642,7 +642,7 @@ private:
         index = this_type::index_for(hash, this->capacity_);
 
         assert(this->table_ != nullptr);
-        list_type * list = (list_type *)this->table_[index];
+        list_type * list = this->table_[index];
         if (likely(list != nullptr)) {
             entry_type * before = nullptr;
             entry_type * entry = list->head();
@@ -717,7 +717,7 @@ public:
         size_type index = this_type::index_for(hash, this->capacity_);
 
         if (likely(this->table_ != nullptr)) {
-            list_type * list = (list_type *)this->table_[index];
+            list_type * list = this->table_[index];
             if (likely(list != nullptr)) {
                 entry_type * entry = list->head();
                 while (likely(entry != nullptr)) {
@@ -771,6 +771,9 @@ public:
                             this->table_[index] = new_list;
                             ++(this->size_);
                             ++(this->used_);
+                        }
+                        else {
+                            // Error: out of memory
                         }
                     }
                     else {
@@ -826,6 +829,9 @@ public:
                             this->table_[index] = new_list;
                             ++(this->size_);
                             ++(this->used_);
+                        }
+                        else {
+                            // Error: out of memory
                         }
                     }
                     else {
@@ -945,21 +951,21 @@ const float basic_hash_map<Key, Value, HashFunc>::kDefaultLoadFactor = 0.75f;
 template <typename Key, typename Value>
 using hash_map = basic_hash_map<Key, Value, Hash_CRC32C>;
 
+template <typename Key, typename Value>
+using hash_map_v1 = basic_hash_map<Key, Value, Hash_Time31>;
+
+template <typename Key, typename Value>
+using hash_map_v2 = basic_hash_map<Key, Value, Hash_Time31Std>;
+
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_map_v1 = basic_hash_map<Key, Value, Hash_SHA1_MSG2>;
+using hash_map_v3 = basic_hash_map<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_map_v2 = basic_hash_map<Key, Value, Hash_SHA1>;
+using hash_map_v4 = basic_hash_map<Key, Value, Hash_SHA1>;
 #endif
-
-template <typename Key, typename Value>
-using hash_map_v3 = basic_hash_map<Key, Value, Hash_Time31>;
-
-template <typename Key, typename Value>
-using hash_map_v4 = basic_hash_map<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 

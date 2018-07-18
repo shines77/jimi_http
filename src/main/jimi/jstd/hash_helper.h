@@ -16,10 +16,11 @@ namespace jstd {
 
 enum hash_mode_t {
     Hash_CRC32C,
+    Hash_Time31,
+    Hash_Time31Std,
     Hash_SHA1_MSG2,
     Hash_SHA1,
-    Hash_Time31,
-    Hash_Time31Std
+    Hash_Last
 };
 
 namespace detail {

@@ -88,6 +88,10 @@ public:
 
     entry_type * head() const { return this->head_; }
 
+    void set_head(entry_type * entry) {
+        this->head_ = entry;
+    }
+
 private:
     void destroy() {
         entry_type * head = this->head_;
@@ -122,10 +126,6 @@ public:
 
     void clear() {
         this->destroy();
-    }
-
-    void set_head(entry_type * entry) {
-        this->head_ = entry;
     }
 
     void push_first(entry_type * entry) {
@@ -267,6 +267,14 @@ public:
     entry_type * head() const { return this->head_; }
     size_type size() const { return this->size_; }
 
+    void set_head(entry_type * entry) {
+        this->head_ = entry;
+    }
+
+    void set_size(size_type size) {
+        this->size_ = size;
+    }
+
 private:
     void destroy() {
         entry_type * head = this->head_;
@@ -310,14 +318,6 @@ public:
 #ifdef NDEBUG
         this->size_ = 0;
 #endif
-    }
-
-    void set_head(entry_type * entry) {
-        this->head_ = entry;
-    }
-
-    void set_size(size_type size) {
-        this->size_ = size;
     }
 
     void push_first(entry_type * entry) {
@@ -671,8 +671,8 @@ private:
                 // Reset the new table data.
                 memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
 
+                // Recalculate the bucket of all keys.
                 if (likely(this->table_ != nullptr)) {
-                    // Recalculate all hash values.
                     size_type old_used = this->used_;
                     size_type old_size = this->size_;
 
@@ -722,8 +722,8 @@ private:
                 // Reset the new table data.
                 memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
 
+                // Recalculate the bucket of all keys.
                 if (likely(this->table_ != nullptr)) {
-                    // Recalculate all hash values.
                     size_type old_used = this->used_;
                     size_type old_size = this->size_;
 
@@ -1087,21 +1087,21 @@ const float basic_hash_map_ex<Key, Value, HashFunc>::kDefaultLoadFactor = 0.75f;
 template <typename Key, typename Value>
 using hash_map_ex = basic_hash_map_ex<Key, Value, Hash_CRC32C>;
 
+template <typename Key, typename Value>
+using hash_map_ex_v1 = basic_hash_map_ex<Key, Value, Hash_Time31>;
+
+template <typename Key, typename Value>
+using hash_map_ex_v2 = basic_hash_map_ex<Key, Value, Hash_Time31Std>;
+
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_map_ex_v1 = basic_hash_map_ex<Key, Value, Hash_SHA1_MSG2>;
+using 1 = basic_hash_map_ex<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using hash_map_ex_v2 = basic_hash_map_ex<Key, Value, Hash_SHA1>;
+using hash_map_ex_v4 = basic_hash_map_ex<Key, Value, Hash_SHA1>;
 #endif
-
-template <typename Key, typename Value>
-using hash_map_ex_v3 = basic_hash_map_ex<Key, Value, Hash_Time31>;
-
-template <typename Key, typename Value>
-using hash_map_ex_v4 = basic_hash_map_ex<Key, Value, Hash_Time31Std>;
 
 } // namespace jstd
 
