@@ -15,7 +15,6 @@ namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 struct dictionary_traits {
-public:
     typedef Key                         key_type;
     typedef Value                       value_type;
     typedef std::size_t                 size_type;
@@ -28,7 +27,7 @@ public:
     ~dictionary_traits() {}
 
     hash_type hash_code(const key_type & key) {
-        return jstd::hash_helper::getHashCode()
+        return jstd::hash_helper::getHashCode(key.c_str(), key.size());
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) {
@@ -52,7 +51,7 @@ public:
         return StrUtils::compare(key1.c_str(), key1.size(), key2.c_str(), key2.size());
     }
 
-    int value_compare(const value_type & value1, const value_type & key2) const {
+    int value_compare(const value_type & value1, const value_type & value2) const {
         return StrUtils::compare(value1.c_str(), value1.size(), value2.c_str(), value2.size());
     }
 
