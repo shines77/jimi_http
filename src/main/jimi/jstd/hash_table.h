@@ -71,12 +71,15 @@ private:
     size_type mask_;
     size_type buckets_;
 
-    static const size_type kInitialBuckets = 64;
+    // Default initial capacity is 64.
+    static const size_type kDefaultInitialCapacity = 64;
+    // Maximum capacity is 1 << 30.
+    static const size_type kMaximumCapacity = 1U << 30;
 
 public:
     basic_hash_table() :
         table_(nullptr), size_(0), mask_(0), buckets_(0) {
-        this->init(kInitialBuckets);
+        this->init(kDefaultInitialCapacity);
     }
     ~basic_hash_table() {
         this->destroy();
@@ -163,7 +166,9 @@ private:
         // then double the hash table size.
         new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
         // The minimum bucket is kBucketsInit = 64.
-        new_buckets = (new_buckets >= kInitialBuckets) ? new_buckets : kInitialBuckets;
+        new_buckets = (new_buckets >= kDefaultInitialCapacity) ? new_buckets : kDefaultInitialCapacity;
+        // The maximum bucket is kMaximumCapacity = 1 << 30.
+        new_buckets = (new_buckets <= kMaximumCapacity) ? new_buckets : kMaximumCapacity;
         // Round up the new_buckets to power 2.
         new_buckets = jimi::detail::round_up_pow2(new_buckets);
         return new_buckets;
@@ -173,6 +178,8 @@ private:
         // If new_buckets is less than half of the current hash table size,
         // then double the hash table size.
         new_buckets = (new_buckets > (this->size_ * 2)) ? new_buckets : (this->size_ * 2);
+        // The maximum bucket is kMaximumCapacity = 1 << 30.
+        new_buckets = (new_buckets <= kMaximumCapacity) ? new_buckets : kMaximumCapacity;
         // Round up the new_buckets to power 2.
         new_buckets = jimi::detail::round_up_pow2(new_buckets);
         return new_buckets;
@@ -180,7 +187,7 @@ private:
 
     static inline
     hash_type hash(const char * key, size_type length) {
-        return detail::hash_helper<HashFunc>::getHash(key, length);
+        return jstd::hash_helper<HashFunc>::getHashCode(key, length);
     }
 
     static inline
@@ -326,7 +333,7 @@ private:
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(node->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                         return (iterator)&this->table_[index];
                     }
 #else
@@ -348,7 +355,7 @@ private:
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(node->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                        if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                        if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                             return (iterator)&this->table_[index];
                         }
 #else
@@ -400,7 +407,7 @@ public:
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(node->pair.first.size() == key.size())) {
     #if USE_SSE42_STRING_COMPARE
-                        if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                        if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                             return (iterator)&this->table_[index];
                         }
     #else
@@ -422,7 +429,7 @@ public:
                         // If hash value is equal, then compare the key sizes and the strings.
                         if (likely(node->pair.first.size() == key.size())) {
     #if USE_SSE42_STRING_COMPARE
-                            if (likely(detail::string_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                            if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
                                 return (iterator)&this->table_[index];
                             }
     #else

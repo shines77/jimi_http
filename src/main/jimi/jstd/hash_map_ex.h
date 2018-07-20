@@ -40,14 +40,14 @@ struct hash_map_ex_entry {
     pair_type   pair;
 
     hash_map_ex_entry() : next(nullptr), hash(0) {}
-    hash_map_ex_entry(hash_type init_hash) : next(nullptr), hash(init_hash) {}
+    hash_map_ex_entry(hash_type hash_code) : next(nullptr), hash(hash_code) {}
 
-    hash_map_ex_entry(hash_type init_hash, const key_type & key,
+    hash_map_ex_entry(hash_type hash_code, const key_type & key,
                       const value_type & value, this_type * next_entry = nullptr)
-        : next(next_entry), hash(init_hash), pair(key, value) {}
-    hash_map_ex_entry(hash_type init_hash, key_type && key,
+        : next(next_entry), hash(hash_code), pair(key, value) {}
+    hash_map_ex_entry(hash_type hash_code, key_type && key,
                       value_type && value, this_type * next_entry = nullptr)
-        : next(next_entry), hash(init_hash),
+        : next(next_entry), hash(hash_code),
           pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
 
     hash_map_ex_entry(const key_type & key, const value_type & value)
@@ -478,6 +478,8 @@ private:
     static const size_type kMaximumCapacity = 1U << 30;
     // Default load factor is: 0.75
     static const float kDefaultLoadFactor;
+    // The threshold of treeify to red-black tree.
+    static const size_type kTreeifyThreshold = 8;
 
 public:
     basic_hash_map_ex(size_type initialCapacity = kDefaultInitialCapacity,
@@ -560,6 +562,8 @@ private:
         new_capacity = (new_capacity > (this->size_ * 2)) ? new_capacity : (this->size_ * 2);
         // The minimum bucket is kDefaultInitialCapacity = 64.
         new_capacity = (new_capacity >= kDefaultInitialCapacity) ? new_capacity : kDefaultInitialCapacity;
+        // The maximum bucket is kMaximumCapacity = 1 << 30.
+        new_capacity = (new_capacity <= kMaximumCapacity) ? new_capacity : kMaximumCapacity;
         // Round up the new_capacity to power 2.
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         return new_capacity;
@@ -569,6 +573,8 @@ private:
         // If new_capacity is less than half of the current hash table size,
         // then double the hash table size.
         new_capacity = (new_capacity > (this->size_ * 2)) ? new_capacity : (this->size_ * 2);
+        // The maximum bucket is kMaximumCapacity = 1 << 30.
+        new_capacity = (new_capacity <= kMaximumCapacity) ? new_capacity : kMaximumCapacity;
         // Round up the new_capacity to power 2.
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         return new_capacity;
@@ -576,7 +582,7 @@ private:
 
     static inline
     hash_type hash(const char * key, size_type length) {
-        return detail::hash_helper<HashFunc>::getHash(key, length);
+        return jstd::hash_helper<HashFunc>::getHashCode(key, length);
     }
 
     static inline
@@ -783,7 +789,7 @@ private:
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(entry->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(detail::string_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(StrUtils::is_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
                         return (iterator)entry;
                     }
 #else
@@ -817,7 +823,7 @@ private:
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(entry->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(detail::string_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(StrUtils::is_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
                         before_out = before;
                         return (iterator)entry;
                     }
@@ -889,7 +895,7 @@ public:
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(entry->pair.first.size() == key.size())) {
 #if USE_SSE42_STRING_COMPARE
-                        if (likely(detail::string_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                        if (likely(StrUtils::is_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
                             return (iterator)&table[index];
                         }
 #else
@@ -1095,7 +1101,7 @@ using hash_map_ex_v2 = basic_hash_map_ex<Key, Value, Hash_Time31Std>;
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using 1 = basic_hash_map_ex<Key, Value, Hash_SHA1_MSG2>;
+using hash_map_ex_v3 = basic_hash_map_ex<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
 #if USE_SHA1_HASH

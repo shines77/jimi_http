@@ -142,6 +142,12 @@
     <ClInclude Include="..\..\..\src\main\jimi\jstd\char_traits.h">
       <Filter>src\jstd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\dictionary.h">
+      <Filter>src\jstd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\dictionary_traits.h">
+      <Filter>src\jstd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c">

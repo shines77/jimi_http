@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "jimi/basic/stddef.h"
 #include "jimi/basic/stdint.h"
 #include "jimi/basic/stdsize.h"
 #include "jimi/basic/inttypes.h"
@@ -36,6 +37,7 @@
 #include "jimi/jstd/hash_table.h"
 #include "jimi/jstd/hash_map.h"
 #include "jimi/jstd/hash_map_ex.h"
+#include "jimi/jstd/dictionary.h"
 
 using namespace jimi;
 using namespace jimi::http;
@@ -1149,6 +1151,9 @@ void hashtable_benchmark()
     hashtable_rehash2_benchmark();
 
     hashtable_insert_benchmark();
+
+    jstd::dictionary<std::string, std::string> dict(128);
+    dict.dump();
 }
 
 static uint32_t s_bitmap[65536 / 32 / 2 + 1];

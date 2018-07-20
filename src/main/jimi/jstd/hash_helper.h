@@ -23,25 +23,23 @@ enum hash_mode_t {
     Hash_Last
 };
 
-namespace detail {
-
 template <std::size_t HashFunc = Hash_CRC32C>
 struct hash_helper {
-    static uint32_t getHash(const char * data, size_t length) {
+    static uint32_t getHashCode(const char * data, size_t length) {
         return jimi::crc32c_x64(data, length);
     }
 };
 
 template <>
 struct hash_helper<Hash_SHA1_MSG2> {
-    static uint32_t getHash(const char * data, size_t length) {
+    static uint32_t getHashCode(const char * data, size_t length) {
         return jimi::sha1_msg2(data, length);
     }
 };
 
 template <>
 struct hash_helper<Hash_SHA1> {
-    static uint32_t getHash(const char * data, size_t length) {
+    static uint32_t getHashCode(const char * data, size_t length) {
         //alignas(16) uint32_t sha1_state[5];
         //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
         return jimi::sha1_x86(jimi::s_sha1_state, data, length);
@@ -50,19 +48,17 @@ struct hash_helper<Hash_SHA1> {
 
 template <>
 struct hash_helper<Hash_Time31> {
-    static uint32_t getHash(const char * data, size_t length) {
+    static uint32_t getHashCode(const char * data, size_t length) {
         return TiStore::hash::Times31(data, length);
     }
 };
 
 template <>
 struct hash_helper<Hash_Time31Std> {
-    static uint32_t getHash(const char * data, size_t length) {
+    static uint32_t getHashCode(const char * data, size_t length) {
         return TiStore::hash::Times31_std(data, length);
     }
 };
-
-} // namespace detail
 
 } // namespace jstd
 
