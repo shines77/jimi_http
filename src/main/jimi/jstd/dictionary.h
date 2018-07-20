@@ -60,6 +60,7 @@ public:
 
 private:
     index_type * buckets_;
+    entry_type * entries_;
     size_type mask_;
     size_type capacity_;
     size_type size_;
@@ -78,7 +79,7 @@ private:
 public:
     basic_dictionary(size_type initialCapacity = kDefaultInitialCapacity,
                      float loadFactor = kDefaultLoadFactor)
-        : buckets_(nullptr), mask_(0), capacity_(0), size_(0),
+        : buckets_(nullptr), entries_(nullptr), mask_(0), capacity_(0), size_(0),
           threshold_(0), loadFactor_(kDefaultLoadFactor) {
         this->initialize(initialCapacity);
     }
