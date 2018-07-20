@@ -141,11 +141,11 @@ int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t len
             UCharTy ch1 = *((const UCharTy *)str1 - offset);
             UCharTy ch2 = *((const UCharTy *)str2 - offset);
             if (likely(ch1 > ch2))
-                return CompareResult::IsBigger;
-            else (likely(ch1 < ch2))
-                return CompareResult::IsSmaller;
+                return StrUtils::IsBigger;
+            else if (likely(ch1 < ch2))
+                return StrUtils::IsSmaller;
             else
-                return CompareResult::IsEqual;
+                return StrUtils::IsEqual;
         }
     }
 
@@ -153,11 +153,11 @@ int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t len
     UCharTy ch1 = *((const UCharTy *)str1);
     UCharTy ch2 = *((const UCharTy *)str2);
     if (likely(ch1 > ch2))
-        return CompareResult::IsBigger;
-    else (likely(ch1 < ch2))
-        return CompareResult::IsSmaller;
+        return StrUtils::IsBigger;
+    else if (likely(ch1 < ch2))
+        return StrUtils::IsSmaller;
     else
-        return CompareResult::IsEqual;
+        return StrUtils::IsEqual;
 }
 
 } // namespace StrUtils

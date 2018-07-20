@@ -27,7 +27,7 @@ struct dictionary_traits {
     ~dictionary_traits() {}
 
     hash_type hash_code(const key_type & key) {
-        return jstd::hash_helper::getHashCode(key.c_str(), key.size());
+        return jstd::hash_helper<HashFunc>::getHashCode(key.c_str(), key.size());
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) {
