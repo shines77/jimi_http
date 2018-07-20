@@ -79,13 +79,11 @@ private:
 public:
     basic_hash_table() :
         table_(nullptr), size_(0), mask_(0), buckets_(0) {
-        this->init(kDefaultInitialCapacity);
+        this->initialize(kDefaultInitialCapacity);
     }
     ~basic_hash_table() {
         this->destroy();
     }
-
-    bool is_valid() const { return (this->table_ != nullptr); }
 
     iterator begin() const { return &(this->table_[0]); }
     iterator end() const { return &(this->table_[this->buckets_]); }
@@ -95,6 +93,7 @@ public:
     size_type bucket_count() const { return this->buckets_; }
     data_type * data() const { return this->table_; }
 
+    bool is_valid() const { return (this->table_ != nullptr); }
     bool empty() const { return (this->size() == 0); }
 
     void clear() {
@@ -113,7 +112,8 @@ public:
     }
 
 private:
-    void init(size_type new_buckets) {
+    void initialize(size_type new_buckets) {
+        new_buckets = jimi::detail::round_up_pow2(new_buckets);
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
         data_type * new_table = new data_type[new_buckets];
@@ -331,13 +331,13 @@ private:
             // Found, next to check the hash value.
             if (likely(node->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(node->pair.first.size() == key.size())) {
+                if (likely(key.size() == node->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
                         return (iterator)&this->table_[index];
                     }
 #else
-                    if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                    if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
                         return (iterator)&this->table_[index];
                     }
 #endif
@@ -353,13 +353,13 @@ private:
             if (likely(node != nullptr)) {
                 if (likely(node->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(node->pair.first.size() == key.size())) {
+                    if (likely(key.size() == node->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                        if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
                             return (iterator)&this->table_[index];
                         }
 #else
-                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                        if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
                             return (iterator)&this->table_[index];
                         }
 #endif
@@ -405,13 +405,13 @@ public:
                 // Found, next to check the hash value.
                 if (likely(node->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(node->pair.first.size() == key.size())) {
+                    if (likely(key.size() == node->pair.first.size())) {
     #if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                        if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
                             return (iterator)&this->table_[index];
                         }
     #else
-                        if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                        if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
                             return (iterator)&this->table_[index];
                         }
     #endif
@@ -427,13 +427,13 @@ public:
                 if (likely(node != nullptr)) {
                     if (likely(node->hash == hash)) {
                         // If hash value is equal, then compare the key sizes and the strings.
-                        if (likely(node->pair.first.size() == key.size())) {
+                        if (likely(key.size() == node->pair.first.size())) {
     #if USE_SSE42_STRING_COMPARE
-                            if (likely(StrUtils::is_equal(node->pair.first.c_str(), key.c_str(), key.size()))) {
+                            if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
                                 return (iterator)&this->table_[index];
                             }
     #else
-                            if (likely(strcmp(node->pair.first.c_str(), key.c_str()) == 0)) {
+                            if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
                                 return (iterator)&this->table_[index];
                             }
     #endif

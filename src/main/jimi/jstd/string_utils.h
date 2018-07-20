@@ -17,11 +17,17 @@
 namespace jstd {
 namespace StrUtils {
 
+enum CompareResult {
+    IsSmaller = -1,
+    IsEqual = 0,
+    IsBigger = 1
+};
+
 #if 0
 
 template <typename CharTy>
 static inline
-bool is_equal(const CharTy * str1, const CharTy * str2, size_t length)
+bool is_equal_unsafe(const CharTy * str1, const CharTy * str2, size_t length)
 {
     assert(str1 != nullptr && str2 != nullptr);
 
@@ -60,7 +66,7 @@ bool is_equal(const CharTy * str1, const CharTy * str2, size_t length)
 
 template <typename CharTy>
 static inline
-bool is_equal(const CharTy * str1, const CharTy * str2, size_t length)
+bool is_equal_unsafe(const CharTy * str1, const CharTy * str2, size_t length)
 {
     assert(str1 != nullptr && str2 != nullptr);
 
@@ -68,7 +74,7 @@ bool is_equal(const CharTy * str1, const CharTy * str2, size_t length)
     static const int _SIDD_CHAR_OPS = jimi::SSEHelper<CharTy>::_SIDD_CHAR_OPS;
     static const int kEqualEach = _SIDD_CHAR_OPS | _SIDD_CMP_EQUAL_EACH
                                 | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT;
-
+    
     ssize_t nlength = (ssize_t)length;
     while (likely(nlength > 0)) {
         __m128i __str1 = _mm_loadu_si128((const __m128i *)str1);
@@ -96,15 +102,55 @@ bool is_equal(const CharTy * str1, const CharTy * str2, size_t length)
 
 #endif
 
-enum CompareResult {
-    IsSmaller = -1,
-    IsEqual = 0,
-    IsBigger = 1
-};
+template <typename CharTy>
+static inline
+bool is_equal_fast(const CharTy * str1, const CharTy * str2, size_t length)
+{
+    if (likely(((uintptr_t)str1 & (uintptr_t)str2) != 0)) {
+        assert(str1 != nullptr && str2 != nullptr);
+        return StrUtils::is_equal_unsafe(str1, str2, length);
+    }
+    else if (likely(((uintptr_t)str1 | (uintptr_t)str2) != 0)) {
+        assert((str1 == nullptr && str2 != nullptr) ||
+               (str1 != nullptr && str2 == nullptr));
+        return (length == 0);
+    }
+    else {
+        assert(str1 == nullptr && str2 == nullptr);
+        return true;
+    }
+}
 
 template <typename CharTy>
 static inline
-int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t length2)
+bool is_equal(const CharTy * str1, size_t length1, const CharTy * str2, size_t length2)
+{
+    if (likely(length1 == length2)) {
+        return StrUtils::is_equal_fast(str1, str2, length1);
+    }
+
+    // The length of between str1 and str2 is different.
+    return false;
+}
+
+template <typename StringType>
+static inline
+bool is_equal_fast(const StringType & str1, const StringType & str2)
+{
+    assert(str1.size() == str2.size());
+    return StrUtils::is_equal_fast(str1.c_str(), str2.c_str(), str1.size());
+}
+
+template <typename StringType>
+static inline
+bool is_equal(const StringType & str1, const StringType & str2)
+{
+    return StrUtils::is_equal(str1.c_str(), str1.size(), str2.c_str(), str2.size());
+}
+
+template <typename CharTy>
+static inline
+int compare_unsafe(const CharTy * str1, size_t length1, const CharTy * str2, size_t length2)
 {
     assert(str1 != nullptr && str2 != nullptr);
 
@@ -158,6 +204,35 @@ int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t len
         return StrUtils::IsSmaller;
     else
         return StrUtils::IsEqual;
+}
+
+template <typename CharTy>
+static inline
+bool compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t length2)
+{
+    if (likely(((uintptr_t)str1 & (uintptr_t)str2) != 0)) {
+        assert(str1 != nullptr && str2 != nullptr);
+        return StrUtils::compare_unsafe(str1, length1, str2, length2);
+    }
+    else if (likely(((uintptr_t)str1 | (uintptr_t)str2) != 0)) {
+        assert((str1 == nullptr && str2 != nullptr) ||
+               (str1 != nullptr && str2 == nullptr));
+        if (likely(str1 != nullptr))
+            return ((length1 != 0) ? StrUtils::IsBigger : StrUtils::IsEqual);
+        else
+            return ((length2 != 0) ? StrUtils::IsSmaller : StrUtils::IsEqual);
+    }
+    else {
+        assert(str1 == nullptr && str2 == nullptr);
+        return StrUtils::IsEqual;
+    }
+}
+
+template <typename StringType>
+static inline
+bool compare(const StringType & str1, const StringType & str2)
+{
+    return StrUtils::compare(str1.c_str(), str1.size(), str2.c_str(), str2.size());
 }
 
 } // namespace StrUtils

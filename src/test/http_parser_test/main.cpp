@@ -1153,6 +1153,7 @@ void hashtable_benchmark()
     hashtable_insert_benchmark();
 
     jstd::dictionary<std::string, std::string> dict(128);
+    dict.contains("test");
     dict.dump();
 }
 

@@ -26,36 +26,35 @@ struct dictionary_traits {
     dictionary_traits() {}
     ~dictionary_traits() {}
 
-    hash_type hash_code(const key_type & key) {
+    hash_type hash_code(const key_type & key) const {
         return jstd::hash_helper<HashFunc>::getHashCode(key.c_str(), key.size());
     }
 
-    index_type index_for(hash_type hash, size_type capacity_mask) {
+    index_type index_for(hash_type hash, size_type capacity_mask) const {
         return (index_type)((size_type)hash & capacity_mask);
     }
 
-    index_type next_index(index_type index, size_type capacity_mask) {
+    index_type next_index(index_type index, size_type capacity_mask) const {
         ++index;
         return this->index_for((hash_type)index, capacity_mask);
     }
 
     bool key_is_equal(const key_type & key1, const key_type & key2) const {
-        return StrUtils::is_equal(key1.c_str(), key2.c_str(), key1.size());
+        return StrUtils::is_equal(key1, key2);
     }
 
     bool value_is_equal(const value_type & value1, const value_type & value2) const {
-        return StrUtils::is_equal(value1.c_str(), value2.c_str(), value1.size());
+        return StrUtils::is_equal(value1, value2);
     }
 
     int key_compare(const key_type & key1, const key_type & key2) const {
-        return StrUtils::compare(key1.c_str(), key1.size(), key2.c_str(), key2.size());
+        return StrUtils::compare(key1, key2);
     }
 
     int value_compare(const value_type & value1, const value_type & value2) const {
-        return StrUtils::compare(value1.c_str(), value1.size(), value2.c_str(), value2.size());
+        return StrUtils::compare(value1, value2);
     }
-
-}; // dictionary<K, V>
+}; // dictionary_traits<K, V, HashFunc>
 
 } // namespace jstd
 

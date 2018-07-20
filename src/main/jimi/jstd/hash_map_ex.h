@@ -486,13 +486,11 @@ public:
                       float loadFactor = kDefaultLoadFactor)
         : table_(nullptr), capacity_(0), size_(0), used_(0),
           threshold_(0), loadFactor_(loadFactor) {
-        this->init(initialCapacity, loadFactor);
+        this->initialize(initialCapacity, loadFactor);
     }
     ~basic_hash_map_ex() {
         this->destroy();
     }
-
-    bool is_valid() const { return (this->table_ != nullptr); }
 
     iterator begin() const {
         return (this->is_valid()) ? this->data()->head() : nullptr;
@@ -504,10 +502,12 @@ public:
     size_type bucket_count() const { return this->capacity_; }
     list_type * data() const { return reinterpret_cast<list_type *>(this->table_); }
 
+    bool is_valid() const { return (this->table_ != nullptr); }
     bool empty() const { return (this->size() == 0); }
 
 private:
-    void init(size_type new_capacity, float loadFactor) {
+    void initialize(size_type new_capacity, float loadFactor) {
+        new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         char * new_table = new char[sizeof(list_type) * new_capacity];
@@ -521,6 +521,7 @@ private:
             this->used_ = 0;
             assert(loadFactor > 0.0f);
             this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
+            this->loadFactor_ = loadFactor;
         }
     }
 
@@ -787,13 +788,13 @@ private:
             // Found entry, next to check the hash value.
             if (likely(entry->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(entry->pair.first.size() == key.size())) {
+                if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(StrUtils::is_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
                         return (iterator)entry;
                     }
 #else
-                    if (likely(strcmp(entry->pair.first.c_str(), key.c_str()) == 0)) {
+                    if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
                         return (iterator)entry;
                     }
 #endif
@@ -821,14 +822,14 @@ private:
             // Found entry, next to check the hash value.
             if (likely(entry->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(entry->pair.first.size() == key.size())) {
+                if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                    if (likely(StrUtils::is_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                    if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
                         before_out = before;
                         return (iterator)entry;
                     }
 #else
-                    if (likely(strcmp(entry->pair.first.c_str(), key.c_str()) == 0)) {
+                    if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
                         before_out = before;
                         return (iterator)entry;
                     }
@@ -893,13 +894,13 @@ public:
                 // Found entry, next to check the hash value.
                 if (likely(entry->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(entry->pair.first.size() == key.size())) {
+                    if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal(entry->pair.first.c_str(), key.c_str(), key.size()))) {
+                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
                             return (iterator)&table[index];
                         }
 #else
-                        if (likely(strcmp(entry->pair.first.c_str(), key.c_str()) == 0)) {
+                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
                             return (iterator)&table[index];
                         }
 #endif
