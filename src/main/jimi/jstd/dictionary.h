@@ -118,7 +118,7 @@ public:
     void clear() {
         if (likely(this->buckets_ != nullptr)) {
             // Initialize the buckets's data.
-            memset((void *)this->buckets_, 0, sizeof(entry_type *) * new_capacity);
+            memset((void *)this->buckets_, 0, sizeof(entry_type *) * this->capacity_);
         }
         // Setting status
         this->size_ = 0;
