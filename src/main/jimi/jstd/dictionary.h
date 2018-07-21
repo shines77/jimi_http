@@ -157,10 +157,10 @@ public:
             if (&right != this) {
                 entry_type * save_head = this->head_;
                 size_type save_size = this->size_;
-                this->head_ = src.head_;
-                this->size_ = src.size_;
-                src.head_ = save_head;
-                src.size_ = save_size;
+                this->head_ = right.head_;
+                this->size_ = right.size_;
+                right.head_ = save_head;
+                right.size_ = save_size;
             }
         }
     };

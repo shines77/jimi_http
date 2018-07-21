@@ -258,15 +258,23 @@ public:
         }
     }
 
-    void swap(const this_type & src) {
-        entry_type * head_save = src.head_;
-        size_type size_save = src.size_;
-        src.head_ = this->head_;
-        src.size_ = this->size_;
-        this->head_ = head_save;
-        this->size_ = size_save;
+    void swap(this_type & right) {
+        if (&right != this) {
+            entry_type * head_save = right.head_;
+            size_type size_save = right.size_;
+            right.head_ = this->head_;
+            right.size_ = this->size_;
+            this->head_ = head_save;
+            this->size_ = size_save;
+        }
     }
 };
+
+template <typename Key, typename Value>
+inline void swap(hash_map_list<Key, Value> & lhs,
+                 hash_map_list<Key, Value> & rhs) {
+    lhs.swap(rhs);
+}
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 class basic_hash_map {

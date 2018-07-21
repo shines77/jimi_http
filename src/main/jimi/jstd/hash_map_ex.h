@@ -234,8 +234,8 @@ public:
 
     void swap(this_type & right) {
         if (&right != this) {
-            entry_type * head_save = src.head_;
-            src.head_ = this->head_;
+            entry_type * head_save = right.head_;
+            right.head_ = this->head_;
             this->head_ = head_save;
         }
     }
