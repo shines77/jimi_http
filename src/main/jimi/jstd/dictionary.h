@@ -152,7 +152,22 @@ public:
             }
             return entry;
         }
+
+        void swap(free_list & right) {
+            if (&right != this) {
+                entry_type * save_head = this->head_;
+                size_type save_size = this->size_;
+                this->head_ = src.head_;
+                this->size_ = src.size_;
+                src.head_ = save_head;
+                src.size_ = save_size;
+            }
+        }
     };
+
+    inline void swap(free_list & lhs, free_list & rhs) {
+        lhs.swap(rhs);
+    }
 #else
     class free_list {
     private:
@@ -493,7 +508,7 @@ private:
 
         do {
             hash_type hash = old_entry->hash;
-            size_type index = this_type::index_for(hash, new_mask);
+            size_type index = this->traits_.index_for(hash, new_mask);
 
             // Save the value of old_entry->next.
             entry_type * next_entry = old_entry->next;
@@ -551,12 +566,11 @@ private:
                         }
                         assert(this->size_ == old_size);
 
-                        // Free old table data.
-                        delete[] this->table_;
+                        // Free old buckets data.
+                        delete[] this->buckets_;
                     }
 
-                    // Resize and fill the free list.
-                    freelist_.refill(new_entries, new_capacity);
+                    this->freelist_ = new_freelist;
 
                     // Setting status
                     this->buckets_ = new_buckets;
@@ -615,12 +629,9 @@ private:
                         }
                         assert(this->size_ == old_size);
 
-                        // Free old table data.
-                        delete[] this->table_;
+                        // Free old buckets data.
+                        delete[] this->buckets_;
                     }
-
-                    // Resize and fill the free list.
-                    freelist_.refill(new_entries, new_capacity);
 
                     // Setting status
                     this->buckets_ = new_buckets;

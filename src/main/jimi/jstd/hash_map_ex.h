@@ -232,12 +232,20 @@ public:
         }
     }
 
-    void swap(const this_type & src) {
-        entry_type * head_save = src.head_;
-        src.head_ = this->head_;
-        this->head_ = head_save;
+    void swap(this_type & right) {
+        if (&right != this) {
+            entry_type * head_save = src.head_;
+            src.head_ = this->head_;
+            this->head_ = head_save;
+        }
     }
 };
+
+template <typename Key, typename Value>
+inline void swap(hash_map_ex_list<Key, Value> & lhs,
+                 hash_map_ex_list<Key, Value> & rhs) {
+    lhs.swap(rhs);
+}
 #else
 template <typename Key, typename Value>
 class hash_map_ex_list {

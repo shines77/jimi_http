@@ -1141,6 +1141,14 @@ void hashtable_insert_benchmark()
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
 #endif
 #endif // USE_JSTD_HASH_MAP_EX
+
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
 }
 
 void hashtable_benchmark()
