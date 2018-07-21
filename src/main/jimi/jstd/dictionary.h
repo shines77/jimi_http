@@ -73,9 +73,9 @@ public:
         size_type    size_;
 
     public:
-        forward_list() : head_(nullptr), size_(0) {}
-        forward_list(entry * head) : head_(head), size_(0) {}
-        ~forward_list() {
+        free_list() : head_(nullptr), size_(0) {}
+        free_list(entry * head) : head_(head), size_(0) {}
+        ~free_list() {
 #ifndef NDEBUG
             this->clear();
 #endif
@@ -86,6 +86,13 @@ public:
 
         entry_type * head() const { return this->head_; }
         size_type size() const { return this->size_; }
+
+        void set_head(entry_type * new_entry) {
+            this->head_ = new_entry;
+        }
+        void set_size(size_type new_size) {
+            this->size_ = new_size;
+        }
 
         bool is_valid() const { return (this->head_ != nullptr); }
         bool is_empty() const { return (this->size_ != 0); }
@@ -328,6 +335,7 @@ private:
     entry_type **   buckets_;
     entry_type *    entries_;  
     size_type       size_;
+    size_type       count_;
     size_type       mask_;
     size_type       capacity_;
     list_type       freelist_;
@@ -347,8 +355,8 @@ private:
 public:
     basic_dictionary(size_type initialCapacity = kDefaultInitialCapacity,
                      float loadFactor = kDefaultLoadFactor)
-        : buckets_(nullptr), entries_(nullptr), size_(0), mask_(0), capacity_(0), 
-          threshold_(0), loadFactor_(kDefaultLoadFactor) {
+        : buckets_(nullptr), entries_(nullptr), size_(0), count_(0), mask_(0),
+          capacity_(0), threshold_(0), loadFactor_(kDefaultLoadFactor) {
         this->initialize(initialCapacity, loadFactor);
     }
     ~basic_dictionary() {
@@ -392,6 +400,20 @@ public:
     }
 
 private:
+    // Linked the entries to the free list.
+    void fill_freelist(list_type & freelist, entry_type * entries, size_type capacity) {
+        assert(entries != nullptr);
+        assert(capacity > 0);
+        entry_type * entry = entries;
+        for (size_type i = 0; i < capacity; ++i) {
+            entry_type * next_entry = entry + 1;
+            entry->next = next_entry;
+            entry = next_entry;
+        }
+        freelist.set_head(entries);
+        freelist.set_size(capacity);
+    }
+
     void initialize(size_type new_capacity, float loadFactor) {
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
@@ -406,13 +428,15 @@ private:
             // The the array of entries.
             entry_type * new_entries = new entry_type[new_capacity];
             if (likely(new_entries != nullptr)) {
-                // Resize and fill the free list.
-                freelist_.refill(new_entries, new_capacity);
+                // Linked all new entries to the free list.
+                fill_freelist(this->freelist_, new_entries, new_capacity);
                 // Initialize status
                 this->entries_ = new_entries;
+                this->size_ = 0;
+                this->count_ = 0;
                 this->mask_ = new_capacity - 1;
                 this->capacity_ = new_capacity;
-                this->size_ = 0;
+
                 assert(loadFactor > 0.0f);
                 this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
                 this->loadFactor_ = loadFactor;
@@ -434,9 +458,10 @@ private:
         }
 #ifdef NDEBUG
         // Setting status
+        this->size_ = 0;
+        this->count_ = 0;
         this->mask_ = 0;
         this->capacity_ = 0;
-        this->size_ = 0;
         this->threshold_ = 0;
 #endif
     }
@@ -459,9 +484,10 @@ private:
         return new_capacity;
     }
 
-    void reinsert_list(entry_type ** new_buckets, size_type new_mask,
-                       entry_type * old_entry) {
+    void reinsert_list(entry_type ** new_buckets, free_list * new_freelist,
+                       size_type new_mask, entry_type * old_entry) {
         assert(new_buckets != nullptr);
+        assert(new_freelist != nullptr);
         assert(old_entry != nullptr);
         assert(new_capacity > 1);
 
@@ -473,25 +499,12 @@ private:
             entry_type * next_entry = old_entry->next;
 
             // Push the old entry to front of new list.
-            entry_type * new_entry = &new_buckets[index];
-            assert(new_entry != nullptr);
-            if (likely(new_entry->head() != nullptr)) {
-                assert(new_entry->head() != nullptr);
-                new_entry->push_front_fast(old_entry);
-                ++(this->size_);
+            old_entry->next = new_buckets[index];
+            new_buckets[index] = old_entry;
+            ++(this->size_);
 
-                // Scan next entry
-                old_entry = next_entry;
-            }
-            else {
-                assert(new_entry->head() == nullptr);
-                new_entry->push_first(old_entry);
-                ++(this->size_);
-                ++(this->used_);
-
-                // Scan next entry
-                old_entry = next_entry;
-            }
+            // Scan next entry
+            old_entry = next_entry;
         } while (likely(old_entry != nullptr));
     }
 
@@ -508,6 +521,10 @@ private:
                 // The the array of entries.
                 entry_type * new_entries = new entry_type[new_capacity];
                 if (likely(new_entries != nullptr)) {
+                    // Linked all new entries to the new free list.
+                    free_list new_freelist;
+                    fill_freelist(new_freelist, new_entries, new_capacity);
+
                     // Recalculate the bucket of all keys.
                     if (likely(this->buckets_ != nullptr)) {
                         size_type old_size = this->size_;
@@ -524,7 +541,7 @@ private:
                             }
                             else {
                                 // Insert the old buckets to the new buckets in the new table.
-                                this->reinsert_list(new_buckets, new_mask, old_entry);
+                                this->reinsert_list(new_buckets, &new_freelist, new_mask, old_entry);
     #ifndef NDEBUG
                                 // Set the old_list.head to nullptr.
                                 *old_buckets = nullptr;
@@ -544,8 +561,75 @@ private:
                     // Setting status
                     this->buckets_ = new_buckets;
                     this->entries_ = new_entries;
+                    this->count_ = 0;
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
+
+                    assert(loadFactor > 0.0f);
+                    this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
+                    this->loadFactor_ = loadFactor;
+                }
+            }
+        }
+    }
+
+    void shrink_internal(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        if (likely(this->capacity_ != new_capacity)) {
+            // The the array of bucket's first entry.
+            entry_type ** new_buckets = new entry_type *[new_capacity];
+            if (likely(new_buckets != nullptr)) {
+                // Initialize the buckets's data.
+                memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
+
+                // The the array of entries.
+                entry_type * new_entries = new entry_type[new_capacity];
+                if (likely(new_entries != nullptr)) {
+                    // Linked all new entries to the new free list.
+                    free_list new_freelist;
+                    fill_freelist(new_freelist, new_entries, new_capacity);
+
+                    // Recalculate the bucket of all keys.
+                    if (likely(this->buckets_ != nullptr)) {
+                        size_type old_size = this->size_;
+                        this->size_ = 0;
+
+                        entry_type ** old_buckets = this->buckets_;
+                        size_type new_mask = new_capacity - 1;
+
+                        for (size_type i = 0; i < this->capacity_; ++i) {
+                            assert(old_buckets != nullptr);
+                            entry_type * old_entry = *old_buckets;
+                            if (likely(old_entry == nullptr)) {
+                                old_buckets++;
+                            }
+                            else {
+                                // Insert the old buckets to the new buckets in the new table.
+                                this->reinsert_list(new_buckets, &new_freelist, new_mask, old_entry);
+    #ifndef NDEBUG
+                                // Set the old_list.head to nullptr.
+                                *old_buckets = nullptr;
+    #endif
+                                old_buckets++;
+                            }
+                        }
+                        assert(this->size_ == old_size);
+
+                        // Free old table data.
+                        delete[] this->table_;
+                    }
+
+                    // Resize and fill the free list.
+                    freelist_.refill(new_entries, new_capacity);
+
+                    // Setting status
+                    this->buckets_ = new_buckets;
+                    this->entries_ = new_entries;
+                    this->count_ = 0;
+                    this->mask_ = new_capacity - 1;
+                    this->capacity_ = new_capacity;
+
                     assert(loadFactor > 0.0f);
                     this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
                     this->loadFactor_ = loadFactor;
@@ -568,7 +652,7 @@ public:
     void reserve(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity(new_capacity);
-        this->reserve_internal(new_capacity);
+        this->rehash_internal(new_capacity);
     }
 
     void rehash(size_type new_capacity) {
@@ -656,13 +740,130 @@ public:
                     index = traits_.index_for(hash, this->mask_);
                 }
 
-                if (!freelist_.is_empty()) {
-                    //
+                entry_type * new_entry;
+                if (likely(!freelist_.is_empty())) {
+                    // Pop a free entry from freelist.
+                    new_entry = freelist_.pop_front();
                 }
+                else {
+                    if (unlikely((this->count_ >= this->capacity_))) {
+                        // Resize the buckets
+                        this->resize_internal(this->capacity_ * 2);
+                        // Recalculate the index.
+                        index = traits_.index_for(hash, this->mask_);
+                    }
+                    // Get a unused entry.
+                    new_entry = this->buckets_[this->count_];
+                    ++(this->count_);
+                }
+
+                new_entry->hash = hash;
+                new_entry->next = this->buckets_[index];
+                new_entry->pair.first = key;
+                new_entry->pair.second = value;
+
+                this->buckets_[index] = new_entry;
+                ++(this->size_);
+            }
+            else {
+                // Update the existed key's value.
+                assert(iter != nullptr);
+                iter->pair.second = value;
             }
         }
     }
 
+    void insert(key_type && key, value_type && value) {
+        if (likely(this->buckets_ != nullptr)) {
+            hash_type hash;
+            index_type index;
+            iterator iter = this->find_internal(std::forward<key_type>(key), hash, index);
+            if (likely(iter == this->unsafe_end())) {
+                // Insert the new key.
+                if (likely(this->size_ >= this->capacity_)) {
+                    // Resize the table
+                    this->resize_internal(this->capacity_ * 2);
+                    // Recalculate the index.
+                    index = traits_.index_for(hash, this->mask_);
+                }
+
+                entry_type * new_entry;
+                if (likely(!freelist_.is_empty())) {
+                    // Pop a free entry from freelist.
+                    new_entry = freelist_.pop_front();
+                }
+                else {
+                    if (unlikely((this->count_ >= this->capacity_))) {
+                        // Resize the buckets
+                        this->resize_internal(this->capacity_ * 2);
+                        // Recalculate the index.
+                        index = traits_.index_for(hash, this->mask_);
+                    }
+                    // Get a unused entry.
+                    new_entry = this->buckets_[this->count_];
+                    ++(this->count_);
+                }
+
+                new_entry->hash = hash;
+                new_entry->next = this->buckets_[index];
+                new_entry->pair.first = std::forward<key_type>(key);
+                new_entry->pair.second = std::forward<value_type>(value);
+
+                this->buckets_[index] = new_entry;
+                ++(this->size_);
+            }
+            else {
+                // Update the existed key's value.
+                assert(iter != nullptr);
+                iter->pair.second = std::move(std::forward<value_type>(value));
+            }
+        }
+    }
+
+    void insert(const pair_type & pair) {
+        this->insert(pair.first, pair.second);
+    }
+
+    void insert(pair_type && pair) {
+        this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
+    }
+
+    void emplace(const pair_type & pair) {
+        this->insert(pair.first, pair.second);
+    }
+
+    void emplace(pair_type && pair) {
+        this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
+    }
+
+    void erase(const key_type & key) {
+        if (likely(this->buckets_ != nullptr)) {
+            //
+        }
+    }
+
+    void erase(key_type && key) {
+        if (likely(this->buckets_ != nullptr)) {
+            //
+        }
+    }
+
+    static const char * name() {
+        switch (HashFunc) {
+        case Hash_CRC32C:
+            return "jstd::dictionary<std::string, std::string>";
+        case Hash_Time31:
+            return "jstd::dictionary_v1<std::string, std::string>";
+        case Hash_Time31Std:
+            return "jstd::dictionary_v2<std::string, std::string>";
+        case Hash_SHA1_MSG2:
+            return "jstd::dictionary_v3<std::string, std::string>";
+        case Hash_SHA1:
+            return "jstd::dictionary_v4<std::string, std::string>";
+        default:
+            return "Unknown class name";
+        }
+    }
 }; // dictionary<K, V>
 
 template <typename Key, typename Value, std::size_t HashFunc, typename Traits>
