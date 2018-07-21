@@ -565,9 +565,8 @@ private:
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
 
-                    assert(loadFactor > 0.0f);
-                    this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
-                    this->loadFactor_ = loadFactor;
+                    assert(this->loadFactor_ > 0.0f);
+                    this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
                 }
             }
         }
@@ -630,9 +629,8 @@ private:
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
 
-                    assert(loadFactor > 0.0f);
-                    this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
-                    this->loadFactor_ = loadFactor;
+                    assert(this->loadFactor_ > 0.0f);
+                    this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
                 }
             }
         }
@@ -699,8 +697,8 @@ public:
     }
 
     iterator find_internal(const key_type & key, hash_type & hash, index_type & index) {
-        hash_type hash = traits_.hash_code(key);
-        index_type index = traits_.index_for(hash, this->mask_);
+        hash = traits_.hash_code(key);
+        index = traits_.index_for(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
