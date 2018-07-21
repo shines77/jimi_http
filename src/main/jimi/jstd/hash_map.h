@@ -608,40 +608,7 @@ private:
     void resize_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        rehash_internal(new_capacity);
-    }
-
-    iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
-        hash = this_type::hash(key.c_str(), key.size());
-        index = this_type::index_for(hash, this->capacity_);
-
-        assert(this->table_ != nullptr);
-        list_type * list = this->table_[index];
-        if (likely(list != nullptr)) {
-            entry_type * entry = list->head();
-            while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
-                if (likely(entry->hash == hash)) {
-                    // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(key.size() == entry->pair.first.size())) {
-#if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
-                            return (iterator)entry;
-                        }
-#else
-                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
-                            return (iterator)entry;
-                        }
-#endif
-                    }
-                }
-                // Scan next entry
-                entry = entry->next;
-            }
-        }
-
-        // Not found
-        return this->end();
+        this->rehash_internal(new_capacity);
     }
 
     iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
@@ -720,10 +687,10 @@ public:
     }
 
     iterator find(const key_type & key) {
-        hash_type hash = this_type::hash(key.c_str(), key.size());
-        size_type index = this_type::index_for(hash, this->capacity_);
-
         if (likely(this->table_ != nullptr)) {
+            hash_type hash = this_type::hash(key.c_str(), key.size());
+            size_type index = this_type::index_for(hash, this->capacity_);
+
             list_type * list = this->table_[index];
             if (likely(list != nullptr)) {
                 entry_type * entry = list->head();
@@ -746,6 +713,39 @@ public:
                     // Scan next entry
                     entry = entry->next;
                 }
+            }
+        }
+
+        // Not found
+        return this->end();
+    }
+
+    iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
+        hash = this_type::hash(key.c_str(), key.size());
+        index = this_type::index_for(hash, this->capacity_);
+
+        assert(this->table_ != nullptr);
+        list_type * list = this->table_[index];
+        if (likely(list != nullptr)) {
+            entry_type * entry = list->head();
+            while (likely(entry != nullptr)) {
+                // Found entry, next to check the hash value.
+                if (likely(entry->hash == hash)) {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(key.size() == entry->pair.first.size())) {
+#if USE_SSE42_STRING_COMPARE
+                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
+                            return (iterator)entry;
+                        }
+#else
+                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
+                            return (iterator)entry;
+                        }
+#endif
+                    }
+                }
+                // Scan next entry
+                entry = entry->next;
             }
         }
 

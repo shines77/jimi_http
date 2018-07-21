@@ -772,10 +772,81 @@ private:
     void resize_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        rehash_internal(new_capacity);
+        this->rehash_internal(new_capacity);
+    }
+
+public:
+    void clear() {
+        // Clear the data only, don't free the table.
+        if (likely(this->table_ != nullptr)) {
+            list_type * table = this->data();
+            for (size_type i = 0; i < this->capacity_; ++i) {
+                list_type & list = table[i];
+                list.clear();
+            }
+        }
+        // Setting status
+        this->size_ = 0;
+        this->used_ = 0;
+    }
+
+    void reserve(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity(new_capacity);
+        this->reserve_internal(new_capacity);
+    }
+
+    void rehash(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity(new_capacity);
+        this->rehash_internal(new_capacity);
+    }
+
+    void resize(size_type new_capacity) {
+        this->rehash(new_capacity);
+    }
+
+    void shrink_to(size_type new_capacity) {
+        // Recalculate the size of new_capacity.
+        new_capacity = this->calc_capacity_fast(new_capacity);
+        this->shrink_internal(new_capacity);
+    }
+
+    iterator find(const key_type & key) {
+        if (likely(this->table_ != nullptr)) {
+            hash_type hash = this_type::hash(key.c_str(), key.size());
+            size_type index = this_type::index_for(hash, this->capacity_);
+
+            list_type * table = this->data();
+            list_type & list = table[index];
+            entry_type * entry = list.head();
+            while (likely(entry != nullptr)) {
+                // Found entry, next to check the hash value.
+                if (likely(entry->hash == hash)) {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(key.size() == entry->pair.first.size())) {
+#if USE_SSE42_STRING_COMPARE
+                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
+                            return (iterator)&table[index];
+                        }
+#else
+                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
+                            return (iterator)&table[index];
+                        }
+#endif
+                    }
+                }
+                // Scan next entry
+                entry = entry->next;
+            }
+        }
+
+        // Not found
+        return this->end();
     }
 
     iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
+        assert(this->buckets() != nullptr);
         hash = this_type::hash(key.c_str(), key.size());
         index = this_type::index_for(hash, this->capacity_);
 
@@ -839,76 +910,6 @@ private:
             // Scan next entry
             before = entry;
             entry = entry->next;
-        }
-
-        // Not found
-        return this->end();
-    }
-
-public:
-    void clear() {
-        // Clear the data only, don't free the table.
-        if (likely(this->table_ != nullptr)) {
-            list_type * table = this->data();
-            for (size_type i = 0; i < this->capacity_; ++i) {
-                list_type & list = table[i];
-                list.clear();
-            }
-        }
-        // Setting status
-        this->size_ = 0;
-        this->used_ = 0;
-    }
-
-    void reserve(size_type new_capacity) {
-        // Recalculate the size of new_capacity.
-        new_capacity = this->calc_capacity(new_capacity);
-        this->reserve_internal(new_capacity);
-    }
-
-    void rehash(size_type new_capacity) {
-        // Recalculate the size of new_capacity.
-        new_capacity = this->calc_capacity(new_capacity);
-        this->rehash_internal(new_capacity);
-    }
-
-    void resize(size_type new_capacity) {
-        this->rehash(new_capacity);
-    }
-
-    void shrink_to(size_type new_capacity) {
-        // Recalculate the size of new_capacity.
-        new_capacity = this->calc_capacity_fast(new_capacity);
-        this->shrink_internal(new_capacity);
-    }
-
-    iterator find(const key_type & key) {
-        hash_type hash = this_type::hash(key.c_str(), key.size());
-        size_type index = this_type::index_for(hash, this->capacity_);
-
-        if (likely(this->table_ != nullptr)) {
-            list_type * table = this->data();
-            list_type & list = table[index];
-            entry_type * entry = list.head();
-            while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
-                if (likely(entry->hash == hash)) {
-                    // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(key.size() == entry->pair.first.size())) {
-#if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
-                            return (iterator)&table[index];
-                        }
-#else
-                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
-                            return (iterator)&table[index];
-                        }
-#endif
-                    }
-                }
-                // Scan next entry
-                entry = entry->next;
-            }
         }
 
         // Not found

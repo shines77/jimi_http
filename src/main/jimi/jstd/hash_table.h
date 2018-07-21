@@ -318,58 +318,7 @@ private:
     void resize_internal(size_type new_buckets) {
         assert(new_buckets > 0);
         assert((new_buckets & (new_buckets - 1)) == 0);
-        rehash_internal(new_buckets);
-    }
-
-    iterator find_internal(const key_type & key, hash_type & hash) {
-        hash = this_type::hash(key.c_str(), key.size());
-        size_type index = this_type::index_for(hash, this->mask_);
-
-        assert(this->table_ != nullptr);
-        node_type * node = (node_type *)this->table_[index];
-        if (likely(node != nullptr)) {
-            // Found, next to check the hash value.
-            if (likely(node->hash == hash)) {
-                // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(key.size() == node->pair.first.size())) {
-#if USE_SSE42_STRING_COMPARE
-                    if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
-                        return (iterator)&this->table_[index];
-                    }
-#else
-                    if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
-                        return (iterator)&this->table_[index];
-                    }
-#endif
-                }
-            }
-        }
-
-        // If first position is not found, search next bucket continue.
-        size_type first_index = index;
-        do {
-            index = this_type::next_index(index, this->mask_);
-            node = (node_type *)this->table_[index];
-            if (likely(node != nullptr)) {
-                if (likely(node->hash == hash)) {
-                    // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(key.size() == node->pair.first.size())) {
-#if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
-                            return (iterator)&this->table_[index];
-                        }
-#else
-                        if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
-                            return (iterator)&this->table_[index];
-                        }
-#endif
-                    }
-                }
-            }
-        } while (likely(index != first_index));
-
-        // Not found
-        return this->end();
+        this->rehash_internal(new_buckets);
     }
 
 public:
@@ -396,11 +345,11 @@ public:
     }
 
     iterator find(const key_type & key) {
-        hash_type hash = this_type::hash(key.c_str(), key.size());
-        size_type index = this_type::index_for(hash, this->mask_);
-
         if (likely(this->table_ != nullptr)) {
-            node_type * node = (node_type *)this->table_[index];
+            hash_type hash = this_type::hash(key.c_str(), key.size());
+            size_type index = this_type::index_for(hash, this->mask_);
+
+            node_type * node = this->table_[index];
             if (likely(node != nullptr)) {
                 // Found, next to check the hash value.
                 if (likely(node->hash == hash)) {
@@ -423,7 +372,7 @@ public:
             size_type first_index = index;
             do {
                 index = this_type::next_index(index, this->mask_);
-                node = (node_type *)this->table_[index];
+                node = this->table_[index];
                 if (likely(node != nullptr)) {
                     if (likely(node->hash == hash)) {
                         // If hash value is equal, then compare the key sizes and the strings.
@@ -442,6 +391,57 @@ public:
                 }
             } while (likely(index != first_index));
         }
+
+        // Not found
+        return this->end();
+    }
+
+    iterator find_internal(const key_type & key, hash_type & hash) {
+        hash = this_type::hash(key.c_str(), key.size());
+        size_type index = this_type::index_for(hash, this->mask_);
+
+        assert(this->table_ != nullptr);
+        node_type * node = this->table_[index];
+        if (likely(node != nullptr)) {
+            // Found, next to check the hash value.
+            if (likely(node->hash == hash)) {
+                // If hash value is equal, then compare the key sizes and the strings.
+                if (likely(key.size() == node->pair.first.size())) {
+#if USE_SSE42_STRING_COMPARE
+                    if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
+                        return (iterator)&this->table_[index];
+                    }
+#else
+                    if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
+                        return (iterator)&this->table_[index];
+                    }
+#endif
+                }
+            }
+        }
+
+        // If first position is not found, search next bucket continue.
+        size_type first_index = index;
+        do {
+            index = this_type::next_index(index, this->mask_);
+            node = this->table_[index];
+            if (likely(node != nullptr)) {
+                if (likely(node->hash == hash)) {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(key.size() == node->pair.first.size())) {
+#if USE_SSE42_STRING_COMPARE
+                        if (likely(StrUtils::is_equal_fast(key, node->pair.first))) {
+                            return (iterator)&this->table_[index];
+                        }
+#else
+                        if (likely(strcmp(key.c_str(), node->pair.first.c_str()) == 0)) {
+                            return (iterator)&this->table_[index];
+                        }
+#endif
+                    }
+                }
+            }
+        } while (likely(index != first_index));
 
         // Not found
         return this->end();

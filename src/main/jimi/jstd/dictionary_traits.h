@@ -8,8 +8,10 @@
 
 #include "jimi/basic/stddef.h"
 #include "jimi/basic/stdint.h"
+#include "jimi/basic/stdsize.h"
 
 #include "jimi/jstd/hash_helper.h"
+#include "jimi/jstd/string_utils.h"
 
 namespace jstd {
 
