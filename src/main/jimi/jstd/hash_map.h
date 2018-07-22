@@ -198,36 +198,49 @@ public:
 
     void erase(entry_type * before) {
         if (likely(before != nullptr)) {
-            entry_type * entry = this->head_;
-            while (likely(entry != nullptr)) {
-                if (likely(entry != before)) {
-                    // It's not before
-                    if (likely(entry->next != nullptr))
-                        entry = entry->next;
-                    else
-                        return;
-                }
-                else {
-                    // Current entry is before
-                    if (likely(entry->next != nullptr)) {
-                        entry_type * target = entry->next;
-                        entry->next = target->next;
-                        delete target;
-                        --(this->size_);
-                    }
-                    else {
-                        // Error: no entry after [before]
-                    }
-                    break;
-                }
+            entry_type * target = before->next;
+            if (likely(target != nullptr)) {
+                before->next = target->next;
+                delete target;
+
+                assert(this->size_ > 0);
+                --(this->size_);
             }
         }
         else {
-            pop_front();
+            entry_type * target = this->head_;
+            if (likely(target != nullptr)) {
+                this->head_ = target->next;
+                delete target;
+
+                assert(this->size_ > 0);
+                --(this->size_);
+            }
         }
     }
 
     void erase_fast(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * target = before->next;
+            assert(target != nullptr);
+            before->next = target->next;
+            delete target;
+
+            assert(this->size_ > 0);
+            --(this->size_);
+        }
+        else {
+            entry_type * target = this->head_;
+            assert(target != nullptr);
+            this->head_ = target->next;
+            delete target;
+
+            assert(this->size_ > 0);
+            --(this->size_);
+        }
+    }
+
+    void erase_slow(entry_type * before) {
         if (likely(before != nullptr)) {
             entry_type * entry = this->head_;
             while (likely(entry != nullptr)) {
@@ -254,7 +267,7 @@ public:
             }
         }
         else {
-            pop_front_fast();
+            pop_front();
         }
     }
 
