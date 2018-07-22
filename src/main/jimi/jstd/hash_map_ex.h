@@ -172,6 +172,38 @@ public:
 
     void erase(entry_type * before) {
         if (likely(before != nullptr)) {
+            entry_type * target = before->next;
+            if (likely(target != nullptr)) {
+                before->next = target->next;
+                delete target;
+            }
+        }
+        else {
+            entry_type * target = this->head_;
+            if (likely(target != nullptr)) {
+                this->head_ = target->next;
+                delete target;
+            }
+        }
+    }
+
+    void erase_fast(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * target = before->next;
+            assert(target != nullptr);
+            before->next = target->next;
+            delete target;
+        }
+        else {
+            entry_type * target = this->head_;
+            assert(target != nullptr);
+            this->head_ = target->next;
+            delete target;
+        }
+    }
+
+    void erase_slow(entry_type * before) {
+        if (likely(before != nullptr)) {
             entry_type * entry = this->head_;
             while (likely(entry != nullptr)) {
                 if (likely(entry != before)) {
@@ -200,50 +232,14 @@ public:
         }
     }
 
-    void erase_fast(entry_type * before) {
-        if (likely(before != nullptr)) {
-            entry_type * entry = this->head_;
-            while (likely(entry != nullptr)) {
-                if (likely(entry != before)) {
-                    // It's not before
-                    if (likely(entry->next != nullptr))
-                        entry = entry->next;
-                    else
-                        return;
-                }
-                else {
-                    // Current entry is before
-                    if (likely(entry->next != nullptr)) {
-                        entry_type * target = entry->next;
-                        entry->next = target->next;
-                        delete target;
-                    }
-                    else {
-                        // Error: no entry after [before]
-                    }
-                    break;
-                }
-            }
-        }
-        else {
-            pop_front_fast();
-        }
-    }
-
     void swap(this_type & right) {
-        if (&right != this) {
+        if (likely(&right != this)) {
             entry_type * head_save = right.head_;
             right.head_ = this->head_;
             this->head_ = head_save;
         }
     }
 };
-
-template <typename Key, typename Value>
-inline void swap(hash_map_ex_list<Key, Value> & lhs,
-                 hash_map_ex_list<Key, Value> & rhs) {
-    lhs.swap(rhs);
-}
 #else
 template <typename Key, typename Value>
 class hash_map_ex_list {
@@ -384,36 +380,49 @@ public:
 
     void erase(entry_type * before) {
         if (likely(before != nullptr)) {
-            entry_type * entry = this->head_;
-            while (likely(entry != nullptr)) {
-                if (likely(entry != before)) {
-                    // It's not before
-                    if (likely(entry->next != nullptr))
-                        entry = entry->next;
-                    else
-                        return;
-                }
-                else {
-                    // Current entry is before
-                    if (likely(entry->next != nullptr)) {
-                        entry_type * target = entry->next;
-                        entry->next = target->next;
-                        delete target;
-                        --(this->size_);
-                    }
-                    else {
-                        // Error: no entry after [before]
-                    }
-                    break;
-                }
+            entry_type * target = before->next;
+            if (likely(target != nullptr)) {
+                before->next = target->next;
+                delete target;
+
+                assert(this->size_ > 0);
+                --(this->size_);
             }
         }
         else {
-            pop_front();
+            entry_type * target = this->head_;
+            if (likely(target != nullptr)) {
+                this->head_ = target->next;
+                delete target;
+
+                assert(this->size_ > 0);
+                --(this->size_);
+            }
         }
     }
 
     void erase_fast(entry_type * before) {
+        if (likely(before != nullptr)) {
+            entry_type * target = before->next;
+            assert(target != nullptr);
+            before->next = target->next;
+            delete target;
+
+            assert(this->size_ > 0);
+            --(this->size_);
+        }
+        else {
+            entry_type * target = this->head_;
+            assert(target != nullptr);
+            this->head_ = target->next;
+            delete target;
+
+            assert(this->size_ > 0);
+            --(this->size_);
+        }
+    }
+
+    void erase_slow(entry_type * before) {
         if (likely(before != nullptr)) {
             entry_type * entry = this->head_;
             while (likely(entry != nullptr)) {
@@ -430,6 +439,8 @@ public:
                         entry_type * target = entry->next;
                         entry->next = target->next;
                         delete target;
+
+                        assert(this->size_ > 0);
                         --(this->size_);
                     }
                     else {
@@ -440,20 +451,28 @@ public:
             }
         }
         else {
-            pop_front_fast();
+            pop_front();
         }
     }
 
-    void swap(const this_type & src) {
-        entry_type * head_save = src.head_;
-        size_type size_save = src.size_;
-        src.head_ = this->head_;
-        src.size_ = this->size_;
-        this->head_ = head_save;
-        this->size_ = size_save;
+    void swap(this_type & right) {
+        if (likely(&right != this)) {
+            entry_type * head_save = right.head_;
+            size_type size_save = right.size_;
+            right.head_ = this->head_;
+            right.size_ = this->size_;
+            this->head_ = head_save;
+            this->size_ = size_save;
+        }
     }
 };
 #endif
+
+template <typename Key, typename Value>
+inline void swap(hash_map_ex_list<Key, Value> & lhs,
+                 hash_map_ex_list<Key, Value> & rhs) {
+    lhs.swap(rhs);
+}
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 class basic_hash_map_ex {
