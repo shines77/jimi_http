@@ -818,12 +818,7 @@ public:
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
                 entry_type * new_entry;
-                if (likely(!freelist_.is_empty())) {
-                    // Pop a free entry from freelist.
-                    new_entry = freelist_.pop_front();
-                    assert(new_entry != nullptr);
-                }
-                else {
+                if (likely(this->freelist_.is_empty())) {
                     if (likely((this->count_ < this->capacity_ && this->size_ < this->capacity_))) {
                         // Get a unused entry.
                         new_entry = &this->entries_[this->count_];
@@ -842,10 +837,16 @@ public:
                         ++(this->count_);
                     }
                 }
+                else {
+                    // Pop a free entry from freelist.
+                    new_entry = this->freelist_.pop_front();
+                    assert(new_entry != nullptr);
+                }
 
                 new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
-                new_entry->pair = std::make_pair(key, value);
+                new_entry->pair.first = key;
+                new_entry->pair.second = value;
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -873,12 +874,7 @@ public:
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
                 entry_type * new_entry;
-                if (likely(!freelist_.is_empty())) {
-                    // Pop a free entry from freelist.
-                    new_entry = freelist_.pop_front();
-                    assert(new_entry != nullptr);
-                }
-                else {
+                if (likely(this->freelist_.is_empty())) {
                     if (likely((this->count_ < this->capacity_ && this->size_ < this->capacity_))) {
                         // Get a unused entry.
                         new_entry = &this->entries_[this->count_];
@@ -897,11 +893,16 @@ public:
                         ++(this->count_);
                     }
                 }
+                else {
+                    // Pop a free entry from freelist.
+                    new_entry = this->freelist_.pop_front();
+                    assert(new_entry != nullptr);
+                }
 
                 new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
-                new_entry->pair = std::make_pair(std::forward<key_type>(key),
-                                                 std::forward<value_type>(value));
+                new_entry->pair.first = std::move(std::forward<key_type>(key));
+                new_entry->pair.second = std::move(std::forward<value_type>(value));
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -955,11 +956,11 @@ public:
 
                 entry->hash = kInvalidHash;
                 entry->next = this->freelist_.head();
-                entry->pair.first.clear();
-                entry->pair.second.clear();
-
                 this->freelist_.set_head(entry);
                 this->freelist_.increase();
+
+                entry->pair.first.clear();
+                entry->pair.second.clear();
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -993,11 +994,11 @@ public:
 
                 entry->hash = kInvalidHash;
                 entry->next = this->freelist_.head();
-                entry->pair.first.clear();
-                entry->pair.second.clear();
-
                 this->freelist_.set_head(entry);
                 this->freelist_.increase();
+
+                entry->pair.first.clear();
+                entry->pair.second.clear();
 
                 assert(this->size_ > 0);
                 --(this->size_);
