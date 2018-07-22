@@ -1167,8 +1167,8 @@ void hashtable_benchmark()
 {
     hashtable_find_benchmark();
 
-    hashtable_rehash_benchmark();
-    hashtable_rehash2_benchmark();
+    //hashtable_rehash_benchmark();
+    //hashtable_rehash2_benchmark();
 
     hashtable_insert_benchmark();
 }

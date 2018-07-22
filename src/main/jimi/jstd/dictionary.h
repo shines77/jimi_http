@@ -818,13 +818,6 @@ public:
             iterator iter = this->find_internal(key, hash, index);
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
-                if (likely(this->size_ >= this->capacity_)) {
-                    // Resize the table
-                    this->resize_internal(this->capacity_ * 2);
-                    // Recalculate the index.
-                    index = this->traits_.index_for(hash, this->mask_);
-                }
-
                 entry_type * new_entry;
                 if (likely(!freelist_.is_empty())) {
                     // Pop a free entry from freelist.
@@ -832,16 +825,23 @@ public:
                     assert(new_entry != nullptr);
                 }
                 else {
-                    if (unlikely((this->count_ >= this->capacity_))) {
+                    if (likely((this->count_ < this->capacity_ && this->size_ < this->capacity_))) {
+                        // Get a unused entry.
+                        new_entry = &this->entries_[this->count_];
+                        assert(new_entry != nullptr);
+                        ++(this->count_);
+                    }
+                    else {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
                         index = this->traits_.index_for(hash, this->mask_);
+
+                        // Get a unused entry.
+                        new_entry = &this->entries_[this->count_];
+                        assert(new_entry != nullptr);
+                        ++(this->count_);
                     }
-                    // Get a unused entry.
-                    new_entry = &this->entries_[this->count_];
-                    assert(new_entry != nullptr);
-                    ++(this->count_);
                 }
 
                 new_entry->hash = hash;
@@ -860,6 +860,9 @@ public:
                 // Update the existed key's value.
                 assert(iter != nullptr);
                 iter->pair.second = value;
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
             }
         }
     }
@@ -871,13 +874,6 @@ public:
             iterator iter = this->find_internal(std::forward<key_type>(key), hash, index);
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
-                if (likely(this->size_ >= this->capacity_)) {
-                    // Resize the table
-                    this->resize_internal(this->capacity_ * 2);
-                    // Recalculate the index.
-                    index = this->traits_.index_for(hash, this->mask_);
-                }
-
                 entry_type * new_entry;
                 if (likely(!freelist_.is_empty())) {
                     // Pop a free entry from freelist.
@@ -885,16 +881,23 @@ public:
                     assert(new_entry != nullptr);
                 }
                 else {
-                    if (unlikely((this->count_ >= this->capacity_))) {
+                    if (likely((this->count_ < this->capacity_ && this->size_ < this->capacity_))) {
+                        // Get a unused entry.
+                        new_entry = &this->entries_[this->count_];
+                        assert(new_entry != nullptr);
+                        ++(this->count_);
+                    }
+                    else {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
                         index = this->traits_.index_for(hash, this->mask_);
+
+                        // Get a unused entry.
+                        new_entry = &this->entries_[this->count_];
+                        assert(new_entry != nullptr);
+                        ++(this->count_);
                     }
-                    // Get a unused entry.
-                    new_entry = &this->entries_[this->count_];
-                    assert(new_entry != nullptr);
-                    ++(this->count_);
                 }
 
                 new_entry->hash = hash;
@@ -913,6 +916,9 @@ public:
                 // Update the existed key's value.
                 assert(iter != nullptr);
                 iter->pair.second = std::move(std::forward<value_type>(value));
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
             }
         }
     }
@@ -952,7 +958,7 @@ public:
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
-                        if (before != nullptr)
+                        if (likely(before != nullptr))
                             before->next = entry->next;
                         else
                             this->buckets_[index] = entry->next;
@@ -1002,7 +1008,7 @@ public:
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(this->traits_.key_is_equal(std::forward<key_type>(key),
                                                           entry->pair.first))) {
-                        if (before != nullptr)
+                        if (likely(before != nullptr))
                             before->next = entry->next;
                         else
                             this->buckets_[index] = entry->next;
