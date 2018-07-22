@@ -883,7 +883,7 @@ public:
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
-                iter->pair.second = std::move(std::forward<value_type>(value));
+                iter->pair.second = std::forward<value_type>(value);
             }
         }
     }
