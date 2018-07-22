@@ -816,6 +816,16 @@ void hashtable_find_benchmark()
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
 #endif
 #endif // USE_JSTD_HASH_MAP_EX
+
+#if USE_JSTD_DICTIONARY
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if USE_SHA1_HASH
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_find_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
 }
 
 template <typename AlgorithmTy>
@@ -1142,6 +1152,7 @@ void hashtable_insert_benchmark()
 #endif
 #endif // USE_JSTD_HASH_MAP_EX
 
+#if USE_JSTD_DICTIONARY
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
@@ -1149,6 +1160,7 @@ void hashtable_insert_benchmark()
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
 #endif
+#endif // USE_JSTD_DICTIONARY
 }
 
 void hashtable_benchmark()

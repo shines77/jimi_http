@@ -17,6 +17,7 @@
 #include "jimi/jstd/dictionary_traits.h"
 #include "jimi/support/Power2.h"
 
+#define USE_JSTD_DICTIONARY         1
 #define SUPPORT_DICTIONARY_VERSION  0
 
 namespace jstd {
