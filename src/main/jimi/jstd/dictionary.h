@@ -732,7 +732,7 @@ public:
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
                 // Found a entry, next to check the hash value.
-                if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                if (likely(entry->hash != hash)) {
                     // Scan next entry
                     entry = entry->next;
                 }
@@ -761,7 +761,7 @@ public:
         entry_type * entry = this->buckets_[index];
         while (likely(entry != nullptr)) {
             // Found a entry, next to check the hash value.
-            if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+            if (likely(entry->hash != hash)) {
                 // Scan next entry
                 entry = entry->next;
             }
@@ -787,7 +787,7 @@ public:
         entry_type * entry = this->buckets_[index];
         while (likely(entry != nullptr)) {
             // Found entry, next to check the hash value.
-            if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+            if (likely(entry->hash != hash)) {
                 // Scan next entry
                 before = entry;
                 entry = entry->next;
@@ -819,23 +819,18 @@ public:
                 // Insert the new key.
                 entry_type * new_entry;
                 if (likely(this->freelist_.is_empty())) {
-                    if (likely((this->count_ < this->capacity_ && this->size_ < this->capacity_))) {
-                        // Get a unused entry.
-                        new_entry = &this->entries_[this->count_];
-                        assert(new_entry != nullptr);
-                        ++(this->count_);
-                    }
-                    else {
+                    if (likely((this->count_ >= this->capacity_ ||
+                                this->size_ >= this->capacity_))) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
                         index = this->traits_.index_for(hash, this->mask_);
-
-                        // Get a unused entry.
-                        new_entry = &this->entries_[this->count_];
-                        assert(new_entry != nullptr);
-                        ++(this->count_);
                     }
+
+                    // Get a unused entry.
+                    new_entry = &this->entries_[this->count_];
+                    assert(new_entry != nullptr);
+                    ++(this->count_);
                 }
                 else {
                     // Pop a free entry from freelist.
@@ -875,23 +870,18 @@ public:
                 // Insert the new key.
                 entry_type * new_entry;
                 if (likely(this->freelist_.is_empty())) {
-                    if (likely((this->count_ < this->capacity_ && this->size_ < this->capacity_))) {
-                        // Get a unused entry.
-                        new_entry = &this->entries_[this->count_];
-                        assert(new_entry != nullptr);
-                        ++(this->count_);
-                    }
-                    else {
+                    if (likely((this->count_ >= this->capacity_ ||
+                                this->size_ >= this->capacity_))) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
                         index = this->traits_.index_for(hash, this->mask_);
-
-                        // Get a unused entry.
-                        new_entry = &this->entries_[this->count_];
-                        assert(new_entry != nullptr);
-                        ++(this->count_);
                     }
+
+                    // Get a unused entry.
+                    new_entry = &this->entries_[this->count_];
+                    assert(new_entry != nullptr);
+                    ++(this->count_);
                 }
                 else {
                     // Pop a free entry from freelist.
@@ -901,8 +891,8 @@ public:
 
                 new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
-                new_entry->pair.first = std::move(std::forward<key_type>(key));
-                new_entry->pair.second = std::move(std::forward<value_type>(value));
+                new_entry->pair.first = std::forward<key_type>(key);
+                new_entry->pair.second = std::forward<value_type>(value);
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -914,7 +904,7 @@ public:
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
-                iter->pair.second = std::move(std::forward<value_type>(value));
+                iter->pair.second = std::forward<value_type>(value);
 #if SUPPORT_DICTIONARY_VERSION
                 ++(this->version_);
 #endif
@@ -938,7 +928,7 @@ public:
         this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
     }
 
-#if 1
+#if 0
     bool erase(const key_type & key) {
         if (likely(this->buckets_ != nullptr)) {
             assert(this->entries() != nullptr);
@@ -956,11 +946,11 @@ public:
 
                 entry->hash = kInvalidHash;
                 entry->next = this->freelist_.head();
-                this->freelist_.set_head(entry);
-                this->freelist_.increase();
-
                 entry->pair.first.clear();
                 entry->pair.second.clear();
+
+                this->freelist_.set_head(entry);
+                this->freelist_.increase();
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -994,11 +984,11 @@ public:
 
                 entry->hash = kInvalidHash;
                 entry->next = this->freelist_.head();
-                this->freelist_.set_head(entry);
-                this->freelist_.increase();
-
                 entry->pair.first.clear();
                 entry->pair.second.clear();
+
+                this->freelist_.set_head(entry);
+                this->freelist_.increase();
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -1026,7 +1016,7 @@ public:
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
                 // Found a entry, next to check the hash value.
-                if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                if (likely(entry->hash != hash)) {
                     // Scan next entry
                     before = entry;
                     entry = entry->next;
@@ -1075,7 +1065,7 @@ public:
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
                 // Found a entry, next to check the hash value.
-                if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                if (likely(entry->hash != hash)) {
                     // Scan next entry
                     before = entry;
                     entry = entry->next;
