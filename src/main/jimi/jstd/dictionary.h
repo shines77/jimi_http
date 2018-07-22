@@ -17,6 +17,8 @@
 #include "jimi/jstd/dictionary_traits.h"
 #include "jimi/support/Power2.h"
 
+#define SUPPORT_DICTIONARY_VERSION  0
+
 namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C,
@@ -95,7 +97,7 @@ public:
         }
 
         bool is_valid() const { return (this->head_ != nullptr); }
-        bool is_empty() const { return (this->size_ != 0); }
+        bool is_empty() const { return (this->size_ == 0); }
 
         void clear() {
             this->head_ = nullptr;
@@ -107,8 +109,17 @@ public:
             this->size_ = 0;
         }
 
+        void increase() {
+            ++(this->size_);
+        }
+
+        void decrease() {
+            --(this->size_);
+        }
+
         void push_first(entry_type * entry) {
             assert(entry != nullptr);
+            assert(entry->next == nullptr);
             this->head_ = entry;
             ++(this->size_);
         }
@@ -196,7 +207,7 @@ public:
         size_type data() const { return this->list_; }
 
         bool is_valid() const { return (this->list_ != nullptr); }
-        bool is_empty() const { return (this->size_ != 0); }
+        bool is_empty() const { return (this->size_ == 0); }
         bool is_overflow() const { return (this->size_ >= this->capacity_); }
 
     private:
@@ -356,6 +367,9 @@ private:
     list_type       freelist_;
     size_type       threshold_;
     float           loadFactor_;
+#if SUPPORT_DICTIONARY_VERSION
+    size_type       version_;
+#endif
     traits_type     traits_;
 
     // Default initial capacity is 64.
@@ -366,14 +380,21 @@ private:
     static const float kDefaultLoadFactor;
     // The threshold of treeify to red-black tree.
     static const size_type kTreeifyThreshold = 8;
+    // The invalid hash value.
+    static const hash_type kInvalidHash = static_cast<hash_type>(-1);
 
 public:
     basic_dictionary(size_type initialCapacity = kDefaultInitialCapacity,
                      float loadFactor = kDefaultLoadFactor)
         : buckets_(nullptr), entries_(nullptr), size_(0), count_(0), mask_(0),
-          capacity_(0), threshold_(0), loadFactor_(kDefaultLoadFactor) {
+          capacity_(0), threshold_(0), loadFactor_(kDefaultLoadFactor)
+#if SUPPORT_DICTIONARY_VERSION
+          , version_(0)
+#endif
+    {
         this->initialize(initialCapacity, loadFactor);
     }
+
     ~basic_dictionary() {
         this->destroy();
     }
@@ -405,6 +426,14 @@ public:
     bool is_valid() const { return (this->buckets_ != nullptr); }
     bool is_empty() const { return (this->size() == 0); }
 
+    size_type version() const {
+#if SUPPORT_DICTIONARY_VERSION
+        return this->version_;
+#else
+        return 0;
+#endif
+    }
+
     void clear() {
         if (likely(this->buckets_ != nullptr)) {
             // Initialize the buckets's data.
@@ -412,6 +441,7 @@ public:
         }
         // Setting status
         this->size_ = 0;
+        this->count_ = 0;
     }
 
 private:
@@ -444,7 +474,8 @@ private:
             entry_type * new_entries = new entry_type[new_capacity];
             if (likely(new_entries != nullptr)) {
                 // Linked all new entries to the free list.
-                fill_freelist(this->freelist_, new_entries, new_capacity);
+                //fill_freelist(this->freelist_, new_entries, new_capacity);
+
                 // Initialize status
                 this->entries_ = new_entries;
                 this->size_ = 0;
@@ -455,6 +486,10 @@ private:
                 assert(loadFactor > 0.0f);
                 this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
                 this->loadFactor_ = loadFactor;
+
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
             }
         }
     }
@@ -504,7 +539,7 @@ private:
         assert(new_buckets != nullptr);
         assert(new_freelist != nullptr);
         assert(old_entry != nullptr);
-        assert(new_capacity > 1);
+        assert(new_mask > 0);
 
         do {
             hash_type hash = old_entry->hash;
@@ -538,7 +573,7 @@ private:
                 if (likely(new_entries != nullptr)) {
                     // Linked all new entries to the new free list.
                     free_list new_freelist;
-                    fill_freelist(new_freelist, new_entries, new_capacity);
+                    //fill_freelist(new_freelist, new_entries, new_capacity);
 
                     // Recalculate the bucket of all keys.
                     if (likely(this->buckets_ != nullptr)) {
@@ -581,6 +616,9 @@ private:
 
                     assert(this->loadFactor_ > 0.0f);
                     this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
+#if SUPPORT_DICTIONARY_VERSION
+                    ++(this->version_);
+#endif
                 }
             }
         }
@@ -601,7 +639,7 @@ private:
                 if (likely(new_entries != nullptr)) {
                     // Linked all new entries to the new free list.
                     free_list new_freelist;
-                    fill_freelist(new_freelist, new_entries, new_capacity);
+                    //fill_freelist(new_freelist, new_entries, new_capacity);
 
                     // Recalculate the bucket of all keys.
                     if (likely(this->buckets_ != nullptr)) {
@@ -642,6 +680,9 @@ private:
 
                     assert(this->loadFactor_ > 0.0f);
                     this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
+#if SUPPORT_DICTIONARY_VERSION
+                    ++(this->version_);
+#endif
                 }
             }
         }
@@ -682,21 +723,23 @@ public:
 
     iterator find(const key_type & key) {
         if (likely(this->buckets() != nullptr)) {
-            hash_type hash = traits_.hash_code(key);
-            index_type index = traits_.index_for(hash, this->mask_);
+            hash_type hash = this->traits_.hash_code(key);
+            index_type index = this->traits_.index_for(hash, this->mask_);
 
             assert(this->entries() != nullptr);
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
                 // Found entry, next to check the hash value.
-                if (likely(entry->hash == hash)) {
+                if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                    // Scan next entry
+                    entry = entry->next;
+                }
+                else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(traits_.key_is_equal(key, entry->pair.first))) {
+                    if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
                         return (iterator)entry;
                     }
                 }
-                // Scan next entry
-                entry = entry->next;
             }
 
             // Not found
@@ -707,23 +750,54 @@ public:
         return nullptr;
     }
 
-    iterator find_internal(const key_type & key, hash_type & hash, index_type & index) {
-        hash = traits_.hash_code(key);
-        index = traits_.index_for(hash, this->mask_);
+    inline iterator find_internal(const key_type & key, hash_type & hash, index_type & index) {
+        hash = this->traits_.hash_code(key);
+        index = this->traits_.index_for(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
         entry_type * entry = this->buckets_[index];
         while (likely(entry != nullptr)) {
             // Found entry, next to check the hash value.
-            if (likely(entry->hash == hash)) {
+            if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                // Scan next entry
+                entry = entry->next;
+            }
+            else {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(traits_.key_is_equal(key, entry->pair.first))) {
+                if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
                     return (iterator)entry;
                 }
             }
-            // Scan next entry
-            entry = entry->next;
+        }
+
+        // Not found
+        return this->unsafe_end();
+    }
+
+    inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
+        hash = this->traits_.hash_code(key);
+        index = this->traits_.index_for(hash, this->mask_);
+
+        assert(this->buckets() != nullptr);
+        assert(this->entries() != nullptr);
+        entry_type * before = nullptr;
+        entry_type * entry = this->buckets_[index];
+        while (likely(entry != nullptr)) {
+            // Found entry, next to check the hash value.
+            if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                // Scan next entry
+                before = entry;
+                entry = entry->next;
+            }
+            else {
+                // If hash value is equal, then compare the key sizes and the strings.
+                if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
+                    before_out = before;
+                    return (iterator)entry;
+                }
+            }
+
         }
 
         // Not found
@@ -746,23 +820,25 @@ public:
                     // Resize the table
                     this->resize_internal(this->capacity_ * 2);
                     // Recalculate the index.
-                    index = traits_.index_for(hash, this->mask_);
+                    index = this->traits_.index_for(hash, this->mask_);
                 }
 
                 entry_type * new_entry;
                 if (likely(!freelist_.is_empty())) {
                     // Pop a free entry from freelist.
                     new_entry = freelist_.pop_front();
+                    assert(new_entry != nullptr);
                 }
                 else {
                     if (unlikely((this->count_ >= this->capacity_))) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = traits_.index_for(hash, this->mask_);
+                        index = this->traits_.index_for(hash, this->mask_);
                     }
                     // Get a unused entry.
-                    new_entry = this->buckets_[this->count_];
+                    new_entry = &this->entries_[this->count_];
+                    assert(new_entry != nullptr);
                     ++(this->count_);
                 }
 
@@ -773,6 +849,10 @@ public:
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
+
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
             }
             else {
                 // Update the existed key's value.
@@ -793,23 +873,25 @@ public:
                     // Resize the table
                     this->resize_internal(this->capacity_ * 2);
                     // Recalculate the index.
-                    index = traits_.index_for(hash, this->mask_);
+                    index = this->traits_.index_for(hash, this->mask_);
                 }
 
                 entry_type * new_entry;
                 if (likely(!freelist_.is_empty())) {
                     // Pop a free entry from freelist.
                     new_entry = freelist_.pop_front();
+                    assert(new_entry != nullptr);
                 }
                 else {
                     if (unlikely((this->count_ >= this->capacity_))) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = traits_.index_for(hash, this->mask_);
+                        index = this->traits_.index_for(hash, this->mask_);
                     }
                     // Get a unused entry.
-                    new_entry = this->buckets_[this->count_];
+                    new_entry = &this->entries_[this->count_];
+                    assert(new_entry != nullptr);
                     ++(this->count_);
                 }
 
@@ -820,6 +902,10 @@ public:
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
+
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
             }
             else {
                 // Update the existed key's value.
@@ -845,16 +931,103 @@ public:
         this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
     }
 
-    void erase(const key_type & key) {
+    bool erase(const key_type & key) {
         if (likely(this->buckets_ != nullptr)) {
-            //
+            hash_type hash = this->traits_.hash_code(key);
+            size_type index = this->traits_.index_for(hash, this->mask_);
+
+            assert(this->buckets() != nullptr);
+            assert(this->entries() != nullptr);
+            entry_type * before = nullptr;
+            entry_type * entry = this->buckets_[index];
+            while (likely(entry != nullptr)) {
+                // Found entry, next to check the hash value.
+                if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                    // Scan next entry
+                    before = entry;
+                    entry = entry->next;
+                }
+                else {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
+                        if (before != nullptr)
+                            before->next = entry->next;
+                        else
+                            this->buckets_[index] = entry->next;
+
+                        entry->hash = kInvalidHash;
+                        entry->next = this->freelist_.head();
+                        entry->pair.first.clear();
+                        entry->pair.second.clear();
+
+                        this->freelist_.set_head(entry);
+                        this->freelist_.increase();
+
+                        assert(this->size_ > 0);
+                        --(this->size_);
+
+#if SUPPORT_DICTIONARY_VERSION
+                        ++(this->version_);
+#endif
+                        // Has found the key.
+                        return true;
+                    }
+                }
+            }
         }
+
+        // Not found the key.
+        return false;
     }
 
-    void erase(key_type && key) {
+    bool erase(key_type && key) {
         if (likely(this->buckets_ != nullptr)) {
-            //
+            hash_type hash = this->traits_.hash_code(std::forward<key_type>(key));
+            size_type index = this->traits_.index_for(hash, this->mask_);
+
+            assert(this->buckets() != nullptr);
+            assert(this->entries() != nullptr);
+            entry_type * before = nullptr;
+            entry_type * entry = this->buckets_[index];
+            while (likely(entry != nullptr)) {
+                // Found entry, next to check the hash value.
+                if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
+                    // Scan next entry
+                    before = entry;
+                    entry = entry->next;
+                }
+                else {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(this->traits_.key_is_equal(std::forward<key_type>(key),
+                                                          entry->pair.first))) {
+                        if (before != nullptr)
+                            before->next = entry->next;
+                        else
+                            this->buckets_[index] = entry->next;
+
+                        entry->hash = kInvalidHash;
+                        entry->next = this->freelist_.head();
+                        entry->pair.first.clear();
+                        entry->pair.second.clear();
+
+                        this->freelist_.set_head(entry);
+                        this->freelist_.increase();
+
+                        assert(this->size_ > 0);
+                        --(this->size_);
+
+#if SUPPORT_DICTIONARY_VERSION
+                        ++(this->version_);
+#endif
+                        // Has found the key.
+                        return true;
+                    }
+                }
+            }
         }
+
+        // Not found the key.
+        return false;
     }
 
     static const char * name() {

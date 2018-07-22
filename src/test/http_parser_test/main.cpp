@@ -1159,10 +1159,6 @@ void hashtable_benchmark()
     hashtable_rehash2_benchmark();
 
     hashtable_insert_benchmark();
-
-    jstd::dictionary<std::string, std::string> dict(128);
-    dict.contains("test");
-    dict.dump();
 }
 
 static uint32_t s_bitmap[65536 / 32 / 2 + 1];

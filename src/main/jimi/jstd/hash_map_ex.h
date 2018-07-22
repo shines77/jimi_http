@@ -641,7 +641,7 @@ private:
                        list_type * old_list) {
         assert(new_table != nullptr);
         assert(old_list != nullptr);
-        assert(new_capacity > 1);
+        assert(new_capacity > 0);
 
         entry_type * old_entry = old_list->head();
         assert(old_entry != nullptr);
@@ -853,8 +853,7 @@ public:
         return this->end();
     }
 
-    iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
-        assert(this->buckets() != nullptr);
+    inline iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
         hash = this_type::hash(key.c_str(), key.size());
         index = this_type::index_for(hash, this->capacity_);
 
@@ -887,7 +886,7 @@ public:
         return this->end();
     }
 
-    iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
+    inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
         hash_type hash = this_type::hash(key.c_str(), key.size());
         index = this_type::index_for(hash, this->capacity_);
 

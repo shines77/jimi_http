@@ -15,6 +15,7 @@
 namespace jstd {
 
 enum hash_mode_t {
+    Hash_UserDefine,
     Hash_CRC32C,
     Hash_Time31,
     Hash_Time31Std,
@@ -23,10 +24,31 @@ enum hash_mode_t {
     Hash_Last
 };
 
-template <std::size_t HashFunc = Hash_CRC32C>
+template <std::size_t HashFunc = Hash_UserDefine>
 struct hash_helper {
     static uint32_t getHashCode(const char * data, size_t length) {
+        return TiStore::hash::Times31_std(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_CRC32C> {
+    static uint32_t getHashCode(const char * data, size_t length) {
         return jimi::crc32c_x64(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_Time31> {
+    static uint32_t getHashCode(const char * data, size_t length) {
+        return TiStore::hash::Times31(data, length);
+    }
+};
+
+template <>
+struct hash_helper<Hash_Time31Std> {
+    static uint32_t getHashCode(const char * data, size_t length) {
+        return TiStore::hash::Times31_std(data, length);
     }
 };
 
@@ -43,20 +65,6 @@ struct hash_helper<Hash_SHA1> {
         //alignas(16) uint32_t sha1_state[5];
         //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
         return jimi::sha1_x86(jimi::s_sha1_state, data, length);
-    }
-};
-
-template <>
-struct hash_helper<Hash_Time31> {
-    static uint32_t getHashCode(const char * data, size_t length) {
-        return TiStore::hash::Times31(data, length);
-    }
-};
-
-template <>
-struct hash_helper<Hash_Time31Std> {
-    static uint32_t getHashCode(const char * data, size_t length) {
-        return TiStore::hash::Times31_std(data, length);
     }
 };
 
