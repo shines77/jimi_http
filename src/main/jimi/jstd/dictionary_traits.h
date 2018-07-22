@@ -21,7 +21,7 @@ struct dictionary_traits {
     typedef Value                       value_type;
     typedef std::size_t                 size_type;
     typedef std::uint32_t               hash_type;
-    typedef std::uint32_t               index_type;
+    typedef std::size_t                 index_type;
     typedef dictionary_traits<Key, Value, HashFunc>
                                         this_type;
 
@@ -38,7 +38,7 @@ struct dictionary_traits {
 
     index_type next_index(index_type index, size_type capacity_mask) const {
         ++index;
-        return this->index_for((hash_type)index, capacity_mask);
+        return (index_type)((size_type)index & capacity_mask);
     }
 
     bool key_is_equal(const key_type & key1, const key_type & key2) const {
