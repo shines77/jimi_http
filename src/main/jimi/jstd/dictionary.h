@@ -799,7 +799,6 @@ public:
                     return (iterator)entry;
                 }
             }
-
         }
 
         // Not found
@@ -846,8 +845,7 @@ public:
 
                 new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
-                new_entry->pair.first = key;
-                new_entry->pair.second = value;
+                new_entry->pair = std::make_pair(key, value);
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -902,8 +900,8 @@ public:
 
                 new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
-                new_entry->pair.first = std::forward<key_type>(key);
-                new_entry->pair.second = std::forward<value_type>(value);
+                new_entry->pair = std::make_pair(std::forward<key_type>(key),
+                                                 std::forward<value_type>(value));
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -939,6 +937,83 @@ public:
         this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
     }
 
+#if 1
+    bool erase(const key_type & key) {
+        if (likely(this->buckets_ != nullptr)) {
+            assert(this->entries() != nullptr);
+            entry_type * before;
+            size_type index;
+            iterator iter = this->find_before(key, before, index);
+            if (likely(iter != this->unsafe_end())) {
+                entry_type * entry = (entry_type *)iter;
+                assert(entry != nullptr);
+
+                if (likely(before != nullptr))
+                    before->next = entry->next;
+                else
+                    this->buckets_[index] = entry->next;
+
+                entry->hash = kInvalidHash;
+                entry->next = this->freelist_.head();
+                entry->pair.first.clear();
+                entry->pair.second.clear();
+
+                this->freelist_.set_head(entry);
+                this->freelist_.increase();
+
+                assert(this->size_ > 0);
+                --(this->size_);
+
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
+                // Has found the key.
+                return true;
+            }
+        }
+
+        // Not found the key.
+        return false;
+    }
+
+    bool erase(key_type && key) {
+        if (likely(this->buckets_ != nullptr)) {
+            assert(this->entries() != nullptr);
+            entry_type * before;
+            size_type index;
+            iterator iter = this->find_before(std::forward<key_type>(key), before, index);
+            if (likely(iter != this->unsafe_end())) {
+                entry_type * entry = (entry_type *)iter;
+                assert(entry != nullptr);
+
+                if (likely(before != nullptr))
+                    before->next = entry->next;
+                else
+                    this->buckets_[index] = entry->next;
+
+                entry->hash = kInvalidHash;
+                entry->next = this->freelist_.head();
+                entry->pair.first.clear();
+                entry->pair.second.clear();
+
+                this->freelist_.set_head(entry);
+                this->freelist_.increase();
+
+                assert(this->size_ > 0);
+                --(this->size_);
+
+#if SUPPORT_DICTIONARY_VERSION
+                ++(this->version_);
+#endif
+                // Has found the key.
+                return true;
+            }
+        }
+
+        // Not found the key.
+        return false;
+    }
+#else
     bool erase(const key_type & key) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->traits_.hash_code(key);
@@ -1037,6 +1112,7 @@ public:
         // Not found the key.
         return false;
     }
+#endif
 
     static const char * name() {
         switch (HashFunc) {
