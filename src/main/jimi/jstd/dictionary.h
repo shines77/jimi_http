@@ -777,7 +777,7 @@ public:
     }
 
     inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
-        hash = this->traits_.hash_code(key);
+        hash_type hash = this->traits_.hash_code(key);
         index = this->traits_.index_for(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
