@@ -18,9 +18,7 @@
 
 #include "jimi/support/Power2.h"
 
-#ifndef USE_JSTD_HASH_MAP_EX
 #define USE_JSTD_HASH_MAP_EX        1
-#endif
 
 #define USE_SSE42_STRING_COMPARE    1
 
@@ -564,7 +562,6 @@ private:
 #endif
     }
 
-#if USE_JSTD_HASH_MAP_EX
     inline size_type calc_capacity(size_type new_capacity) {
         // If new_capacity is less than half of the current hash table size,
         // then double the hash table size.
@@ -829,7 +826,7 @@ public:
             list_type & list = table[index];
             entry_type * entry = list.head();
             while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
+                // Found a entry, next to check the hash value.
                 if (likely(entry->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(key.size() == entry->pair.first.size())) {
@@ -863,7 +860,7 @@ public:
 
         entry_type * entry = list.head();
         while (likely(entry != nullptr)) {
-            // Found entry, next to check the hash value.
+            // Found a entry, next to check the hash value.
             if (likely(entry->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(key.size() == entry->pair.first.size())) {
@@ -897,7 +894,7 @@ public:
         entry_type * before = nullptr;
         entry_type * entry = list.head();
         while (likely(entry != nullptr)) {
-            // Found entry, next to check the hash value.
+            // Found a entry, next to check the hash value.
             if (likely(entry->hash == hash)) {
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(key.size() == entry->pair.first.size())) {
@@ -1076,7 +1073,6 @@ public:
             }
         }
     }
-#endif // USE_JSTD_HASH_MAP_EX
 
     static const char * name() {
         switch (HashFunc) {

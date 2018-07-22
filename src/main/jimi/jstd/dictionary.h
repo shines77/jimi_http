@@ -18,6 +18,7 @@
 #include "jimi/support/Power2.h"
 
 #define USE_JSTD_DICTIONARY         1
+
 #define SUPPORT_DICTIONARY_VERSION  0
 
 namespace jstd {
@@ -730,7 +731,7 @@ public:
             assert(this->entries() != nullptr);
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
+                // Found a entry, next to check the hash value.
                 if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
                     // Scan next entry
                     entry = entry->next;
@@ -759,7 +760,7 @@ public:
         assert(this->entries() != nullptr);
         entry_type * entry = this->buckets_[index];
         while (likely(entry != nullptr)) {
-            // Found entry, next to check the hash value.
+            // Found a entry, next to check the hash value.
             if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
                 // Scan next entry
                 entry = entry->next;
@@ -942,7 +943,7 @@ public:
             entry_type * before = nullptr;
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
+                // Found a entry, next to check the hash value.
                 if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
                     // Scan next entry
                     before = entry;
@@ -991,7 +992,7 @@ public:
             entry_type * before = nullptr;
             entry_type * entry = this->buckets_[index];
             while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
+                // Found a entry, next to check the hash value.
                 if (likely(entry->hash != hash || entry->hash == kInvalidHash)) {
                     // Scan next entry
                     before = entry;

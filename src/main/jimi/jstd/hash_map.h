@@ -703,7 +703,7 @@ public:
             if (likely(list != nullptr)) {
                 entry_type * entry = list->head();
                 while (likely(entry != nullptr)) {
-                    // Found entry, next to check the hash value.
+                    // Found a entry, next to check the hash value.
                     if (likely(entry->hash == hash)) {
                         // If hash value is equal, then compare the key sizes and the strings.
                         if (likely(key.size() == entry->pair.first.size())) {
@@ -737,7 +737,7 @@ public:
         if (likely(list != nullptr)) {
             entry_type * entry = list->head();
             while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
+                // Found a entry, next to check the hash value.
                 if (likely(entry->hash == hash)) {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(key.size() == entry->pair.first.size())) {
