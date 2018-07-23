@@ -444,6 +444,7 @@ public:
         // Setting status
         this->size_ = 0;
         this->count_ = 0;
+        this->freelist_.clear();
     }
 
 private:
@@ -607,14 +608,14 @@ private:
                         delete[] this->buckets_;
                     }
 
-                    this->freelist_ = new_freelist;
-
                     // Setting status
                     this->buckets_ = new_buckets;
                     this->entries_ = new_entries;
                     this->count_ = 0;
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
+
+                    this->freelist_.swap(new_freelist);
 
                     assert(this->loadFactor_ > 0.0f);
                     this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
@@ -838,8 +839,8 @@ public:
                     assert(new_entry != nullptr);
                 }
 
-                new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
+                new_entry->hash = hash;
                 new_entry->pair.first = key;
                 new_entry->pair.second = value;
 
@@ -889,10 +890,10 @@ public:
                     assert(new_entry != nullptr);
                 }
 
-                new_entry->hash = hash;
                 new_entry->next = this->buckets_[index];
-                new_entry->pair.first = std::forward<key_type>(key);
-                new_entry->pair.second = std::forward<value_type>(value);
+                new_entry->hash = hash;
+                new_entry->pair.first.swap(std::forward<key_type>(key));
+                new_entry->pair.second.swap(std::forward<value_type>(value));
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -904,7 +905,7 @@ public:
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
-                iter->pair.second = std::forward<value_type>(value);
+                iter->pair.second.swap(std::forward<value_type>(value));
 #if SUPPORT_DICTIONARY_VERSION
                 ++(this->version_);
 #endif
@@ -944,8 +945,8 @@ public:
                 else
                     this->buckets_[index] = entry->next;
 
-                entry->hash = kInvalidHash;
                 entry->next = this->freelist_.head();
+                entry->hash = kInvalidHash;
                 entry->pair.first.clear();
                 entry->pair.second.clear();
 
@@ -982,8 +983,8 @@ public:
                 else
                     this->buckets_[index] = entry->next;
 
-                entry->hash = kInvalidHash;
                 entry->next = this->freelist_.head();
+                entry->hash = kInvalidHash;
                 entry->pair.first.clear();
                 entry->pair.second.clear();
 
@@ -1029,8 +1030,8 @@ public:
                         else
                             this->buckets_[index] = entry->next;
 
-                        entry->hash = kInvalidHash;
                         entry->next = this->freelist_.head();
+                        entry->hash = kInvalidHash;
                         entry->pair.first.clear();
                         entry->pair.second.clear();
 
@@ -1079,8 +1080,8 @@ public:
                         else
                             this->buckets_[index] = entry->next;
 
-                        entry->hash = kInvalidHash;
                         entry->next = this->freelist_.head();
+                        entry->hash = kInvalidHash;
                         entry->pair.first.clear();
                         entry->pair.second.clear();
 
