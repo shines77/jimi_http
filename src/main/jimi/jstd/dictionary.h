@@ -892,8 +892,8 @@ public:
 
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
-                new_entry->pair.first.swap(std::forward<key_type>(key));
-                new_entry->pair.second.swap(std::forward<value_type>(value));
+                new_entry->pair.first.swap(key);
+                new_entry->pair.second.swap(value);
 
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
@@ -905,7 +905,7 @@ public:
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
-                iter->pair.second.swap(std::forward<value_type>(value));
+                iter->pair.second.swap(value);
 #if SUPPORT_DICTIONARY_VERSION
                 ++(this->version_);
 #endif
