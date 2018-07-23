@@ -583,15 +583,15 @@ public:
     static const char * name() {
         switch (HashFunc) {
         case Hash_CRC32C:
-            return "jstd::hash_table<std::string, std::string>";
+            return "jstd::hash_table<K, V>   ";
         case Hash_Time31:
-            return "jstd::hash_table_v1<std::string, std::string>";
+            return "jstd::hash_table_v1<K, V>";
         case Hash_Time31Std:
-            return "jstd::hash_table_v2<std::string, std::string>";
+            return "jstd::hash_table_v2<K, V>";
         case Hash_SHA1_MSG2:
-            return "jstd::hash_table_v3<std::string, std::string>";
+            return "jstd::hash_table_v3<K, V>";
         case Hash_SHA1:
-            return "jstd::hash_table_v4<std::string, std::string>";
+            return "jstd::hash_table_v4<K, V>";
         default:
             return "Unknown class name";
         }
