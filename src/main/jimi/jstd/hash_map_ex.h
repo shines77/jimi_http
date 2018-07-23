@@ -1096,7 +1096,7 @@ public:
     static const char * name() {
         switch (HashFunc) {
         case Hash_CRC32C:
-            return "jstd::hash_map_ex<K, V>   ";
+            return "jstd::hash_map_ex<K, V>";
         case Hash_Time31:
             return "jstd::hash_map_ex_v1<K, V>";
         case Hash_Time31Std:

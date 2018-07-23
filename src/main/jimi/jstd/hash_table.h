@@ -583,7 +583,7 @@ public:
     static const char * name() {
         switch (HashFunc) {
         case Hash_CRC32C:
-            return "jstd::hash_table<K, V>   ";
+            return "jstd::hash_table<K, V>";
         case Hash_Time31:
             return "jstd::hash_table_v1<K, V>";
         case Hash_Time31Std:

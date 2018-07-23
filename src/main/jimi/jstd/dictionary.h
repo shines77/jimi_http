@@ -1109,7 +1109,7 @@ public:
     static const char * name() {
         switch (HashFunc) {
         case Hash_CRC32C:
-            return "jstd::dictionary<K, V>   ";
+            return "jstd::dictionary<K, V>";
         case Hash_Time31:
             return "jstd::dictionary_v1<K, V>";
         case Hash_Time31Std:
