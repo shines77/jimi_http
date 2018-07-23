@@ -1032,9 +1032,13 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
+#ifdef _MSC_VER
                         entry->pair.first.clear();
                         entry->pair.second.clear();
-
+#else
+                        entry->pair.first = std::string("");
+                        entry->pair.second = std::string("");
+#endif
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
@@ -1082,9 +1086,13 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
+#ifdef _MSC_VER
                         entry->pair.first.clear();
                         entry->pair.second.clear();
-
+#else
+                        entry->pair.first = std::string("");
+                        entry->pair.second = std::string("");
+#endif
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
