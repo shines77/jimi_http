@@ -30,7 +30,7 @@
 #define STRING_COMPARE_U64        1
 #define STRING_COMPARE_SSE42      2
 
-#define STRING_COMPARE_MODE       STRING_COMPARE_U64
+#define STRING_COMPARE_MODE       STRING_COMPARE_SSE42
 
 #if USE_PICO_HTTP_PARSER
 #include <picohttpparser/picohttpparser.h>
