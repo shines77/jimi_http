@@ -25,6 +25,13 @@
 #define USE_SHA1_HASH           0
 #define USE_PICO_HTTP_PARSER    1
 
+// String compare mode
+#define STRING_COMPARE_STDC       0
+#define STRING_COMPARE_U64        1
+#define STRING_COMPARE_SSE42      2
+
+#define STRING_COMPARE_MODE       STRING_COMPARE_STDC
+
 #if USE_PICO_HTTP_PARSER
 #include <picohttpparser/picohttpparser.h>
 #endif

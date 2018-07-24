@@ -24,7 +24,7 @@
 namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C,
-          typename Traits = dictionary_traits<Key, Value, HashFunc>>
+          typename Traits = default_dictionary_traits<Key, Value, HashFunc>>
 class basic_dictionary {
 public:
     typedef Key                             key_type;
@@ -739,7 +739,7 @@ public:
                 }
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
+                    if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
                         return (iterator)entry;
                     }
                 }
@@ -768,7 +768,7 @@ public:
             }
             else {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
+                if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
                     return (iterator)entry;
                 }
             }
@@ -795,7 +795,7 @@ public:
             }
             else {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
+                if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
                     before_out = before;
                     return (iterator)entry;
                 }
@@ -1024,7 +1024,7 @@ public:
                 }
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(this->traits_.key_is_equal(key, entry->pair.first))) {
+                    if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
                         if (likely(before != nullptr))
                             before->next = entry->next;
                         else
@@ -1077,8 +1077,8 @@ public:
                 }
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(this->traits_.key_is_equal(std::forward<key_type>(key),
-                                                          entry->pair.first))) {
+                    if (likely(this->traits_.key_is_equals(std::forward<key_type>(key),
+                                                           entry->pair.first))) {
                         if (likely(before != nullptr))
                             before->next = entry->next;
                         else

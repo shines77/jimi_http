@@ -647,7 +647,7 @@ private:
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
+                        if (likely(StrUtils::is_equals_fast(key, entry->pair.first))) {
                             before_out = before;
                             return (iterator)entry;
                         }
@@ -721,7 +721,7 @@ public:
                         // If hash value is equal, then compare the key sizes and the strings.
                         if (likely(key.size() == entry->pair.first.size())) {
     #if USE_SSE42_STRING_COMPARE
-                            if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
+                            if (likely(StrUtils::is_equals_fast(key, entry->pair.first))) {
                                 return (iterator)&this->table_[index];
                             }
     #else
@@ -755,7 +755,7 @@ public:
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equal_fast(key, entry->pair.first))) {
+                        if (likely(StrUtils::is_equals_fast(key, entry->pair.first))) {
                             return (iterator)entry;
                         }
 #else
