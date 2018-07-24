@@ -537,7 +537,7 @@ private:
         assert((new_capacity & (new_capacity - 1)) == 0);
         char * new_table = new char[sizeof(list_type) * new_capacity];
         if (likely(new_table != nullptr)) {
-            // Reset the table data.
+            // Initialize the table data.
             memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
             // Setting status
             this->table_ = new_table;
@@ -547,6 +547,28 @@ private:
             assert(loadFactor > 0.0f);
             this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
             this->loadFactor_ = loadFactor;
+        }
+    }
+
+    void reserve_internal(size_type new_capacity) {
+        assert(new_capacity > 0);
+        assert((new_capacity & (new_capacity - 1)) == 0);
+        if (likely(new_capacity > this->capacity_)) {
+            char * new_table = new char[sizeof(list_type) * new_capacity];
+            if (new_table != nullptr) {
+                // Initialize the table data.
+                memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
+                if (likely(this->table_ != nullptr)) {
+                    delete[] this->table_;
+                }
+                // Setting status
+                this->table_ = new_table;
+                this->capacity_ = new_capacity;
+                this->size_ = 0;
+                this->used_ = 0;
+                assert(this->loadFactor_ > 0.0f);
+                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
+            }
         }
     }
 
@@ -630,28 +652,6 @@ private:
         return index;
     }
 
-    void reserve_internal(size_type new_capacity) {
-        assert(new_capacity > 0);
-        assert((new_capacity & (new_capacity - 1)) == 0);
-        if (likely(new_capacity > this->capacity_)) {
-            char * new_table = new char[sizeof(list_type) * new_capacity];
-            if (new_table != nullptr) {
-                // Reset the table data.
-                memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
-                if (likely(this->table_ != nullptr)) {
-                    delete[] this->table_;
-                }
-                // Setting status
-                this->table_ = new_table;
-                this->capacity_ = new_capacity;
-                this->size_ = 0;
-                this->used_ = 0;
-                assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
-            }
-        }
-    }
-
     //JM_NOINLINE_DECLARE(void)
     void reinsert_list(list_type * new_table, size_type new_capacity,
                        list_type * old_list) {
@@ -699,7 +699,7 @@ private:
         if (likely(new_capacity > this->capacity_)) {
             char * new_table = new char[sizeof(list_type) * new_capacity];
             if (likely(new_table != nullptr)) {
-                // Reset the new table data.
+                // Initialize the new table data.
                 memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
 
                 // Recalculate the bucket of all keys.
@@ -750,7 +750,7 @@ private:
         if (likely(new_capacity != this->capacity_)) {
             char * new_table = new char[sizeof(list_type) * new_capacity];
             if (likely(new_table != nullptr)) {
-                // Reset the new table data.
+                // Initialize the new table data.
                 memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
 
                 // Recalculate the bucket of all keys.
@@ -846,7 +846,11 @@ public:
             entry_type * entry = list.head();
             while (likely(entry != nullptr)) {
                 // Found a entry, next to check the hash value.
-                if (likely(entry->hash == hash)) {
+                if (likely(entry->hash != hash)) {
+                    // Scan next entry
+                    entry = entry->next;
+                }
+                else {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
@@ -859,9 +863,9 @@ public:
                         }
 #endif
                     }
+                    // Scan next entry
+                    entry = entry->next;
                 }
-                // Scan next entry
-                entry = entry->next;
             }
         }
 
@@ -880,7 +884,11 @@ public:
         entry_type * entry = list.head();
         while (likely(entry != nullptr)) {
             // Found a entry, next to check the hash value.
-            if (likely(entry->hash == hash)) {
+            if (likely(entry->hash != hash)) {
+                // Scan next entry
+                entry = entry->next;
+            }
+            else {
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
@@ -893,9 +901,9 @@ public:
                     }
 #endif
                 }
+                // Scan next entry
+                entry = entry->next;
             }
-            // Scan next entry
-            entry = entry->next;
         }
 
         // Not found
@@ -914,7 +922,11 @@ public:
         entry_type * entry = list.head();
         while (likely(entry != nullptr)) {
             // Found a entry, next to check the hash value.
-            if (likely(entry->hash == hash)) {
+            if (likely(entry->hash != hash)) {
+                // Scan next entry
+                entry = entry->next;
+            }
+            else {
                 // If hash value is equal, then compare the key sizes and the strings.
                 if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
@@ -929,10 +941,10 @@ public:
                     }
 #endif
                 }
+                // Scan next entry
+                before = entry;
+                entry = entry->next;
             }
-            // Scan next entry
-            before = entry;
-            entry = entry->next;
         }
 
         // Not found

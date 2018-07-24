@@ -350,7 +350,7 @@ private:
         assert((new_capacity & (new_capacity - 1)) == 0);
         list_type ** new_table = new list_type *[new_capacity];
         if (likely(new_table != nullptr)) {
-            // Reset the table data.
+            // Initialize the table data.
             memset(new_table, 0, sizeof(list_type *) * new_capacity);
             // Setting status
             this->table_ = new_table;
@@ -453,7 +453,7 @@ private:
         if (likely(new_capacity > this->capacity_)) {
             list_type ** new_table = new list_type *[new_capacity];
             if (new_table != nullptr) {
-                // Reset the table data.
+                // Initialize the table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
                 if (likely(this->table_ != nullptr)) {
                     delete[] this->table_;
@@ -539,7 +539,7 @@ private:
         if (likely(new_capacity > this->capacity_)) {
             list_type ** new_table = new list_type *[new_capacity];
             if (likely(new_table != nullptr)) {
-                // Reset the new table data.
+                // Initialize the new table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
 
                 // Recalculate the bucket of all keys.
@@ -586,7 +586,7 @@ private:
         if (likely(new_capacity != this->capacity_)) {
             list_type ** new_table = new list_type *[new_capacity];
             if (likely(new_table != nullptr)) {
-                // Reset the new table data.
+                // Initialize the new table data.
                 memset(new_table, 0, sizeof(list_type *) * new_capacity);
 
                 // Recalculate the bucket of all keys.
@@ -630,43 +630,6 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         this->rehash_internal(new_capacity);
-    }
-
-    iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
-        hash_type hash = this_type::hash(key.c_str(), key.size());
-        index = this_type::index_for(hash, this->capacity_);
-
-        assert(this->table_ != nullptr);
-        list_type * list = this->table_[index];
-        if (likely(list != nullptr)) {
-            entry_type * before = nullptr;
-            entry_type * entry = list->head();
-            while (likely(entry != nullptr)) {
-                // Found entry, next to check the hash value.
-                if (likely(entry->hash == hash)) {
-                    // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(key.size() == entry->pair.first.size())) {
-#if USE_SSE42_STRING_COMPARE
-                        if (likely(StrUtils::is_equals_fast(key, entry->pair.first))) {
-                            before_out = before;
-                            return (iterator)entry;
-                        }
-#else
-                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
-                            before_out = before;
-                            return (iterator)entry;
-                        }
-#endif
-                    }
-                }
-                // Scan next entry
-                before = entry;
-                entry = entry->next;
-            }
-        }
-
-        // Not found
-        return this->end();
     }
 
 public:
@@ -717,7 +680,11 @@ public:
                 entry_type * entry = list->head();
                 while (likely(entry != nullptr)) {
                     // Found a entry, next to check the hash value.
-                    if (likely(entry->hash == hash)) {
+                    if (likely(entry->hash != hash)) {
+                        // Scan next entry
+                        entry = entry->next;
+                    }
+                    else {
                         // If hash value is equal, then compare the key sizes and the strings.
                         if (likely(key.size() == entry->pair.first.size())) {
     #if USE_SSE42_STRING_COMPARE
@@ -730,9 +697,9 @@ public:
                             }
     #endif
                         }
+                        // Scan next entry
+                        entry = entry->next;
                     }
-                    // Scan next entry
-                    entry = entry->next;
                 }
             }
         }
@@ -751,7 +718,11 @@ public:
             entry_type * entry = list->head();
             while (likely(entry != nullptr)) {
                 // Found a entry, next to check the hash value.
-                if (likely(entry->hash == hash)) {
+                if (likely(entry->hash != hash)) {
+                    // Scan next entry
+                    entry = entry->next;
+                }
+                else {
                     // If hash value is equal, then compare the key sizes and the strings.
                     if (likely(key.size() == entry->pair.first.size())) {
 #if USE_SSE42_STRING_COMPARE
@@ -764,9 +735,51 @@ public:
                         }
 #endif
                     }
+                    // Scan next entry
+                    entry = entry->next;
                 }
-                // Scan next entry
-                entry = entry->next;
+            }
+        }
+
+        // Not found
+        return this->end();
+    }
+
+    iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
+        hash_type hash = this_type::hash(key.c_str(), key.size());
+        index = this_type::index_for(hash, this->capacity_);
+
+        assert(this->table_ != nullptr);
+        list_type * list = this->table_[index];
+        if (likely(list != nullptr)) {
+            entry_type * before = nullptr;
+            entry_type * entry = list->head();
+            while (likely(entry != nullptr)) {
+                // Found entry, next to check the hash value.
+                if (likely(entry->hash != hash)) {
+                    // Scan next entry
+                    before = entry;
+                    entry = entry->next;
+                }
+                else {
+                    // If hash value is equal, then compare the key sizes and the strings.
+                    if (likely(key.size() == entry->pair.first.size())) {
+#if USE_SSE42_STRING_COMPARE
+                        if (likely(StrUtils::is_equals_fast(key, entry->pair.first))) {
+                            before_out = before;
+                            return (iterator)entry;
+                        }
+#else
+                        if (likely(strcmp(key.c_str(), entry->pair.first.c_str()) == 0)) {
+                            before_out = before;
+                            return (iterator)entry;
+                        }
+#endif
+                    }
+                    // Scan next entry
+                    before = entry;
+                    entry = entry->next;
+                }
             }
         }
 

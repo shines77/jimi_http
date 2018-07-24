@@ -721,6 +721,8 @@ public:
                     if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
                         return (iterator)entry;
                     }
+                    // Scan next entry
+                    entry = entry->next;
                 }
             }
 
@@ -750,6 +752,8 @@ public:
                 if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
                     return (iterator)entry;
                 }
+                // Scan next entry
+                entry = entry->next;
             }
         }
 
@@ -778,6 +782,8 @@ public:
                     before_out = before;
                     return (iterator)entry;
                 }
+                // Scan next entry
+                entry = entry->next;
             }
         }
 
@@ -1014,6 +1020,9 @@ public:
                         // Has found the key.
                         return true;
                     }
+                    // Scan next entry
+                    before = entry;
+                    entry = entry->next;
                 }
             }
         }
@@ -1064,6 +1073,9 @@ public:
                         // Has found the key.
                         return true;
                     }
+                    // Scan next entry
+                    before = entry;
+                    entry = entry->next;
                 }
             }
         }

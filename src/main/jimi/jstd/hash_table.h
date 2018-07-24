@@ -118,7 +118,7 @@ private:
         assert((new_buckets & (new_buckets - 1)) == 0);
         data_type * new_table = new data_type[new_buckets];
         if (likely(new_table != nullptr)) {
-            // Reset the table data.
+            // Initialize the table data.
             memset(new_table, 0, sizeof(data_type) * new_buckets);
             // Setting status
             this->table_ = new_table;
@@ -208,7 +208,7 @@ private:
         if (likely(new_buckets > this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (new_table != nullptr) {
-                // Reset the table data.
+                // Initialize the table data.
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
                 if (likely(this->table_ != nullptr)) {
                     delete[] this->table_;
@@ -252,7 +252,7 @@ private:
         if (likely(new_buckets > this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (likely(new_table != nullptr)) {
-                // Reset the new table data.
+                // Initialize the new table data.
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
 
                 if (likely(this->table_ != nullptr)) {
@@ -287,7 +287,7 @@ private:
         if (likely(new_buckets != this->buckets_)) {
             data_type * new_table = new data_type[new_buckets];
             if (likely(new_table != nullptr)) {
-                // Reset the new table data.
+                // Initialize the new table data.
                 memset(new_table, 0, sizeof(data_type) * new_buckets);
 
                 if (likely(this->table_ != nullptr)) {
