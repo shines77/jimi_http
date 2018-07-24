@@ -182,7 +182,7 @@ bool is_equals_fast(const CharTy * str1, const CharTy * str2, size_t length)
         assert(str1 == nullptr && str2 == nullptr);
         return true;
     }
-#endif
+#endif // STRING_COMPARE_MODE
 }
 
 template <typename CharTy>
@@ -302,7 +302,7 @@ int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t len
         return StrUtils::IsEqual;
     }
     return StrUtils::compare(str1.c_str(), str1.size(), str2.c_str(), str2.size());
-#endif
+#endif // STRING_COMPARE_MODE
 }
 
 template <typename StringType>

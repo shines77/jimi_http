@@ -361,7 +361,7 @@ public:
 
 private:
     entry_type **   buckets_;
-    entry_type *    entries_;  
+    entry_type *    entries_;
     size_type       size_;
     size_type       count_;
     size_type       mask_;
