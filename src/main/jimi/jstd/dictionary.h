@@ -391,7 +391,7 @@ public:
         : buckets_(nullptr), entries_(nullptr), size_(0), count_(0), mask_(0),
           capacity_(0), threshold_(0), loadFactor_(kDefaultLoadFactor)
 #if SUPPORT_DICTIONARY_VERSION
-          , version_(0)
+          , version_(1)
 #endif
     {
         this->initialize(initialCapacity, loadFactor);
@@ -489,10 +489,6 @@ private:
                 assert(loadFactor > 0.0f);
                 this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
                 this->loadFactor_ = loadFactor;
-
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
             }
         }
     }
@@ -535,6 +531,12 @@ private:
         // Round up the new_capacity to power 2.
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         return new_capacity;
+    }
+
+    void updateVersion() {
+#if SUPPORT_DICTIONARY_VERSION
+        ++(this->version_);
+#endif
     }
 
     void reinsert_list(entry_type ** new_buckets, free_list * new_freelist,
@@ -619,9 +621,8 @@ private:
 
                     assert(this->loadFactor_ > 0.0f);
                     this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
-#if SUPPORT_DICTIONARY_VERSION
-                    ++(this->version_);
-#endif
+
+                    this->updateVersion();
                 }
             }
         }
@@ -683,9 +684,8 @@ private:
 
                     assert(this->loadFactor_ > 0.0f);
                     this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
-#if SUPPORT_DICTIONARY_VERSION
-                    ++(this->version_);
-#endif
+
+                    this->updateVersion();
                 }
             }
         }
@@ -847,17 +847,14 @@ public:
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
 
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
+                this->updateVersion();
             }
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
                 iter->pair.second = value;
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
+
+                this->updateVersion();
             }
         }
     }
@@ -898,17 +895,14 @@ public:
                 this->buckets_[index] = new_entry;
                 ++(this->size_);
 
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
+                this->updateVersion();
             }
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
                 iter->pair.second.swap(value);
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
+
+                this->updateVersion();
             }
         }
     }
@@ -956,9 +950,8 @@ public:
                 assert(this->size_ > 0);
                 --(this->size_);
 
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
+                this->updateVersion();
+
                 // Has found the key.
                 return true;
             }
@@ -994,9 +987,8 @@ public:
                 assert(this->size_ > 0);
                 --(this->size_);
 
-#if SUPPORT_DICTIONARY_VERSION
-                ++(this->version_);
-#endif
+                this->updateVersion();
+
                 // Has found the key.
                 return true;
             }
@@ -1045,9 +1037,8 @@ public:
                         assert(this->size_ > 0);
                         --(this->size_);
 
-#if SUPPORT_DICTIONARY_VERSION
-                        ++(this->version_);
-#endif
+                        this->updateVersion();
+
                         // Has found the key.
                         return true;
                     }
@@ -1099,9 +1090,8 @@ public:
                         assert(this->size_ > 0);
                         --(this->size_);
 
-#if SUPPORT_DICTIONARY_VERSION
-                        ++(this->version_);
-#endif
+                        this->updateVersion();
+
                         // Has found the key.
                         return true;
                     }

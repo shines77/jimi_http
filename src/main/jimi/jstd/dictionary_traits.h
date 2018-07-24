@@ -18,15 +18,15 @@
 namespace jstd {
 
 //
-// Default dictionary<K, V> hash traits
+// Default jstd::dictionary<K, V> hash traits
 //
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
 struct default_dictionary_hasher {
-    typedef Key                         key_type;
-    typedef Value                       value_type;
-    typedef std::size_t                 size_type;
-    typedef std::uint32_t               hash_type;
-    typedef std::size_t                 index_type;
+    typedef Key             key_type;
+    typedef Value           value_type;
+    typedef std::size_t     size_type;
+    typedef std::uint32_t   hash_type;
+    typedef std::size_t     index_type;
 
     default_dictionary_hasher() {}
     ~default_dictionary_hasher() {}
@@ -43,10 +43,10 @@ struct default_dictionary_hasher {
         ++index;
         return (index_type)((size_type)index & capacity_mask);
     }
-};
+}; // struct default_dictionary_hasher<K, V, HashFunc>
 
 //
-// Default dictionary<K, V> compare traits
+// Default jstd::dictionary<K, V> compare traits
 //
 template <typename Key, typename Value>
 struct default_dictionary_comparer {
@@ -93,10 +93,10 @@ struct default_dictionary_comparer {
     }
 
 #endif // STRING_COMPARE_MODE
-};
+}; // struct default_dictionary_comparer<K, V>
 
 //
-// Default dictionary<K, V> traits
+// Default jstd::dictionary<K, V> traits
 //
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C,
           typename HashTraits = default_dictionary_hasher<Key, Value, HashFunc>,
@@ -107,9 +107,6 @@ struct default_dictionary_traits {
     typedef typename HashTraits::size_type  size_type;
     typedef typename HashTraits::hash_type  hash_type;
     typedef typename HashTraits::index_type index_type;
-
-    typedef default_dictionary_traits<Key, Value, HashFunc, HashTraits, ComparerTraits>
-                                            this_type;
 
     HashTraits hashTraits_;
     ComparerTraits comparerTraits_;
@@ -151,7 +148,7 @@ struct default_dictionary_traits {
         return this->comparerTraits_.value_compare(value1, value2);
     }
 
-}; // default_dictionary_traits<K, V, HashFunc, HashTraits, ComparerTraits>
+}; // struct default_dictionary_traits<K, V, HashFunc, HashTraits, ComparerTraits>
 
 } // namespace jstd
 
