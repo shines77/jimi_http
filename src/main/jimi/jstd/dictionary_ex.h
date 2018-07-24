@@ -1,6 +1,6 @@
 
-#ifndef JSTD_DICTIONARY_H
-#define JSTD_DICTIONARY_H
+#ifndef JSTD_DICTIONARY_EX_H
+#define JSTD_DICTIONARY_EX_H
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
@@ -17,7 +17,7 @@
 #include "jimi/jstd/dictionary_traits.h"
 #include "jimi/support/Power2.h"
 
-#define USE_JSTD_DICTIONARY         1
+#define USE_JSTD_DICTIONARY_EX      1
 
 #define SUPPORT_DICTIONARY_VERSION  0
 
@@ -25,7 +25,7 @@ namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C,
           typename Traits = default_dictionary_traits<Key, Value, HashFunc>>
-class basic_dictionary {
+class basic_dictionary_ex {
 public:
     typedef Key                             key_type;
     typedef Value                           value_type;
@@ -34,7 +34,7 @@ public:
     typedef typename Traits::size_type      size_type;
     typedef typename Traits::hash_type      hash_type;
     typedef typename Traits::index_type     index_type;
-    typedef basic_dictionary<Key, Value, HashFunc, Traits>
+    typedef basic_dictionary_ex<Key, Value, HashFunc, Traits>
                                             this_type;
 
     struct entry {
@@ -70,7 +70,6 @@ public:
     typedef entry_type *        iterator;
     typedef const entry_type *  const_iterator;
 
-#if 1
     class free_list {
     private:
         entry_type * head_;
@@ -142,30 +141,6 @@ public:
             return entry;
         }
 
-        void safe_push_first(entry_type * entry) {
-            this->head_ = entry;
-            if (entry != nullptr)
-                ++(this->size_);
-        }
-
-        void safe_push_front(entry_type * entry) {
-            if (likely(entry != nullptr)) {
-                entry->next = this->head_;
-                ++(this->size_);
-            }
-            this->head_ = entry;
-        }
-
-        entry_type * safe_pop_front() {
-            entry_type * entry = this->head_;
-            if (likely(this->head_ != nullptr)) {
-                this->head_ = entry->next;
-                assert(this->size_ > 0);
-                --(this->size_);
-            }
-            return entry;
-        }
-
         void swap(free_list & right) {
             if (&right != this) {
                 entry_type * save_head = this->head_;
@@ -181,191 +156,19 @@ public:
     inline void swap(free_list & lhs, free_list & rhs) {
         lhs.swap(rhs);
     }
-#else
-    class free_list {
-    private:
-        entry_type **   list_;
-        size_type       size_;
-        size_type       capacity_;
-
-    public:
-        forward_list() : list_(nullptr), size_(0), capacity_(0) {}
-        forward_list(size_type capacity) : list_(nullptr), size_(0), capacity_(0) {
-            this->initialize(capacity);
-        }
-        ~forward_list() {
-            if (likely(this->list_ != nullptr)) {
-                delete[] this->list_;
-                this->list_ = nullptr;
-            }
-        }
-
-        entry_type ** begin() const { return &this->list_[0]; }
-        entry_type ** end() const { return &this->list_[this->size_]; }
-
-        size_type size() const { return this->size_; }
-        size_type capacity() const { return this->capacity; }
-
-        size_type data() const { return this->list_; }
-
-        bool is_valid() const { return (this->list_ != nullptr); }
-        bool is_empty() const { return (this->size_ == 0); }
-        bool is_overflow() const { return (this->size_ >= this->capacity_); }
-
-    private:
-        void initialize(size_type new_capacity) {
-            if (likely(new_capacity > 0)) {
-                assert(new_capacity > 0);
-                assert((new_capacity & (new_capacity - 1)) == 0);
-                entry_type ** new_list = new entry_type *[new_capacity];
-                if (likely(new_list != nullptr)) {
-                    // Initialize the list data.
-                    memset((void *)new_list, 0, sizeof(entry_type *) * new_capacity);
-                    // Setting status
-                    this->list_ = new_list;
-                    this->size_ = 0;
-                    this->capacity_ = new_capacity;
-                }
-            }
-        }
-
-    public:
-        void clear() {
-            this->size_ = 0;
-        }
-
-        void reserve(size_type new_capacity) {
-            if (likely(this->capacity_ != new_capacity)) {
-                assert(new_capacity > 0);
-                assert((new_capacity & (new_capacity - 1)) == 0);
-                entry_type ** new_list = new entry_type *[new_capacity];
-                if (likely(new_list != nullptr)) {
-                    // Initialize the new list data.
-                    memset((void *)new_list, 0, sizeof(entry_type *) * new_capacity);
-                    if (likely(this->list_ != nullptr)) {
-                        delete[] this->list_;
-                    }
-                    // Setting status
-                    this->list_ = new_list;
-                    this->size_ = 0;
-                    this->capacity_ = new_capacity;
-                }
-            }
-        }
-
-        void refill(entry_type * entries, size_type new_capacity) {
-            if (likely(this->capacity_ != new_capacity)) {
-                assert(new_capacity > 0);
-                assert((new_capacity & (new_capacity - 1)) == 0);
-                entry_type ** new_list = new entry_type *[new_capacity];
-                if (likely(new_list != nullptr)) {
-                    // Fill the new list data use entries.
-                    assert(entries != nullptr);
-                    entry_type * current = entries[new_capacity - 1];
-                    for (size_type i = 0; i < new_capacity; ++i) {
-                        new_list[i] = current;
-                        current--;
-                    }
-                    if (likely(this->list_ != nullptr)) {
-                        delete[] this->list_;
-                    }
-                    // Setting status
-                    this->list_ = new_list;
-                    this->size_ = new_capacity;
-                    this->capacity_ = new_capacity;
-                }
-            }
-        }
-
-        void resize(size_type new_capacity) {
-            if (likely(this->capacity_ != new_capacity)) {
-                assert(new_capacity > 0);
-                assert((new_capacity & (new_capacity - 1)) == 0);
-                entry_type ** new_list = new entry_type *[new_capacity];
-                if (likely(new_list != nullptr)) {
-                    if (likely(new_capacity > this->capacity_)) {
-                        // Copy the data from old list.
-                        if (likely(this->list_ != nullptr)) {
-                            memcpy((void *)new_list, (const void *)this->list_,
-                                    sizeof(entry_type *) * this->capacity_);
-                            delete[] this->list_;
-                        }
-                        // Initialize the remain list data.
-                        memset((void *)(new_list + this->capacity_), 0,
-                                sizeof(entry_type *) * (new_capacity - this->capacity_));
-                    }
-                    else {
-                        // Copy the data from old list.
-                        assert(new_capacity < this->capacity_);
-                        if (likely(this->list_ != nullptr)) {
-                            memcpy((void *)new_list, (const void *)this->list_,
-                                    sizeof(entry_type *) * new_capacity);
-                            delete[] this->list_;
-                        }
-                        this->size_ = new_capacity;
-                    }
-                    // Setting status
-                    this->list_ = new_list;
-                    this->capacity_ = new_capacity;
-                }
-            }
-        }
-
-        entry_type * operator [] (size_type index) {
-            assert(this->list_ != nullptr);
-            assert(index >= 0 && index < this->size_);
-            return this->list_[index];
-        }
-
-        void push_back(entry_type * entry) {
-            assert(this->list_ != nullptr);
-            assert(this->size_ < this->capacity_);
-            this->list_[this->size_] = entry;
-            ++(this->size_);
-            assert(this->size_ <= this->capacity_);
-        }
-
-        entry_type * pop_back() {
-            assert(this->list_ != nullptr);
-            assert(this->size_ > 0);
-            --(this->size_);
-            entry_type * entry = this->list_[this->size_];
-            return entry;
-        }
-
-        void safe_push_back(entry_type * entry) {
-            if (likely(this->list_ != nullptr)) {
-                if (likely(this->size_ < this->capacity_)) {
-                    this->list_[this->size_] = entry;
-                    ++(this->size_);
-                    assert(this->size_ <= this->capacity_);
-                }
-            }
-        }
-
-        entry_type * safe_pop_back() {
-            entry_type * entry;
-            if (likely(this->list_ != nullptr)) {
-                if (likely(this->size_ > 0)) {
-                    --(this->size_);
-                    entry_type * entry = this->list_[this->size_];
-                    return entry;
-                }
-            }
-            return nullptr;
-        }
-    };
-#endif
 
     typedef free_list list_type;
 
 private:
     entry_type **   buckets_;
     entry_type *    entries_;
+    size_type       size_;
     size_type       count_;
     size_type       mask_;
     size_type       capacity_;
     list_type       freelist_;
+    size_type       threshold_;
+    float           loadFactor_;
 #if SUPPORT_DICTIONARY_VERSION
     size_type       version_;
 #endif
@@ -375,22 +178,26 @@ private:
     static const size_type kDefaultInitialCapacity = 64;
     // Maximum capacity is 1 << 30.
     static const size_type kMaximumCapacity = 1U << 30;
+    // Default load factor is: 0.75
+    static const float kDefaultLoadFactor;
     // The threshold of treeify to red-black tree.
     static const size_type kTreeifyThreshold = 8;
     // The invalid hash value.
     static const hash_type kInvalidHash = static_cast<hash_type>(-1);
 
 public:
-    basic_dictionary(size_type initialCapacity = kDefaultInitialCapacity)
-        : buckets_(nullptr), entries_(nullptr), count_(0), mask_(0), capacity_(0)
+    basic_dictionary_ex(size_type initialCapacity = kDefaultInitialCapacity,
+                     float loadFactor = kDefaultLoadFactor)
+        : buckets_(nullptr), entries_(nullptr), size_(0), count_(0), mask_(0),
+          capacity_(0), threshold_(0), loadFactor_(kDefaultLoadFactor)
 #if SUPPORT_DICTIONARY_VERSION
           , version_(1)
 #endif
     {
-        this->initialize(initialCapacity);
+        this->initialize(initialCapacity, loadFactor);
     }
 
-    ~basic_dictionary() {
+    ~basic_dictionary_ex() {
         this->destroy();
     }
 
@@ -398,25 +205,25 @@ public:
         return (this->entries() != nullptr) ? (iterator)&this->entries_[0] : nullptr;
     }
     iterator end() const {
-        return (this->entries() != nullptr) ? (iterator)&this->entries_[this->capacity_] : nullptr;
+        return (this->entries() != nullptr) ? (iterator)&this->entries_[this->entries_count()] : nullptr;
     }
 
     iterator unsafe_begin() const {
         return (iterator)&this->entries_[0];
     }
     iterator unsafe_end() const {
-        return (iterator)&this->entries_[this->capacity_];
+        return (iterator)&this->entries_[this->entries_count()];
     }
 
-    size_type size() const {
-        assert(this->count_ >= this->freelist_.size());
-        return (this->count_ - this->freelist_.size());
-    }
+    size_type size() const { return this->size_; }
     size_type bucket_mask() const { return this->mask_; }
     size_type bucket_capacity() const { return this->capacity_; }
     size_type entries_count() const { return this->capacity_; }
     entry_type ** buckets() const { return this->buckets_; }
     entry_type * entries() const { return this->entries_; }
+
+    size_type threshold() const { return this->threshold_; }
+    float load_factor() const { return this->loadFactor_; }
 
     bool is_valid() const { return (this->buckets_ != nullptr); }
     bool is_empty() const { return (this->size() == 0); }
@@ -435,6 +242,7 @@ public:
             memset((void *)this->buckets_, 0, sizeof(entry_type *) * this->capacity_);
         }
         // Setting status
+        this->size_ = 0;
         this->count_ = 0;
         this->freelist_.clear();
     }
@@ -454,7 +262,7 @@ private:
         freelist.set_size(capacity);
     }
 
-    void initialize(size_type new_capacity) {
+    void initialize(size_type new_capacity, float loadFactor) {
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
@@ -473,9 +281,14 @@ private:
 
                 // Initialize status
                 this->entries_ = new_entries;
+                this->size_ = 0;
                 this->count_ = 0;
                 this->mask_ = new_capacity - 1;
                 this->capacity_ = new_capacity;
+
+                assert(loadFactor > 0.0f);
+                this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
+                this->loadFactor_ = loadFactor;
             }
         }
     }
@@ -494,9 +307,11 @@ private:
         }
 #ifdef NDEBUG
         // Setting status
+        this->size_ = 0;
         this->count_ = 0;
         this->mask_ = 0;
         this->capacity_ = 0;
+        this->threshold_ = 0;
 #endif
     }
 
@@ -524,9 +339,10 @@ private:
 #endif
     }
 
-    void reinsert_list(entry_type ** new_buckets, size_type new_mask,
-                       entry_type * old_entry) {
+    void reinsert_list(entry_type ** new_buckets, free_list * new_freelist,
+                       size_type new_mask, entry_type * old_entry) {
         assert(new_buckets != nullptr);
+        assert(new_freelist != nullptr);
         assert(old_entry != nullptr);
         assert(new_mask > 0);
 
@@ -540,7 +356,7 @@ private:
             // Push the old entry to front of new list.
             old_entry->next = new_buckets[index];
             new_buckets[index] = old_entry;
-            ++(this->count_);
+            ++(this->size_);
 
             // Scan next entry
             old_entry = next_entry;
@@ -566,8 +382,8 @@ private:
 
                     // Recalculate the bucket of all keys.
                     if (likely(this->buckets_ != nullptr)) {
-                        size_type old_count = this->count_;
-                        this->count_ = 0;
+                        size_type old_size = this->size_;
+                        this->size_ = 0;
 
                         entry_type ** old_buckets = this->buckets_;
                         size_type new_mask = new_capacity - 1;
@@ -580,7 +396,7 @@ private:
                             }
                             else {
                                 // Insert the old buckets to the new buckets in the new table.
-                                this->reinsert_list(new_buckets, new_mask, old_entry);
+                                this->reinsert_list(new_buckets, &new_freelist, new_mask, old_entry);
     #ifndef NDEBUG
                                 // Set the old_list.head to nullptr.
                                 *old_buckets = nullptr;
@@ -588,7 +404,7 @@ private:
                                 old_buckets++;
                             }
                         }
-                        assert(this->count_ == old_count);
+                        assert(this->size_ == old_size);
 
                         // Free old buckets data.
                         delete[] this->buckets_;
@@ -597,10 +413,14 @@ private:
                     // Setting status
                     this->buckets_ = new_buckets;
                     this->entries_ = new_entries;
+                    this->count_ = 0;
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
 
                     this->freelist_.swap(new_freelist);
+
+                    assert(this->loadFactor_ > 0.0f);
+                    this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
 
                     this->updateVersion();
                 }
@@ -627,8 +447,8 @@ private:
 
                     // Recalculate the bucket of all keys.
                     if (likely(this->buckets_ != nullptr)) {
-                        size_type old_count = this->count_;
-                        this->count_ = 0;
+                        size_type old_size = this->size_;
+                        this->size_ = 0;
 
                         entry_type ** old_buckets = this->buckets_;
                         size_type new_mask = new_capacity - 1;
@@ -641,7 +461,7 @@ private:
                             }
                             else {
                                 // Insert the old buckets to the new buckets in the new table.
-                                this->reinsert_list(new_buckets, new_mask, old_entry);
+                                this->reinsert_list(new_buckets, &new_freelist, new_mask, old_entry);
     #ifndef NDEBUG
                                 // Set the old_list.head to nullptr.
                                 *old_buckets = nullptr;
@@ -649,7 +469,7 @@ private:
                                 old_buckets++;
                             }
                         }
-                        assert(this->count_ == old_count);
+                        assert(this->size_ == old_size);
 
                         // Free old buckets data.
                         delete[] this->buckets_;
@@ -662,7 +482,8 @@ private:
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
 
-                    this->freelist_.swap(new_freelist);
+                    assert(this->loadFactor_ > 0.0f);
+                    this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
 
                     this->updateVersion();
                 }
@@ -678,7 +499,7 @@ private:
 
 public:
     void dump() {
-        printf("jstd::basic_dictionary<K, V>::dump()\n\n");
+        printf("jstd::basic_dictionary_ex<K, V>::dump()\n\n");
     }
 
     void reserve(size_type new_capacity) {
@@ -799,7 +620,8 @@ public:
                 // Insert the new key.
                 entry_type * new_entry;
                 if (likely(this->freelist_.is_empty())) {
-                    if (likely(this->count_ >= this->capacity_)) {
+                    if (likely((this->count_ >= this->capacity_ ||
+                                this->size_ >= this->capacity_))) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
@@ -819,9 +641,11 @@ public:
 
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
-                this->buckets_[index] = new_entry;
                 new_entry->pair.first = key;
-                new_entry->pair.second = value;                
+                new_entry->pair.second = value;
+
+                this->buckets_[index] = new_entry;
+                ++(this->size_);
 
                 this->updateVersion();
             }
@@ -844,7 +668,8 @@ public:
                 // Insert the new key.
                 entry_type * new_entry;
                 if (likely(this->freelist_.is_empty())) {
-                    if (likely(this->count_ >= this->capacity_)) {
+                    if (likely((this->count_ >= this->capacity_ ||
+                                this->size_ >= this->capacity_))) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
@@ -864,9 +689,11 @@ public:
 
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
-                this->buckets_[index] = new_entry;
                 new_entry->pair.first.swap(key);
                 new_entry->pair.second.swap(value);
+
+                this->buckets_[index] = new_entry;
+                ++(this->size_);
 
                 this->updateVersion();
             }
@@ -914,15 +741,14 @@ public:
 
                 entry->next = this->freelist_.head();
                 entry->hash = kInvalidHash;
-#ifdef _MSC_VER
                 entry->pair.first.clear();
                 entry->pair.second.clear();
-#else
-                entry->pair.first = std::string("");
-                entry->pair.second = std::string("");
-#endif
+
                 this->freelist_.set_head(entry);
                 this->freelist_.increase();
+
+                assert(this->size_ > 0);
+                --(this->size_);
 
                 this->updateVersion();
 
@@ -952,15 +778,14 @@ public:
 
                 entry->next = this->freelist_.head();
                 entry->hash = kInvalidHash;
-#ifdef _MSC_VER
                 entry->pair.first.clear();
                 entry->pair.second.clear();
-#else
-                entry->pair.first = std::string("");
-                entry->pair.second = std::string("");
-#endif
+
                 this->freelist_.set_head(entry);
                 this->freelist_.increase();
+
+                assert(this->size_ > 0);
+                --(this->size_);
 
                 this->updateVersion();
 
@@ -1008,6 +833,9 @@ public:
 #endif
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
+
+                        assert(this->size_ > 0);
+                        --(this->size_);
 
                         this->updateVersion();
 
@@ -1059,6 +887,9 @@ public:
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
+                        assert(this->size_ > 0);
+                        --(this->size_);
+
                         this->updateVersion();
 
                         // Has found the key.
@@ -1076,40 +907,43 @@ public:
     static const char * name() {
         switch (HashFunc) {
         case Hash_CRC32C:
-            return "jstd::dictionary<K, V>";
+            return "jstd::dictionary_ex<K, V>";
         case Hash_Time31:
-            return "jstd::dictionary_v1<K, V>";
+            return "jstd::dictionary_ex_v1<K, V>";
         case Hash_Time31Std:
-            return "jstd::dictionary_v2<K, V>";
+            return "jstd::dictionary_ex_v2<K, V>";
         case Hash_SHA1_MSG2:
-            return "jstd::dictionary_v3<K, V>";
+            return "jstd::dictionary_ex_v3<K, V>";
         case Hash_SHA1:
-            return "jstd::dictionary_v4<K, V>";
+            return "jstd::dictionary_ex_v4<K, V>";
         default:
             return "Unknown class name";
         }
     }
 }; // dictionary<K, V>
 
-template <typename Key, typename Value>
-using dictionary = basic_dictionary<Key, Value, Hash_CRC32C>;
+template <typename Key, typename Value, std::size_t HashFunc, typename Traits>
+const float basic_dictionary_ex<Key, Value, HashFunc, Traits>::kDefaultLoadFactor = 0.75f;
 
 template <typename Key, typename Value>
-using dictionary_v1 = basic_dictionary<Key, Value, Hash_Time31>;
+using dictionary_ex = basic_dictionary_ex<Key, Value, Hash_CRC32C>;
 
 template <typename Key, typename Value>
-using dictionary_v2 = basic_dictionary<Key, Value, Hash_Time31Std>;
+using dictionary_ex_v1 = basic_dictionary_ex<Key, Value, Hash_Time31>;
+
+template <typename Key, typename Value>
+using dictionary_ex_v2 = basic_dictionary_ex<Key, Value, Hash_Time31Std>;
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using dictionary_v3 = basic_dictionary<Key, Value, Hash_SHA1_MSG2>;
+using dictionary_ex_v3 = basic_dictionary_ex<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
 #if USE_SHA1_HASH
 template <typename Key, typename Value>
-using dictionary_v4 = basic_dictionary<Key, Value, Hash_SHA1>;
+using dictionary_ex_v4 = basic_dictionary_ex<Key, Value, Hash_SHA1>;
 #endif
 
 } // namespace jstd
 
-#endif // JSTD_DICTIONARY_H
+#endif // JSTD_DICTIONARY_EX_H
