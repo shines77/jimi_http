@@ -764,10 +764,16 @@ void hashtable_find_benchmark_impl()
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
     std::string crc32_str[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
+    std::string indexs[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        indexs[i] = buf;
     }
 
     {
@@ -776,14 +782,7 @@ void hashtable_find_benchmark_impl()
         size_t checksum = 0;
         AlgorithmTy algorithm;
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            char buf[16];
-#ifdef _MSC_VER
-            _itoa_s((int)i, buf, 10);
-#else
-            sprintf(buf, "%d", (int)i);
-#endif
-            std::string index = buf;
-            algorithm.insert(crc32_str[i], index);
+            algorithm.insert(crc32_str[i], indexs[i]);
         }
 
         StopWatch sw;
@@ -876,10 +875,8 @@ void hashtable_rehash_benchmark_impl()
 
     std::string crc32_str[kHeaderFieldSize];
     std::string indexs[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
@@ -949,10 +946,8 @@ void hashtable_rehash2_benchmark_impl()
 
     std::string crc32_str[kHeaderFieldSize];
     std::string indexs[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
@@ -1119,10 +1114,8 @@ void hashtable_insert_benchmark_impl()
 
     std::string crc32_str[kHeaderFieldSize];
     std::string indexs[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
@@ -1228,10 +1221,8 @@ void hashtable_erase_benchmark_impl()
 
     std::string crc32_str[kHeaderFieldSize];
     std::string indexs[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
@@ -1345,10 +1336,8 @@ void hashtable_insert_erase_benchmark_impl()
 
     std::string crc32_str[kHeaderFieldSize];
     std::string indexs[kHeaderFieldSize];
-    StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
         crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
