@@ -423,8 +423,8 @@ private:
     }
 
     static inline
-    hash_type hash(const char * key, size_type length) {
-        return jstd::hash_helper<HashFunc>::getHashCode(key, length);
+    hash_type hash(const key_type & key) {
+        return jstd::hash_helper<key_type, hash_type, HashFunc>::getHashCode(key);
     }
 
     static inline
@@ -672,7 +672,7 @@ public:
 
     iterator find(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
-            hash_type hash = this_type::hash(key.c_str(), key.size());
+            hash_type hash = this_type::hash(key);
             size_type index = this_type::index_for(hash, this->capacity_);
 
             list_type * list = this->table_[index];
@@ -709,7 +709,7 @@ public:
     }
 
     iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
-        hash = this_type::hash(key.c_str(), key.size());
+        hash = this_type::hash(key);
         index = this_type::index_for(hash, this->capacity_);
 
         assert(this->table_ != nullptr);
@@ -746,7 +746,7 @@ public:
     }
 
     iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
-        hash_type hash = this_type::hash(key.c_str(), key.size());
+        hash_type hash = this_type::hash(key);
         index = this_type::index_for(hash, this->capacity_);
 
         assert(this->table_ != nullptr);

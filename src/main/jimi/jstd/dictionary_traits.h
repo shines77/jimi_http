@@ -32,7 +32,7 @@ struct default_dictionary_hasher {
     ~default_dictionary_hasher() {}
 
     hash_type hash_code(const key_type & key) const {
-        return jstd::hash_helper<HashFunc>::getHashCode(key.c_str(), key.size());
+        return jstd::hash_helper<key_type, hash_type, HashFunc>::getHashCode(key);
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) const {
