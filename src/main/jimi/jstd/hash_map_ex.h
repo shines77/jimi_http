@@ -924,6 +924,7 @@ public:
             // Found a entry, next to check the hash value.
             if (likely(entry->hash != hash)) {
                 // Scan next entry
+                before = entry;
                 entry = entry->next;
             }
             else {
