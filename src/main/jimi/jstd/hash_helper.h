@@ -8,6 +8,9 @@
 
 #include "jimi/basic/stddef.h"
 #include "jimi/basic/stdint.h"
+#include "jimi/basic/stdsize.h"
+
+#include <string>
 
 #include "jimi/Hash.h"
 #include "jimi/crc32c.h"
@@ -125,6 +128,33 @@ struct hash_helper<std::string, std::uint32_t, Hash_SHA1> {
 };
 
 #endif // SUPPORT_SMID_SHA
+
+template <typename T, typename HashType = std::uint32_t,
+          std::size_t HashFunc = Hash_Default>
+struct hash {
+    typedef typename std::remove_pointer<
+                typename std::remove_cv<T>::type
+            >::type         Object;
+
+    hash() {}
+    ~hash() {}
+
+    HashType operator() (const Object & object) const {
+        return jstd::hash_helper<Object, HashType, HashFunc>::getHashCode(object);
+    }
+
+    HashType operator() (const volatile Object & object) const {
+        return jstd::hash_helper<Object, HashType, HashFunc>::getHashCode(object);
+    }
+
+    HashType operator() (const Object * object) const {
+        return jstd::hash_helper<Object *, HashType, HashFunc>::getHashCode(object);
+    }
+
+    HashType operator() (const volatile Object * object) const {
+        return jstd::hash_helper<Object *, HashType, HashFunc>::getHashCode(object);
+    }
+};
 
 } // namespace jstd
 
