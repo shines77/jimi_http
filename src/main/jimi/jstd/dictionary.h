@@ -23,7 +23,7 @@
 
 namespace jstd {
 
-template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C,
+template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
           typename Traits = default_dictionary_traits<Key, Value, HashFunc>>
 class basic_dictionary {
 public:
@@ -1103,8 +1103,10 @@ public:
     }
 }; // dictionary<K, V>
 
+#if SUPPORT_SSE42_CRC32C
 template <typename Key, typename Value>
 using dictionary = basic_dictionary<Key, Value, Hash_CRC32C>;
+#endif
 
 template <typename Key, typename Value>
 using dictionary_v1 = basic_dictionary<Key, Value, Hash_Time31>;
@@ -1112,12 +1114,12 @@ using dictionary_v1 = basic_dictionary<Key, Value, Hash_Time31>;
 template <typename Key, typename Value>
 using dictionary_v2 = basic_dictionary<Key, Value, Hash_Time31Std>;
 
-#if USE_SHA1_HASH
+#if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
 using dictionary_v3 = basic_dictionary<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
-#if USE_SHA1_HASH
+#if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
 using dictionary_v4 = basic_dictionary<Key, Value, Hash_SHA1>;
 #endif

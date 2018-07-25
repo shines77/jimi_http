@@ -289,7 +289,7 @@ inline void swap(hash_map_list<Key, Value> & lhs,
     lhs.swap(rhs);
 }
 
-template <typename Key, typename Value, std::size_t HashFunc = Hash_CRC32C>
+template <typename Key, typename Value, std::size_t HashFunc = Hash_Default>
 class basic_hash_map {
 public:
     typedef Key                                     key_type;
@@ -989,8 +989,10 @@ public:
 template <typename Key, typename Value, std::size_t HashFunc>
 const float basic_hash_map<Key, Value, HashFunc>::kDefaultLoadFactor = 0.75f;
 
+#if SUPPORT_SSE42_CRC32C
 template <typename Key, typename Value>
 using hash_map = basic_hash_map<Key, Value, Hash_CRC32C>;
+#endif
 
 template <typename Key, typename Value>
 using hash_map_v1 = basic_hash_map<Key, Value, Hash_Time31>;
@@ -998,12 +1000,12 @@ using hash_map_v1 = basic_hash_map<Key, Value, Hash_Time31>;
 template <typename Key, typename Value>
 using hash_map_v2 = basic_hash_map<Key, Value, Hash_Time31Std>;
 
-#if USE_SHA1_HASH
+#if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
 using hash_map_v3 = basic_hash_map<Key, Value, Hash_SHA1_MSG2>;
 #endif
 
-#if USE_SHA1_HASH
+#if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
 using hash_map_v4 = basic_hash_map<Key, Value, Hash_SHA1>;
 #endif

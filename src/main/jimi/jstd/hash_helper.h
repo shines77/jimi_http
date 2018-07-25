@@ -15,7 +15,7 @@
 namespace jstd {
 
 enum hash_mode_t {
-    Hash_UserDefine,
+    Hash_Default,
     Hash_CRC32C,
     Hash_Time31,
     Hash_Time31Std,
@@ -24,19 +24,21 @@ enum hash_mode_t {
     Hash_Last
 };
 
-template <std::size_t HashFunc = Hash_UserDefine>
+template <std::size_t HashFunc = Hash_Default>
 struct hash_helper {
     static uint32_t getHashCode(const char * data, size_t length) {
         return TiStore::hash::Times31_std(data, length);
     }
 };
 
+#if SUPPORT_SSE42_CRC32C
 template <>
 struct hash_helper<Hash_CRC32C> {
     static uint32_t getHashCode(const char * data, size_t length) {
         return jimi::crc32c_x64(data, length);
     }
 };
+#endif // SUPPORT_SSE42_CRC32C
 
 template <>
 struct hash_helper<Hash_Time31> {
@@ -52,6 +54,7 @@ struct hash_helper<Hash_Time31Std> {
     }
 };
 
+#if SUPPORT_SMID_SHA
 template <>
 struct hash_helper<Hash_SHA1_MSG2> {
     static uint32_t getHashCode(const char * data, size_t length) {
@@ -67,6 +70,7 @@ struct hash_helper<Hash_SHA1> {
         return jimi::sha1_x86(jimi::s_sha1_state, data, length);
     }
 };
+#endif // SUPPORT_SMID_SHA
 
 } // namespace jstd
 
