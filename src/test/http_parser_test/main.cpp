@@ -1277,76 +1277,6 @@ void hashtable_rehash_benchmark_impl()
     }
 }
 
-template <typename AlgorithmTy>
-void hashtable_rehash2_benchmark_impl()
-{
-    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-#ifndef NDEBUG
-    static const size_t kRepeatTimes = 2;
-#else
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
-#endif
-
-    std::string field_str[kHeaderFieldSize];
-    std::string index_str[kHeaderFieldSize];
-    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        field_str[i].assign(header_fields[i]);
-        char buf[16];
-#ifdef _MSC_VER
-        _itoa_s((int)i, buf, 10);
-#else
-        sprintf(buf, "%d", (int)i);
-#endif
-        index_str[i] = buf;
-    }
-
-    {
-        size_t checksum = 0;
-        size_t buckets;
-
-        StopWatch sw;
-
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            AlgorithmTy algorithm;
-            for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-                algorithm.insert(field_str[i], index_str[i]);
-            }
-
-            checksum += algorithm.size();
-            checksum += algorithm.bucket_count();
-
-            buckets = 128;
-            algorithm.shrink_to_fit(buckets - 1);
-#ifndef NDEBUG
-            if (algorithm.bucket_count() != buckets) {
-                size_t bucket_count = algorithm.bucket_count();
-                printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
-                       algorithm.size(), buckets, bucket_count);
-            }
-#endif
-            for (size_t j = 0; j < 7; ++j) {
-                buckets *= 2;
-                algorithm.rehash(buckets - 1);
-#ifndef NDEBUG
-                if (algorithm.bucket_count() != buckets) {
-                    size_t bucket_count = algorithm.bucket_count();
-                    printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
-                           (uint32_t)j, algorithm.size(), buckets, bucket_count);
-                }
-#endif
-                checksum += algorithm.bucket_count();
-            }
-        }
-        sw.stop();
-
-        AlgorithmTy algorithm;
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
-        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
-    }
-}
-
 void hashtable_rehash_benchmark()
 {
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
@@ -1406,6 +1336,78 @@ void hashtable_rehash_benchmark()
 
     printf("-------------------------------------------------------------------------\n");
     printf("\n");
+}
+
+template <typename AlgorithmTy>
+void hashtable_rehash2_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 2;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
+#endif
+
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        field_str[i].assign(header_fields[i]);
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        index_str[i] = buf;
+    }
+
+    {
+        size_t checksum = 0;
+        size_t buckets;
+
+        StopWatch sw;
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            AlgorithmTy algorithm;
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.insert(field_str[j], index_str[j]);
+            }
+
+            checksum += algorithm.size();
+            checksum += algorithm.bucket_count();
+
+            buckets = 128;
+            algorithm.shrink_to_fit(buckets - 1);
+#ifndef NDEBUG
+            if (algorithm.bucket_count() != buckets) {
+                size_t bucket_count = algorithm.bucket_count();
+                printf("shrink_to(): size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                       algorithm.size(), buckets, bucket_count);
+            }
+#endif
+            checksum += algorithm.bucket_count();
+
+            for (size_t j = 0; j < 7; ++j) {
+                buckets *= 2;
+                algorithm.rehash(buckets - 1);
+#ifndef NDEBUG
+                if (algorithm.bucket_count() != buckets) {
+                    size_t bucket_count = algorithm.bucket_count();
+                    printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
+                           (uint32_t)j, algorithm.size(), buckets, bucket_count);
+                }
+#endif
+                checksum += algorithm.bucket_count();
+            }
+        }
+        sw.stop();
+
+        AlgorithmTy algorithm;
+        printf("-------------------------------------------------------------------------\n");
+        printf(" %-28s  ", algorithm.name());
+        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
+    }
 }
 
 void hashtable_rehash2_benchmark()

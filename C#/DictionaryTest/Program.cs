@@ -4,15 +4,16 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DictionayLib;
 
 namespace DictionaryTest
 {
     class Program
     {
 #if DEBUG
-        static readonly long kIterations = 10000;
+        static readonly int kIterations = 10000;
 #else
-        static readonly long kIterations = 3000000;
+        static readonly int kIterations = 3000000;
 #endif
 
         static String[] header_fields = {
@@ -96,12 +97,12 @@ namespace DictionaryTest
 
         static void hashtable_find_benchmark_impl()
         {
-            long kHeaderFieldSize = header_fields.Length;
-            long kRepeatTimes = (kIterations / kHeaderFieldSize);
+            int kHeaderFieldSize = header_fields.Length;
+            int kRepeatTimes = (kIterations / kHeaderFieldSize);
 
             string[] field_str = new string[kHeaderFieldSize];
             string[] index_str = new string[kHeaderFieldSize];
-            for (long i = 0; i < kHeaderFieldSize; ++i)
+            for (int i = 0; i < kHeaderFieldSize; ++i)
             {
                 field_str[i] = header_fields[i];
                 index_str[i] = string.Format("{0}", i);
@@ -109,19 +110,20 @@ namespace DictionaryTest
 
             {
                 Dictionary<string, string> dict = new Dictionary<string, string>();
-                for (long i = 0; i < kHeaderFieldSize; ++i)
+                for (int i = 0; i < kHeaderFieldSize; ++i)
                 {
                     if (!dict.ContainsKey(field_str[i]))
                         dict.Add(field_str[i], index_str[i]);
                 }
 
                 long checksum = 0;
+                double totalTime = 0.0;
                 Stopwatch sw = new Stopwatch();
 
                 sw.Restart();
-                for (long i = 0; i < kRepeatTimes; ++i)
+                for (int i = 0; i < kRepeatTimes; ++i)
                 {
-                    for (long j = 0; j < kHeaderFieldSize; ++j)
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
                     {
                         bool hasKey = dict.ContainsKey(field_str[j]);
                         if (hasKey)
@@ -132,9 +134,11 @@ namespace DictionaryTest
                 }
                 sw.Stop();
 
+                totalTime += sw.Elapsed.TotalMilliseconds;
+
                 Console.Write("-------------------------------------------------------------------------\n");
                 Console.Write(" {0,-28}  ", "Dictionary<string, string>");
-                Console.Write("sum = {0,-10:g}  time: {1,8:f} ms\n", checksum, sw.Elapsed.TotalMilliseconds);
+                Console.Write("sum = {0,-10:g}  time: {1,8:f} ms\n", checksum, totalTime);
                 Console.Write("-------------------------------------------------------------------------\n");
                 Console.Write("\n");
             }
@@ -152,16 +156,16 @@ namespace DictionaryTest
 
         static void hashtable_insert_benchmark_impl()
         {
-            long kHeaderFieldSize = header_fields.Length;
+            int kHeaderFieldSize = header_fields.Length;
 #if DEBUG
-            long kRepeatTimes = 100;
+            int kRepeatTimes = 100;
 #else
-            long kRepeatTimes = (kIterations / kHeaderFieldSize);
+            int kRepeatTimes = (kIterations / kHeaderFieldSize);
 #endif
 
             string[] field_str = new string[kHeaderFieldSize];
             string[] index_str = new string[kHeaderFieldSize];
-            for (long i = 0; i < kHeaderFieldSize; ++i)
+            for (int i = 0; i < kHeaderFieldSize; ++i)
             {
                 field_str[i] = header_fields[i];
                 index_str[i] = string.Format("{0}", i);
@@ -169,15 +173,15 @@ namespace DictionaryTest
 
             {
                 long checksum = 0;
-                double totalTime = 0;
+                double totalTime = 0.0;
                 Stopwatch sw = new Stopwatch();
                 
-                for (long i = 0; i < kRepeatTimes; ++i)
+                for (int i = 0; i < kRepeatTimes; ++i)
                 {
                     Dictionary<string, string> dict = new Dictionary<string, string>();
 
                     sw.Restart();
-                    for (long j = 0; j < kHeaderFieldSize; ++j)
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
                     {
                         if (!dict.ContainsKey(field_str[j]))
                             dict.Add(field_str[j], index_str[j]);
@@ -206,6 +210,58 @@ namespace DictionaryTest
             hashtable_insert_benchmark_impl();
         }
 
+        static void hashtable_erase_benchmark_impl()
+        {
+            int kHeaderFieldSize = header_fields.Length;
+#if DEBUG
+            int kRepeatTimes = 100;
+#else
+            int kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+            string[] field_str = new string[kHeaderFieldSize];
+            string[] index_str = new string[kHeaderFieldSize];
+            for (int i = 0; i < kHeaderFieldSize; ++i)
+            {
+                field_str[i] = header_fields[i];
+                index_str[i] = string.Format("{0}", i);
+            }
+
+            {
+                long checksum = 0;
+                double totalTime = 0.0;
+                Stopwatch sw = new Stopwatch();
+
+                for (int i = 0; i < kRepeatTimes; ++i)
+                {
+                    Dictionary<string, string> dict = new Dictionary<string, string>();
+
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
+                    {
+                        if (!dict.ContainsKey(field_str[j]))
+                            dict.Add(field_str[j], index_str[j]);
+                    }
+                    checksum += dict.Count();
+
+                    sw.Restart();
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
+                    {
+                        dict.Remove(field_str[j]);
+                    }
+                    sw.Stop();
+
+                    checksum += dict.Count();
+                    totalTime += sw.Elapsed.TotalMilliseconds;
+                }
+
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write(" {0,-28}  ", "Dictionary<string, string>");
+                Console.Write("sum = {0,-10:g}  time: {1,8:f} ms\n", checksum, totalTime);
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write("\n");
+            }
+        }
+
         static void dictionary_erase_benchmark()
         {
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
@@ -216,19 +272,202 @@ namespace DictionaryTest
             hashtable_erase_benchmark_impl();
         }
 
+        static void hashtable_insert_erase_benchmark_impl()
+        {
+            int kHeaderFieldSize = header_fields.Length;
+#if DEBUG
+            int kRepeatTimes = 100;
+#else
+            int kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+            string[] field_str = new string[kHeaderFieldSize];
+            string[] index_str = new string[kHeaderFieldSize];
+            for (int i = 0; i < kHeaderFieldSize; ++i)
+            {
+                field_str[i] = header_fields[i];
+                index_str[i] = string.Format("{0}", i);
+            }
+
+            {
+                long checksum = 0;
+                double totalTime = 0.0;
+                Stopwatch sw = new Stopwatch();
+
+                Dictionary<string, string> dict = new Dictionary<string, string>();
+
+                sw.Restart();
+                for (int i = 0; i < kRepeatTimes; ++i)
+                {
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
+                    {
+                        if (!dict.ContainsKey(field_str[j]))
+                            dict.Add(field_str[j], index_str[j]);
+                    }
+                    checksum += dict.Count();
+
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
+                    {
+                        dict.Remove(field_str[j]);
+                    }
+                    checksum += dict.Count();                    
+                }
+                sw.Stop();
+
+                totalTime += sw.Elapsed.TotalMilliseconds;
+
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write(" {0,-28}  ", "Dictionary<string, string>");
+                Console.Write("sum = {0,-10:g}  time: {1,8:f} ms\n", checksum, totalTime);
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write("\n");
+            }
+        }
+
         static void dictionary_insert_erase_benchmark()
         {
-            //
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("  dictionary_insert_erase_benchmark()\n");
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("\n");
+
+            hashtable_insert_erase_benchmark_impl();
+        }
+
+        static void hashtable_rehash_benchmark_impl()
+        {
+            int kHeaderFieldSize = header_fields.Length;
+#if DEBUG
+            int kRepeatTimes = 200;
+#else
+            int kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+            string[] field_str = new string[kHeaderFieldSize];
+            string[] index_str = new string[kHeaderFieldSize];
+            for (int i = 0; i < kHeaderFieldSize; ++i)
+            {
+                field_str[i] = header_fields[i];
+                index_str[i] = string.Format("{0}", i);
+            }
+
+            {
+                long checksum = 0;
+                int buckets = 128;
+                double totalTime = 0.0;
+                Stopwatch sw = new Stopwatch();
+
+                DictionaryEx<string, string> dict = new DictionaryEx<string, string>();
+                for (int i = 0; i < kHeaderFieldSize; ++i)
+                {
+                    if (!dict.ContainsKey(field_str[i]))
+                        dict.Add(field_str[i], index_str[i]);
+                }
+
+                sw.Restart();
+                for (int i = 0; i < kRepeatTimes; ++i)
+                {
+                    checksum += dict.Count();
+
+                    buckets = 128;
+                    dict.Resize(buckets);
+                    checksum += dict.BucketCount;
+
+                    for (int j = 0; j < 7; ++j)
+                    {
+                        buckets *= 2;
+                        dict.Resize(buckets);
+                        checksum += dict.BucketCount;
+                    }
+                }
+                sw.Stop();
+
+                totalTime += sw.Elapsed.TotalMilliseconds;
+
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write(" {0,-28}  ", "DictionaryEx<string, string>");
+                Console.Write("sum = {0,-10:g}  time: {1,8:f} ms\n", checksum, totalTime);
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write("\n");
+            }
         }
 
         static void dictionary_rehash_benchmark()
         {
-            //
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("  dictionary_rehash_benchmark()\n");
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("\n");
+
+            hashtable_rehash_benchmark_impl();
+        }
+
+        static void hashtable_rehash2_benchmark_impl()
+        {
+            int kHeaderFieldSize = header_fields.Length;
+#if DEBUG
+            int kRepeatTimes = 200;
+#else
+            int kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
+#endif
+
+            string[] field_str = new string[kHeaderFieldSize];
+            string[] index_str = new string[kHeaderFieldSize];
+            for (int i = 0; i < kHeaderFieldSize; ++i)
+            {
+                field_str[i] = header_fields[i];
+                index_str[i] = string.Format("{0}", i);
+            }
+
+            {
+                long checksum = 0;
+                int buckets = 128;
+                double totalTime = 0.0;
+                Stopwatch sw = new Stopwatch();
+
+                sw.Restart();
+                for (int i = 0; i < kRepeatTimes; ++i)
+                {
+                    DictionaryEx<string, string> dict = new DictionaryEx<string, string>();
+                    for (int j = 0; j < kHeaderFieldSize; ++j)
+                    {
+                        if (!dict.ContainsKey(field_str[j]))
+                            dict.Add(field_str[j], index_str[j]);
+                    }
+                    checksum += dict.Count();
+                    checksum += dict.BucketCount;
+
+                    buckets = 128;
+                    dict.Resize(buckets);
+                    checksum += dict.BucketCount;
+
+                    for (int j = 0; j < 7; ++j)
+                    {
+                        buckets *= 2;
+                        dict.Resize(buckets);
+                        checksum += dict.BucketCount;
+                    }
+                }
+                sw.Stop();
+
+                totalTime += sw.Elapsed.TotalMilliseconds;
+
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write(" {0,-28}  ", "DictionaryEx<string, string>");
+                Console.Write("sum = {0,-10:g}  time: {1,8:f} ms\n", checksum, totalTime);
+                Console.Write("-------------------------------------------------------------------------\n");
+                Console.Write("\n");
+            }
         }
 
         static void dictionary_rehash2_benchmark()
         {
-            //
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("  dictionary_rehash2_benchmark()\n");
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("\n");
+
+            hashtable_rehash2_benchmark_impl();
         }
 
         static void dictionary_benchmark()
