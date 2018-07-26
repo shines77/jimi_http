@@ -1,10 +1,15 @@
 
+// Enable Visual Leak Detector (Visual Studio)
+#define JIMI_ENABLE_VLD     1
+
 #ifdef _MSC_VER
+#if JIMI_ENABLE_VLD
 #include <vld.h>
+#endif
 #endif
 
 #ifndef __SSE4_2__
-#define __SSE4_2__              1
+#define __SSE4_2__          1
 #endif // __SSE4_2__
 
 #include <stdlib.h>

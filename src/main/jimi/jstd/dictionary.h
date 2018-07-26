@@ -25,6 +25,12 @@
 
 #define SUPPORT_DICTIONARY_VERSION  0
 
+#if defined(_MSC_VER) && !defined(NDEBUG) && (JIMI_ENABLE_VLD != 0)
+#define USE_ENTRY_PLACEMENT_NEW     0
+#else
+#define USE_ENTRY_PLACEMENT_NEW     1
+#endif // (JIMI_ENABLE_VLD != 0)
+
 namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
@@ -46,7 +52,7 @@ public:
         entry *     next;
         hash_type   hash;
         pair_type   pair;
-#if 0
+
         entry() : next(nullptr), hash(0) {}
         entry(hash_type hash_code) : next(nullptr), hash(hash_code) {}
 
@@ -69,7 +75,6 @@ public:
             this->next = nullptr;
 #endif
         }
-#endif
     };
 
     typedef entry               entry_type;
@@ -281,9 +286,13 @@ private:
             // Record this->buckets_
             this->buckets_ = new_buckets;
             // The the array of entries.
+#if USE_ENTRY_PLACEMENT_NEW
             void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity);
             entry_type * new_entries = (entry_type *)(new_entries_buf);
             assert((void *)new_entries == new_entries_buf);
+#else
+            entry_type * new_entries = new entry_type[new_capacity];
+#endif
             if (likely(new_entries != nullptr)) {
                 // Linked all new entries to the free list.
                 //fill_freelist(this->freelist_, new_entries, new_capacity);
@@ -329,14 +338,18 @@ private:
         if (likely(this->buckets_ != nullptr)) {
             if (likely(this->entries_ != nullptr)) {
                 // Free all entries.
+#if USE_ENTRY_PLACEMENT_NEW
                 this->destroy_entries();
+#else
+                delete[] this->entries_;
+#endif
                 this->entries_ = nullptr;
             }
             // Free the array of bucket's first entry.
             delete[] this->buckets_;
             this->buckets_ = nullptr;
         }
-#ifdef NDEBUG
+#ifndef NDEBUG
         // Setting status
         this->count_ = 0;
         this->mask_ = 0;
@@ -400,9 +413,13 @@ private:
                 memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
 
                 // The the array of entries.
+#if USE_ENTRY_PLACEMENT_NEW
                 void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity);
                 entry_type * new_entries = (entry_type *)(new_entries_buf);
                 assert((void *)new_entries == new_entries_buf);
+#else
+                entry_type * new_entries = new entry_type[new_capacity];
+#endif
                 if (likely(new_entries != nullptr)) {
                     // Linked all new entries to the new free list.
                     //free_list new_freelist;
@@ -420,14 +437,22 @@ private:
                             assert(new_entry != nullptr);
                             assert(old_entry != nullptr);
                             if (likely(old_entry->hash != kInvalidHash)) {
+#if USE_ENTRY_PLACEMENT_NEW
                                 // Swap old_entry and new_entry.
                                 new_entry->next = old_entry->next;
                                 new_entry->hash = old_entry->hash;
+
                                 // pair_type class placement new
                                 void * pair_buf = (void *)&new_entry->pair;
                                 pair_type * new_pair = new (pair_buf) pair_type(std::move(old_entry->pair));
                                 assert(new_pair == &new_entry->pair);
                                 //new_entry->pair.swap(old_entry->pair);
+#else
+                                // Swap old_entry and new_entry.
+                                //new_entry->next = old_entry->next;
+                                new_entry->hash = old_entry->hash;
+                                new_entry->pair.swap(old_entry->pair);
+#endif
                                 ++new_entry;
                                 ++new_count;
                             }
@@ -436,8 +461,11 @@ private:
                         assert(new_count == this->size());
 
                         // Free old entries data.
+#if USE_ENTRY_PLACEMENT_NEW
                         this->free_entries();
-
+#else
+                        delete[] this->entries_;
+#endif
                         // Insert and adjust the new entries to the new buckets.
                         size_type new_mask = new_capacity - 1;
                         new_entry = new_entries;
@@ -663,14 +691,17 @@ public:
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
                 this->buckets_[index] = new_entry;
-
+#if USE_ENTRY_PLACEMENT_NEW
                 // pair_type class placement new
                 void * pair_buf = (void *)&new_entry->pair;
                 pair_type * new_pair = new (pair_buf) pair_type(key, value);
                 assert(new_pair == &new_entry->pair);
                 //new ((void *)&new_entry->pair.first) key_type(key);
-                //new ((void *)&new_entry->pair.second) value_type(value);              
-
+                //new ((void *)&new_entry->pair.second) value_type(value);  
+#else
+                new_entry->pair.first = key;
+                new_entry->pair.second = value;
+#endif
                 this->updateVersion();
             }
             else {
@@ -713,17 +744,18 @@ public:
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
                 this->buckets_[index] = new_entry;
-                //new_entry->pair.first.swap(key);
-                //new_entry->pair.second.swap(value);
-
+#if USE_ENTRY_PLACEMENT_NEW
                 // pair_type class placement new
                 void * pair_buf = (void *)&new_entry->pair;
                 pair_type * new_pair = new (pair_buf) pair_type(
                             std::forward<key_type>(key), std::forward<value_type>(value));
                 assert(new_pair == &new_entry->pair);
                 //new ((void *)&new_entry->pair.first) key_type(std::forward<key_type>(key));
-                //new ((void *)&new_entry->pair.second) value_type(std::forward<value_type>(value));    
-
+                //new ((void *)&new_entry->pair.second) value_type(std::forward<value_type>(value));
+#else
+                new_entry->pair.first.swap(key);
+                new_entry->pair.second.swap(value);
+#endif
                 this->updateVersion();
             }
             else {
@@ -855,7 +887,7 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
-#if 0
+#if (USE_ENTRY_PLACEMENT_NEW == 0)
 #ifdef _MSC_VER
                         entry->pair.first.clear();
                         entry->pair.second.clear();
@@ -863,7 +895,7 @@ public:
                         entry->pair.first = key_type();
                         entry->pair.second = value_type();
 #endif
-#endif
+#endif // USE_ENTRY_PLACEMENT_NEW
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
@@ -910,7 +942,7 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
-#if 0
+#if (USE_ENTRY_PLACEMENT_NEW == 0)
 #ifdef _MSC_VER
                         entry->pair.first.clear();
                         entry->pair.second.clear();
@@ -918,7 +950,7 @@ public:
                         entry->pair.first = key_type();
                         entry->pair.second = value_type();
 #endif
-#endif
+#endif // USE_ENTRY_PLACEMENT_NEW
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
