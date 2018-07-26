@@ -32,6 +32,9 @@
 #define USE_ENTRY_PLACEMENT_NEW     1
 #endif // (JIMI_ENABLE_VLD != 0)
 
+// The entry's pair whether release on erase the entry.
+#define ENTRY_RELEASE_ON_ERASE      1
+
 namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
@@ -319,14 +322,19 @@ private:
         assert(this->entries_ != nullptr);
         entry_type * entry = this->entries_;
         for (size_type i = 0; i < this->count_; ++i) {
+#if ENTRY_RELEASE_ON_ERASE
+            if (likely(entry->hash != kInvalidHash)) {
+                assert(entry != nullptr);
+                pair_type * __pair = &entry->pair;
+                assert(__pair != nullptr);
+                __pair->~pair_type();
+            }
+#else
             assert(entry != nullptr);
             pair_type * __pair = &entry->pair;
             assert(__pair != nullptr);
             __pair->~pair_type();
-#ifndef NDEBUG
-            // Placement delete
-            //operator delete((void *)__pair, (void *)__pair);
-#endif
+#endif // ENTRY_RELEASE_ON_ERASE
             entry++;
         }
 
@@ -453,23 +461,25 @@ private:
                                 pair_type * pair_ptr = &old_entry->pair;
                                 assert(pair_ptr != nullptr);
                                 pair_ptr->~pair_type();
-#else
+#else // !USE_ENTRY_PLACEMENT_NEW
                                 // Swap old_entry and new_entry.
                                 //new_entry->next = old_entry->next;
                                 new_entry->hash = old_entry->hash;
                                 new_entry->pair.swap(old_entry->pair);
-#endif
+#endif // USE_ENTRY_PLACEMENT_NEW
                                 ++new_entry;
                                 ++old_entry;
                                 ++new_count;
                             }
                             else {
 #if USE_ENTRY_PLACEMENT_NEW
+#if (ENTRY_RELEASE_ON_ERASE == 0)
                                 // pair_type class placement delete
                                 pair_type * pair_ptr = &old_entry->pair;
                                 assert(pair_ptr != nullptr);
                                 pair_ptr->~pair_type();
-#endif
+#endif // ENTRY_RELEASE_ON_ERASE
+#endif // USE_ENTRY_PLACEMENT_NEW
                                 ++old_entry;
                             }
                         }
@@ -701,24 +711,17 @@ public:
                     // Pop a free entry from freelist.
                     new_entry = this->freelist_.pop_front();
                     assert(new_entry != nullptr);
-#if USE_ENTRY_PLACEMENT_NEW
-                    // pair_type class placement delete
-                    pair_type * pair_ptr = &new_entry->pair;
-                    assert(pair_ptr != nullptr);
-                    pair_ptr->~pair_type();
-#endif
                 }
 
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
                 this->buckets_[index] = new_entry;
-#if USE_ENTRY_PLACEMENT_NEW
+
+#if (USE_ENTRY_PLACEMENT_NEW != 0) && (ENTRY_RELEASE_ON_ERASE != 0)
                 // pair_type class placement new
                 void * pair_buf = (void *)&(new_entry->pair);
                 pair_type * new_pair = new (pair_buf) pair_type(key, value);
                 assert(new_pair == &new_entry->pair);
-                //new ((void *)&new_entry->pair.first) key_type(key);
-                //new ((void *)&new_entry->pair.second) value_type(value);  
 #else
                 new_entry->pair.first = key;
                 new_entry->pair.second = value;
@@ -760,25 +763,18 @@ public:
                     // Pop a free entry from freelist.
                     new_entry = this->freelist_.pop_front();
                     assert(new_entry != nullptr);
-#if USE_ENTRY_PLACEMENT_NEW
-                    // pair_type class placement delete
-                    pair_type * pair_ptr = &new_entry->pair;
-                    assert(pair_ptr != nullptr);
-                    pair_ptr->~pair_type();
-#endif
                 }
 
                 new_entry->next = this->buckets_[index];
                 new_entry->hash = hash;
                 this->buckets_[index] = new_entry;
-#if USE_ENTRY_PLACEMENT_NEW
+
+#if (USE_ENTRY_PLACEMENT_NEW != 0) && (ENTRY_RELEASE_ON_ERASE != 0)
                 // pair_type class placement new
                 void * pair_buf = (void *)&(new_entry->pair);
                 pair_type * new_pair = new (pair_buf) pair_type(
                             std::forward<key_type>(key), std::forward<value_type>(value));
                 assert(new_pair == &new_entry->pair);
-                //new ((void *)&new_entry->pair.first) key_type(std::forward<key_type>(key));
-                //new ((void *)&new_entry->pair.second) value_type(std::forward<value_type>(value));
 #else
                 new_entry->pair.first.swap(key);
                 new_entry->pair.second.swap(value);
@@ -915,12 +911,12 @@ public:
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
 #if USE_ENTRY_PLACEMENT_NEW
-#if 0
+#if ENTRY_RELEASE_ON_ERASE
                         // pair_type class placement delete
                         pair_type * pair_ptr = &entry->pair;
                         assert(pair_ptr != nullptr);
                         pair_ptr->~pair_type();
-#endif
+#endif // ENTRY_RELEASE_ON_ERASE
 #else
 #ifdef _MSC_VER
                         entry->pair.first.clear();
@@ -977,12 +973,12 @@ public:
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
 #if USE_ENTRY_PLACEMENT_NEW
-#if 0
+#if ENTRY_RELEASE_ON_ERASE
                         // pair_type class placement delete
                         pair_type * pair_ptr = &entry->pair;
                         assert(pair_ptr != nullptr);
                         pair_ptr->~pair_type();
-#endif
+#endif // ENTRY_RELEASE_ON_ERASE
 #else
 #ifdef _MSC_VER
                         entry->pair.first.clear();
