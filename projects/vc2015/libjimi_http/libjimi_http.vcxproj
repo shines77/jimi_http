@@ -45,6 +45,7 @@
     <ClInclude Include="..\..\..\src\main\jimi\jstd\dictionary.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\dictionary_ex.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\dictionary_traits.h" />
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\fixed_freelist.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_helper.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_map.h" />
     <ClInclude Include="..\..\..\src\main\jimi\jstd\hash_map_ex.h" />

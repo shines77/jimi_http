@@ -29,16 +29,24 @@ struct default_dictionary_hasher {
     typedef std::uint32_t   hash_type;
     typedef std::size_t     index_type;
 
+    // The invalid hash value.
+    static const hash_type kInvalidHash = static_cast<hash_type>(-1);
+    // The replacement value for invalid hash value.
+    static const hash_type kReplacedHash = static_cast<hash_type>(-2);
+
     default_dictionary_hasher() {}
     ~default_dictionary_hasher() {}
 
     hash_type hash_code(const key_type & key) const {
 #if 0
-        return jstd::hash_helper<key_type, hash_type, HashFunc>::getHashCode(key);
+        hash_type hash = jstd::hash_helper<key_type, hash_type, HashFunc>::getHashCode(key);
 #else
         jstd::hash<key_type, hash_type, HashFunc> hasher;
-        return hasher(key);
+        hash_type hash = hasher(key);
 #endif
+        if (unlikely(hash == kInvalidHash))
+            hash = kReplacedHash;
+        return hash;
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) const {

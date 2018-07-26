@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <limits>
 #include <type_traits>
 
 #include "jimi/jstd/dictionary_traits.h"
@@ -145,30 +146,6 @@ public:
             return entry;
         }
 
-        void safe_push_first(entry_type * entry) {
-            this->head_ = entry;
-            if (entry != nullptr)
-                ++(this->size_);
-        }
-
-        void safe_push_front(entry_type * entry) {
-            if (likely(entry != nullptr)) {
-                entry->next = this->head_;
-                ++(this->size_);
-            }
-            this->head_ = entry;
-        }
-
-        entry_type * safe_pop_front() {
-            entry_type * entry = this->head_;
-            if (likely(this->head_ != nullptr)) {
-                this->head_ = entry->next;
-                assert(this->size_ > 0);
-                --(this->size_);
-            }
-            return entry;
-        }
-
         void swap(free_list & right) {
             if (&right != this) {
                 entry_type * save_head = this->head_;
@@ -207,7 +184,7 @@ private:
     // The threshold of treeify to red-black tree.
     static const size_type kTreeifyThreshold = 8;
     // The invalid hash value.
-    static const hash_type kInvalidHash = static_cast<hash_type>(-1);
+    static const hash_type kInvalidHash = hasher_type::kInvalidHash;
 
 public:
     basic_dictionary(size_type initialCapacity = kDefaultInitialCapacity)
@@ -241,9 +218,16 @@ public:
         assert(this->count_ >= this->freelist_.size());
         return (this->count_ - this->freelist_.size());
     }
+    size_type max_size() const { return std::numeric_limits<size_type>::(max)(); }
+
     size_type bucket_mask() const { return this->mask_; }
     size_type bucket_capacity() const { return this->capacity_; }
+    size_type min_bucket_capacity() const { return this_type::kDefaultInitialCapacity; }
+    size_type max_bucket_capacity() const {
+        return std::(min)(this_type::kMaximumCapacity, std::numeric_limits<size_type>::(max)());
+    }
     size_type entries_count() const { return this->capacity_; }
+
     entry_type ** buckets() const { return this->buckets_; }
     entry_type * entries() const { return this->entries_; }
 
@@ -376,10 +360,12 @@ private:
         } while (likely(old_entry != nullptr));
     }
 
+    template <bool force_shrink = false>
     void rehash_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        if (likely(new_capacity > this->capacity_)) {
+        if (likely((force_shrink == false && new_capacity > this->capacity_) ||
+                   (force_shrink == true && new_capacity != this->capacity_))) {
             // The the array of bucket's first entry.
             entry_type ** new_buckets = new entry_type *[new_capacity];
             if (likely(new_buckets != nullptr)) {
@@ -410,10 +396,10 @@ private:
                             else {
                                 // Insert the old buckets to the new buckets in the new table.
                                 this->reinsert_list(new_buckets, new_mask, old_entry);
-    #ifndef NDEBUG
+#ifndef NDEBUG
                                 // Set the old_list.head to nullptr.
                                 *old_buckets = nullptr;
-    #endif
+#endif
                                 old_buckets++;
                             }
                         }
@@ -426,68 +412,6 @@ private:
                     // Setting status
                     this->buckets_ = new_buckets;
                     this->entries_ = new_entries;
-                    this->mask_ = new_capacity - 1;
-                    this->capacity_ = new_capacity;
-
-                    this->freelist_.swap(new_freelist);
-
-                    this->updateVersion();
-                }
-            }
-        }
-    }
-
-    void shrink_internal(size_type new_capacity) {
-        assert(new_capacity > 0);
-        assert((new_capacity & (new_capacity - 1)) == 0);
-        if (likely(this->capacity_ != new_capacity)) {
-            // The the array of bucket's first entry.
-            entry_type ** new_buckets = new entry_type *[new_capacity];
-            if (likely(new_buckets != nullptr)) {
-                // Initialize the buckets's data.
-                memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
-
-                // The the array of entries.
-                entry_type * new_entries = new entry_type[new_capacity];
-                if (likely(new_entries != nullptr)) {
-                    // Linked all new entries to the new free list.
-                    free_list new_freelist;
-                    //fill_freelist(new_freelist, new_entries, new_capacity);
-
-                    // Recalculate the bucket of all keys.
-                    if (likely(this->buckets_ != nullptr)) {
-                        size_type old_count = this->count_;
-                        this->count_ = 0;
-
-                        entry_type ** old_buckets = this->buckets_;
-                        size_type new_mask = new_capacity - 1;
-
-                        for (size_type i = 0; i < this->capacity_; ++i) {
-                            assert(old_buckets != nullptr);
-                            entry_type * old_entry = *old_buckets;
-                            if (likely(old_entry == nullptr)) {
-                                old_buckets++;
-                            }
-                            else {
-                                // Insert the old buckets to the new buckets in the new table.
-                                this->reinsert_list(new_buckets, new_mask, old_entry);
-    #ifndef NDEBUG
-                                // Set the old_list.head to nullptr.
-                                *old_buckets = nullptr;
-    #endif
-                                old_buckets++;
-                            }
-                        }
-                        assert(this->count_ == old_count);
-
-                        // Free old buckets data.
-                        delete[] this->buckets_;
-                    }
-
-                    // Setting status
-                    this->buckets_ = new_buckets;
-                    this->entries_ = new_entries;
-                    this->count_ = 0;
                     this->mask_ = new_capacity - 1;
                     this->capacity_ = new_capacity;
 
@@ -502,7 +426,7 @@ private:
     void resize_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        this->rehash_internal(new_capacity);
+        this->rehash_internal<false>(new_capacity);
     }
 
 public:
@@ -513,23 +437,23 @@ public:
     void reserve(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity(new_capacity);
-        this->rehash_internal(new_capacity);
+        this->rehash_internal<false>(new_capacity);
     }
 
     void rehash(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity(new_capacity);
-        this->rehash_internal(new_capacity);
+        this->rehash_internal<false>(new_capacity);
     }
 
     void resize(size_type new_capacity) {
         this->rehash(new_capacity);
     }
 
-    void shrink_to(size_type new_capacity) {
+    void shrink_to_fit(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_shrink_capacity(new_capacity);
-        this->shrink_internal(new_capacity);
+        this->rehash_internal<true>(new_capacity);
     }
 
     iterator find(const key_type & key) {
