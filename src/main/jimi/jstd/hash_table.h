@@ -9,6 +9,9 @@
 #include "jimi/basic/stddef.h"
 #include "jimi/basic/stdint.h"
 
+#include <memory.h>
+#include <assert.h>
+
 #include <cstddef>
 #include <memory>
 #include <type_traits>
