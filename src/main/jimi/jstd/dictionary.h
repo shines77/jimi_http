@@ -24,17 +24,19 @@
 namespace jstd {
 
 template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
-          typename Traits = default_dictionary_traits<Key, Value, HashFunc>>
+          typename Hasher = default_dictionary_hasher<Key, Value, HashFunc>,
+          typename Comparer = default_dictionary_comparer<Key, Value>>
 class basic_dictionary {
 public:
     typedef Key                             key_type;
     typedef Value                           value_type;
-    typedef Traits                          traits_type;
     typedef std::pair<Key, Value>           pair_type;
-    typedef typename Traits::size_type      size_type;
-    typedef typename Traits::hash_type      hash_type;
-    typedef typename Traits::index_type     index_type;
-    typedef basic_dictionary<Key, Value, HashFunc, Traits>
+    typedef Hasher                          hasher_type;
+    typedef Comparer                        comparer_type;
+    typedef typename Hasher::size_type      size_type;
+    typedef typename Hasher::hash_type      hash_type;
+    typedef typename Hasher::index_type     index_type;
+    typedef basic_dictionary<Key, Value, HashFunc, Hasher, Comparer>
                                             this_type;
 
     struct entry {
@@ -369,7 +371,8 @@ private:
 #if SUPPORT_DICTIONARY_VERSION
     size_type       version_;
 #endif
-    traits_type     traits_;
+    hasher_type     hasher_;
+    comparer_type   comparer_;
 
     // Default initial capacity is 64.
     static const size_type kDefaultInitialCapacity = 64;
@@ -532,7 +535,7 @@ private:
 
         do {
             hash_type hash = old_entry->hash;
-            size_type index = this->traits_.index_for(hash, new_mask);
+            size_type index = this->hasher_.index_for(hash, new_mask);
 
             // Save the value of old_entry->next.
             entry_type * next_entry = old_entry->next;
@@ -705,8 +708,8 @@ public:
 
     iterator find(const key_type & key) {
         if (likely(this->buckets() != nullptr)) {
-            hash_type hash = this->traits_.hash_code(key);
-            index_type index = this->traits_.index_for(hash, this->mask_);
+            hash_type hash = this->hasher_.hash_code(key);
+            index_type index = this->hasher_.index_for(hash, this->mask_);
 
             assert(this->entries() != nullptr);
             entry_type * entry = this->buckets_[index];
@@ -718,7 +721,7 @@ public:
                 }
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
+                    if (likely(this->comparer_.key_is_equals(key, entry->pair.first))) {
                         return (iterator)entry;
                     }
                     // Scan next entry
@@ -735,8 +738,8 @@ public:
     }
 
     inline iterator find_internal(const key_type & key, hash_type & hash, index_type & index) {
-        hash = this->traits_.hash_code(key);
-        index = this->traits_.index_for(hash, this->mask_);
+        hash = this->hasher_.hash_code(key);
+        index = this->hasher_.index_for(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
@@ -749,7 +752,7 @@ public:
             }
             else {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
+                if (likely(this->comparer_.key_is_equals(key, entry->pair.first))) {
                     return (iterator)entry;
                 }
                 // Scan next entry
@@ -762,8 +765,8 @@ public:
     }
 
     inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
-        hash_type hash = this->traits_.hash_code(key);
-        index = this->traits_.index_for(hash, this->mask_);
+        hash_type hash = this->hasher_.hash_code(key);
+        index = this->hasher_.index_for(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
@@ -778,7 +781,7 @@ public:
             }
             else {
                 // If hash value is equal, then compare the key sizes and the strings.
-                if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
+                if (likely(this->comparer_.key_is_equals(key, entry->pair.first))) {
                     before_out = before;
                     return (iterator)entry;
                 }
@@ -809,7 +812,7 @@ public:
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = this->traits_.index_for(hash, this->mask_);
+                        index = this->hasher_.index_for(hash, this->mask_);
                     }
 
                     // Get a unused entry.
@@ -854,7 +857,7 @@ public:
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = this->traits_.index_for(hash, this->mask_);
+                        index = this->hasher_.index_for(hash, this->mask_);
                     }
 
                     // Get a unused entry.
@@ -981,8 +984,8 @@ public:
 #else
     bool erase(const key_type & key) {
         if (likely(this->buckets_ != nullptr)) {
-            hash_type hash = this->traits_.hash_code(key);
-            size_type index = this->traits_.index_for(hash, this->mask_);
+            hash_type hash = this->hasher_.hash_code(key);
+            size_type index = this->hasher_.index_for(hash, this->mask_);
 
             assert(this->buckets() != nullptr);
             assert(this->entries() != nullptr);
@@ -997,7 +1000,7 @@ public:
                 }
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(this->traits_.key_is_equals(key, entry->pair.first))) {
+                    if (likely(this->comparer_.key_is_equals(key, entry->pair.first))) {
                         if (likely(before != nullptr))
                             before->next = entry->next;
                         else
@@ -1033,8 +1036,8 @@ public:
 
     bool erase(key_type && key) {
         if (likely(this->buckets_ != nullptr)) {
-            hash_type hash = this->traits_.hash_code(std::forward<key_type>(key));
-            size_type index = this->traits_.index_for(hash, this->mask_);
+            hash_type hash = this->hasher_.hash_code(std::forward<key_type>(key));
+            size_type index = this->hasher_.index_for(hash, this->mask_);
 
             assert(this->buckets() != nullptr);
             assert(this->entries() != nullptr);
@@ -1049,8 +1052,8 @@ public:
                 }
                 else {
                     // If hash value is equal, then compare the key sizes and the strings.
-                    if (likely(this->traits_.key_is_equals(std::forward<key_type>(key),
-                                                           entry->pair.first))) {
+                    if (likely(this->comparer_.key_is_equals(std::forward<key_type>(key),
+                                                             entry->pair.first))) {
                         if (likely(before != nullptr))
                             before->next = entry->next;
                         else

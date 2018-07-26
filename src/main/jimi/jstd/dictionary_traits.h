@@ -11,6 +11,7 @@
 #include "jimi/basic/stdsize.h"
 
 #include <string.h>
+#include <string>
 
 #include "jimi/jstd/hash_helper.h"
 #include "jimi/jstd/string_utils.h"
@@ -104,56 +105,56 @@ struct default_dictionary_comparer {
 // Default jstd::dictionary<K, V> traits
 //
 template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
-          typename HashTraits = default_dictionary_hasher<Key, Value, HashFunc>,
-          typename ComparerTraits = default_dictionary_comparer<Key, Value>>
+          typename Hasher = default_dictionary_hasher<Key, Value, HashFunc>,
+          typename Comparer = default_dictionary_comparer<Key, Value>>
 struct default_dictionary_traits {
     typedef Key                             key_type;
     typedef Value                           value_type;
-    typedef typename HashTraits::size_type  size_type;
-    typedef typename HashTraits::hash_type  hash_type;
-    typedef typename HashTraits::index_type index_type;
+    typedef typename Hasher::size_type      size_type;
+    typedef typename Hasher::hash_type      hash_type;
+    typedef typename Hasher::index_type     index_type;
 
-    HashTraits hashTraits_;
-    ComparerTraits comparerTraits_;
+    Hasher hasher_;
+    Comparer comparer_;
 
     default_dictionary_traits() {}
     ~default_dictionary_traits() {}
 
     //
-    // HashTraits
+    // Hasher
     //
     hash_type hash_code(const key_type & key) const {
-        return this->hashTraits_.hash_code(key);
+        return this->hasher_.hash_code(key);
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) const {
-        return this->hashTraits_.index_for(hash, capacity_mask);
+        return this->hasher_.index_for(hash, capacity_mask);
     }
 
     index_type next_index(index_type index, size_type capacity_mask) const {
-        return this->hashTraits_.next_index(index, capacity_mask);
+        return this->hasher_.next_index(index, capacity_mask);
     }
 
     //
-    // ComparerTraits
+    // Comparer
     //
     bool key_is_equals(const key_type & key1, const key_type & key2) const {
-        return this->comparerTraits_.key_is_equals(key1, key2);
+        return this->comparer_.key_is_equals(key1, key2);
     }
 
     bool value_is_equals(const value_type & value1, const value_type & value2) const {
-        return this->comparerTraits_.value_is_equals(value1, value2);
+        return this->comparer_.value_is_equals(value1, value2);
     }
 
     int key_compare(const key_type & key1, const key_type & key2) const {
-        return this->comparerTraits_.key_compare(key1, key2);
+        return this->comparer_.key_compare(key1, key2);
     }
 
     int value_compare(const value_type & value1, const value_type & value2) const {
-        return this->comparerTraits_.value_compare(value1, value2);
+        return this->comparer_.value_compare(value1, value2);
     }
 
-}; // struct default_dictionary_traits<K, V, HashFunc, HashTraits, ComparerTraits>
+}; // struct default_dictionary_traits<K, V, HashFunc, Hasher, Comparer>
 
 } // namespace jstd
 
