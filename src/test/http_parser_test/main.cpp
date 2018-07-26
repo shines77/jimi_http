@@ -580,26 +580,27 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
-#if 0
     void insert(std::string && key, std::string && value) {
         this->map_.insert(std::make_pair(std::forward<std::string>(key),
                                          std::forward<std::string>(value)));
     }
-#endif
 
     void emplace(const std::string & key, const std::string & value) {
         this->map_.emplace(std::make_pair(key, value));
+    }
+
+    void emplace(std::string && key, std::string && value) {
+        this->map_.emplace(std::make_pair(std::forward<std::string>(key),
+                                          std::forward<std::string>(value)));
     }
 
     void erase(const std::string & key) {
         this->map_.erase(key);
     }
 
-#if 0
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
-#endif
 };
 
 class std_unordered_map {
@@ -658,26 +659,27 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
-#if 1
     void insert(std::string && key, std::string && value) {
         this->map_.insert(std::make_pair(std::forward<std::string>(key),
                                          std::forward<std::string>(value)));
     }
-#endif
 
     void emplace(const std::string & key, const std::string & value) {
         this->map_.emplace(std::make_pair(key, value));
+    }
+
+    void emplace(std::string && key, std::string && value) {
+        this->map_.emplace(std::make_pair(std::forward<std::string>(key),
+                                          std::forward<std::string>(value)));
     }
 
     void erase(const std::string & key) {
         this->map_.erase(key);
     }
 
-#if 1
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
-#endif
 };
 
 template <typename T>
@@ -738,26 +740,27 @@ public:
         this->map_.insert(std::make_pair(key, value));
     }
 
-#if 1
     void insert(key_type && key, value_type && value) {
         this->map_.insert(std::make_pair(std::forward<key_type>(key),
                                          std::forward<value_type>(value)));
     }
-#endif
 
     void emplace(const std::string & key, const std::string & value) {
         this->map_.emplace(std::make_pair(key, value));
+    }
+
+    void emplace(key_type && key, value_type && value) {
+        this->map_.emplace(std::make_pair(std::forward<key_type>(key),
+                                          std::forward<value_type>(value)));
     }
 
     void erase(const std::string & key) {
         this->map_.erase(key);
     }
 
-#if 1
     void erase(std::string && key) {
         this->map_.erase(std::forward<std::string>(key));
     }
-#endif
 };
 
 } // namespace test
@@ -787,7 +790,7 @@ void hashtable_find_benchmark_impl()
         size_t checksum = 0;
         AlgorithmTy algorithm;
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            algorithm.insert(field_str[i], index_str[i]);
+            algorithm.emplace(field_str[i], index_str[i]);
         }
 
         StopWatch sw;
@@ -900,7 +903,7 @@ void hashtable_insert_benchmark_impl()
             AlgorithmTy algorithm;
             sw.start();
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(field_str[j], index_str[j]);
+                algorithm.emplace(field_str[j], index_str[j]);
             }
             checksum += algorithm.size();
             sw.stop();
@@ -1007,7 +1010,7 @@ void hashtable_erase_benchmark_impl()
             AlgorithmTy algorithm;
 
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(field_str[j], index_str[j]);
+                algorithm.emplace(field_str[j], index_str[j]);
             }
             checksum += algorithm.size();
 
@@ -1128,7 +1131,7 @@ void hashtable_insert_erase_benchmark_impl()
             checksum += algorithm.size();
 #endif
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(field_str[j], index_str[j]);
+                algorithm.emplace(field_str[j], index_str[j]);
             }
             checksum += algorithm.size();
 
@@ -1237,7 +1240,7 @@ void hashtable_rehash_benchmark_impl()
         algorithm.reserve(buckets);
 
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            algorithm.insert(field_str[i], index_str[i]);
+            algorithm.emplace(field_str[i], index_str[i]);
         }
 
         StopWatch sw;
@@ -1371,7 +1374,7 @@ void hashtable_rehash2_benchmark_impl()
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             AlgorithmTy algorithm;
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(field_str[j], index_str[j]);
+                algorithm.emplace(field_str[j], index_str[j]);
             }
 
             checksum += algorithm.size();
