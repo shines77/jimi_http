@@ -563,7 +563,7 @@ public:
         // Not implemented
     }
 
-    void shrink_to(size_type new_capacity) {
+    void shrink_to_fit(size_type new_capacity) {
         // Not implemented
     }
 
@@ -641,7 +641,7 @@ public:
         this->map_.rehash(new_buckets);
     }
 
-    void shrink_to(size_type new_buckets) {
+    void shrink_to_fit(size_type new_buckets) {
         this->map_.rehash(new_buckets);
     }
 
@@ -721,8 +721,8 @@ public:
         this->map_.rehash(new_buckets);
     }
 
-    void shrink_to(size_type new_buckets) {
-        this->map_.shrink_to(new_buckets);
+    void shrink_to_fit(size_type new_buckets) {
+        this->map_.shrink_to_fit(new_buckets);
     }
 
     iterator find(const key_type & key) {
@@ -904,7 +904,7 @@ void hashtable_rehash_benchmark_impl()
             checksum += algorithm.size();
 
             buckets = 128;
-            algorithm.shrink_to(buckets - 1);
+            algorithm.shrink_to_fit(buckets - 1);
             checksum += algorithm.bucket_count();
 #ifndef NDEBUG
             if (algorithm.bucket_count() != buckets) {
@@ -974,7 +974,7 @@ void hashtable_rehash2_benchmark_impl()
             checksum += algorithm.bucket_count();
 
             buckets = 128;
-            algorithm.shrink_to(buckets - 1);
+            algorithm.shrink_to_fit(buckets - 1);
 #ifndef NDEBUG
             if (algorithm.bucket_count() != buckets) {
                 size_t bucket_count = algorithm.bucket_count();

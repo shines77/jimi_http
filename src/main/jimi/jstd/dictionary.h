@@ -331,12 +331,6 @@ private:
         return new_capacity;
     }
 
-    void updateVersion() {
-#if SUPPORT_DICTIONARY_VERSION
-        ++(this->version_);
-#endif
-    }
-
     void reinsert_list(entry_type ** new_buckets, size_type new_mask,
                        entry_type * old_entry) {
         assert(new_buckets != nullptr);
@@ -427,6 +421,12 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         this->rehash_internal<false>(new_capacity);
+    }
+
+    void updateVersion() {
+#if SUPPORT_DICTIONARY_VERSION
+        ++(this->version_);
+#endif
     }
 
 public:

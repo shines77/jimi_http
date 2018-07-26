@@ -341,7 +341,7 @@ public:
         this->rehash(new_buckets);
     }
 
-    void shrink_to(size_type new_buckets) {
+    void shrink_to_fit(size_type new_buckets) {
         // Recalculate the size of new_buckets.
         new_buckets = this->calc_buckets_fast(new_buckets);
         this->shrink_internal(new_buckets);

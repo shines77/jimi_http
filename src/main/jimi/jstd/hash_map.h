@@ -667,7 +667,7 @@ public:
         this->rehash(new_capacity);
     }
 
-    void shrink_to(size_type new_capacity) {
+    void shrink_to_fit(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity_fast(new_capacity);
         this->shrink_internal(new_capacity);
