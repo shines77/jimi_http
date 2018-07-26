@@ -146,7 +146,7 @@ static const char * header_fields[] = {
     "X-Content-Type-Options",
     "X-Forwarded-For",
     "X-Forwarded-Proto",
-    "X-Powered-By"
+    "X-Powered-By",
     "X-Requested-With",
     "X-XSS-Protection",
 
@@ -167,7 +167,7 @@ static const char * header_fields[] = {
     "Date",
     "ETag",
     "Expires",
-    "Last-Modified"
+    "Last-Modified",
     "Link",
     "Location",
     "P3P",
@@ -314,11 +314,11 @@ void crc32c_debug_test()
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
-    std::string crc32_str[kHeaderFieldSize];
+    std::string field_str[kHeaderFieldSize];
     StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        field_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(field_str[i].c_str(), field_str[i].size());
     }
 
 #if CRC32C_IS_X86_64
@@ -434,11 +434,11 @@ void crc32c_benchmark_impl()
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
-    std::string crc32_str[kHeaderFieldSize];
+    std::string field_str[kHeaderFieldSize];
     StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        field_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(field_str[i].c_str(), field_str[i].size());
     }
 
     StopWatch sw;
@@ -493,11 +493,11 @@ void crc32c_benchmark()
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
-    std::string crc32_str[kHeaderFieldSize];
+    std::string field_str[kHeaderFieldSize];
     StringRef crc32_data[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        crc32_data[i].assign(crc32_str[i].c_str(), crc32_str[i].size());
+        field_str[i].assign(header_fields[i]);
+        crc32_data[i].assign(field_str[i].c_str(), field_str[i].size());
     }
 
 #if SUPPORT_SSE42_CRC32C
@@ -768,17 +768,17 @@ void hashtable_find_benchmark_impl()
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
+        field_str[i].assign(header_fields[i]);
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
 #else
         sprintf(buf, "%d", (int)i);
 #endif
-        indexs[i] = buf;
+        index_str[i] = buf;
     }
 
     {
@@ -787,14 +787,14 @@ void hashtable_find_benchmark_impl()
         size_t checksum = 0;
         AlgorithmTy algorithm;
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            algorithm.insert(crc32_str[i], indexs[i]);
+            algorithm.insert(field_str[i], index_str[i]);
         }
 
         StopWatch sw;
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                iterator iter = algorithm.find(crc32_str[j]);
+                iterator iter = algorithm.find(field_str[j]);
                 if (iter != algorithm.end()) {
                     checksum++;
                 }
@@ -869,6 +869,344 @@ void hashtable_find_benchmark()
 }
 
 template <typename AlgorithmTy>
+void hashtable_insert_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 100;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        field_str[i].assign(header_fields[i]);
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        index_str[i] = buf;
+    }
+
+    {
+        size_t checksum = 0;
+        double totalTime = 0.0;
+        StopWatch sw;
+
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            AlgorithmTy algorithm;
+            sw.start();
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.insert(field_str[j], index_str[j]);
+            }
+            checksum += algorithm.size();
+            sw.stop();
+
+            totalTime += sw.getMillisec();
+        }
+
+        AlgorithmTy algorithm;
+        printf("-------------------------------------------------------------------------\n");
+        printf(" %-28s  ", algorithm.name());
+        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, totalTime);
+    }
+}
+
+void hashtable_insert_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_insert_benchmark_impl()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_insert_benchmark_impl<test::std_map>();
+    hashtable_insert_benchmark_impl<test::std_unordered_map>();
+
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
+#endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
+
+#if USE_JSTD_HASH_MAP
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP
+
+#if USE_JSTD_HASH_MAP_EX
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP_EX
+
+#if USE_JSTD_DICTIONARY
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+#endif
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
+
+    printf("-------------------------------------------------------------------------\n");
+    printf("\n");
+}
+
+template <typename AlgorithmTy>
+void hashtable_erase_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 100;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        field_str[i].assign(header_fields[i]);
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        index_str[i] = buf;
+    }
+
+    {
+        size_t checksum = 0;
+        double totalTime = 0.0;
+        StopWatch sw;
+
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+            AlgorithmTy algorithm;
+
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.insert(field_str[j], index_str[j]);
+            }
+            checksum += algorithm.size();
+
+            sw.start();
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.erase(field_str[j]);
+            }
+            sw.stop();
+
+            assert(algorithm.size() == 0);
+            checksum += algorithm.size();
+
+            totalTime += sw.getMillisec();
+        }
+
+        AlgorithmTy algorithm;
+        printf("-------------------------------------------------------------------------\n");
+        printf(" %-28s  ", algorithm.name());
+        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, totalTime);
+    }
+}
+
+void hashtable_erase_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_erase_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_erase_benchmark_impl<test::std_map>();
+    hashtable_erase_benchmark_impl<test::std_unordered_map>();
+
+#if SUPPORT_SSE42_CRC32C
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
+#endif
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
+
+#if USE_JSTD_HASH_MAP
+#if SUPPORT_SSE42_CRC32C
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#endif
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP
+
+#if USE_JSTD_HASH_MAP_EX
+#if SUPPORT_SSE42_CRC32C
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#endif
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP_EX
+
+#if USE_JSTD_DICTIONARY
+#if SUPPORT_SSE42_CRC32C
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+#endif
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
+
+    printf("-------------------------------------------------------------------------\n");
+    printf("\n");
+}
+
+template <typename AlgorithmTy>
+void hashtable_insert_erase_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 100;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        field_str[i].assign(header_fields[i]);
+        char buf[16];
+#ifdef _MSC_VER
+        _itoa_s((int)i, buf, 10);
+#else
+        sprintf(buf, "%d", (int)i);
+#endif
+        index_str[i] = buf;
+    }
+
+    {
+        size_t checksum = 0;
+        AlgorithmTy algorithm;
+
+        StopWatch sw;
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+#if 0
+            assert(algorithm.size() == 0);
+            algorithm.clear();
+            assert(algorithm.size() == 0);
+            checksum += algorithm.size();
+#endif
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.insert(field_str[j], index_str[j]);
+            }
+            checksum += algorithm.size();
+
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.erase(field_str[j]);
+            }
+            assert(algorithm.size() == 0);
+            checksum += algorithm.size();
+        }
+        sw.stop();
+
+        printf("-------------------------------------------------------------------------\n");
+        printf(" %-28s  ", algorithm.name());
+        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
+    }
+}
+
+void hashtable_insert_erase_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_insert_erase_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_insert_erase_benchmark_impl<test::std_map>();
+    hashtable_insert_erase_benchmark_impl<test::std_unordered_map>();
+
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
+#endif
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
+#endif
+
+#if USE_JSTD_HASH_MAP
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
+#endif
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP
+
+#if USE_JSTD_HASH_MAP_EX
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
+#endif
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP_EX
+
+#if USE_JSTD_DICTIONARY
+#if SUPPORT_SSE42_CRC32C
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+#endif
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
+
+    printf("-------------------------------------------------------------------------\n");
+    printf("\n");
+}
+
+template <typename AlgorithmTy>
 void hashtable_rehash_benchmark_impl()
 {
     static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
@@ -878,17 +1216,17 @@ void hashtable_rehash_benchmark_impl()
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
 #endif
 
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
+        field_str[i].assign(header_fields[i]);
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
 #else
         sprintf(buf, "%d", (int)i);
 #endif
-        indexs[i] = buf;
+        index_str[i] = buf;
     }
 
     {
@@ -899,7 +1237,7 @@ void hashtable_rehash_benchmark_impl()
         algorithm.reserve(buckets);
 
         for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-            algorithm.insert(crc32_str[i], indexs[i]);
+            algorithm.insert(field_str[i], index_str[i]);
         }
 
         StopWatch sw;
@@ -928,7 +1266,7 @@ void hashtable_rehash_benchmark_impl()
                     printf("rehash(%u):   size = %" PRIuPTR ", buckets = %" PRIuPTR ", bucket_count = %" PRIuPTR "\n",
                            (uint32_t)j, algorithm.size(), buckets, bucket_count);
                 }
-#endif          
+#endif
             }
         }
         sw.stop();
@@ -949,17 +1287,17 @@ void hashtable_rehash2_benchmark_impl()
     static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize / 2);
 #endif
 
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
+    std::string field_str[kHeaderFieldSize];
+    std::string index_str[kHeaderFieldSize];
     for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
+        field_str[i].assign(header_fields[i]);
         char buf[16];
 #ifdef _MSC_VER
         _itoa_s((int)i, buf, 10);
 #else
         sprintf(buf, "%d", (int)i);
 #endif
-        indexs[i] = buf;
+        index_str[i] = buf;
     }
 
     {
@@ -972,7 +1310,7 @@ void hashtable_rehash2_benchmark_impl()
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             AlgorithmTy algorithm;
             for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-                algorithm.insert(crc32_str[i], indexs[i]);
+                algorithm.insert(field_str[i], index_str[i]);
             }
 
             checksum += algorithm.size();
@@ -1124,344 +1462,6 @@ void hashtable_rehash2_benchmark()
 #if SUPPORT_SMID_SHA
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_DICTIONARY
-
-    printf("-------------------------------------------------------------------------\n");
-    printf("\n");
-}
-
-template <typename AlgorithmTy>
-void hashtable_insert_benchmark_impl()
-{
-    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-#ifndef NDEBUG
-    static const size_t kRepeatTimes = 100;
-#else
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
-#endif
-
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
-    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        char buf[16];
-#ifdef _MSC_VER
-        _itoa_s((int)i, buf, 10);
-#else
-        sprintf(buf, "%d", (int)i);
-#endif
-        indexs[i] = buf;
-    }
-
-    {
-        size_t checksum = 0;
-        double totalTime = 0.0;
-        StopWatch sw;
-
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            AlgorithmTy algorithm;
-            sw.start();
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(crc32_str[j], indexs[j]);
-            }
-            checksum += algorithm.size();
-            sw.stop();
-
-            totalTime += sw.getMillisec();
-        }
-
-        AlgorithmTy algorithm;
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
-        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, totalTime);
-    }
-}
-
-void hashtable_insert_benchmark()
-{
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  hashtable_insert_benchmark_impl()" << std::endl;
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << std::endl;
-
-    hashtable_insert_benchmark_impl<test::std_map>();
-    hashtable_insert_benchmark_impl<test::std_unordered_map>();
-
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#endif
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
-#endif
-
-#if USE_JSTD_HASH_MAP
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#endif
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_HASH_MAP
-
-#if USE_JSTD_HASH_MAP_EX
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#endif
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_HASH_MAP_EX
-
-#if USE_JSTD_DICTIONARY
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
-#endif
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
-    hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_DICTIONARY
-
-    printf("-------------------------------------------------------------------------\n");
-    printf("\n");
-}
-
-template <typename AlgorithmTy>
-void hashtable_erase_benchmark_impl()
-{
-    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-#ifndef NDEBUG
-    static const size_t kRepeatTimes = 100;
-#else
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
-#endif
-
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
-    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        char buf[16];
-#ifdef _MSC_VER
-        _itoa_s((int)i, buf, 10);
-#else
-        sprintf(buf, "%d", (int)i);
-#endif
-        indexs[i] = buf;
-    }
-
-    {
-        size_t checksum = 0;
-        double totalTime = 0.0;
-        StopWatch sw;
-
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-            AlgorithmTy algorithm;
-            
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(crc32_str[j], indexs[j]);
-            }
-            checksum += algorithm.size();
-
-            sw.start();
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.erase(crc32_str[j]);
-            }
-            sw.stop();
-
-            assert(algorithm.size() == 0);
-            checksum += algorithm.size();
-
-            totalTime += sw.getMillisec();
-        }
-
-        AlgorithmTy algorithm;
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
-        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, totalTime);
-    }
-}
-
-void hashtable_erase_benchmark()
-{
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  hashtable_erase_benchmark()" << std::endl;
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << std::endl;
-
-    hashtable_erase_benchmark_impl<test::std_map>();
-    hashtable_erase_benchmark_impl<test::std_unordered_map>();
-
-#if SUPPORT_SSE42_CRC32C
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#endif
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
-#endif
-
-#if USE_JSTD_HASH_MAP
-#if SUPPORT_SSE42_CRC32C
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#endif
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_HASH_MAP
-
-#if USE_JSTD_HASH_MAP_EX
-#if SUPPORT_SSE42_CRC32C
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#endif
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_HASH_MAP_EX
-
-#if USE_JSTD_DICTIONARY
-#if SUPPORT_SSE42_CRC32C
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
-#endif
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
-    hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_DICTIONARY
-
-    printf("-------------------------------------------------------------------------\n");
-    printf("\n");
-}
-
-template <typename AlgorithmTy>
-void hashtable_insert_erase_benchmark_impl()
-{
-    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
-#ifndef NDEBUG
-    static const size_t kRepeatTimes = 100;
-#else
-    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
-#endif
-
-    std::string crc32_str[kHeaderFieldSize];
-    std::string indexs[kHeaderFieldSize];
-    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
-        crc32_str[i].assign(header_fields[i]);
-        char buf[16];
-#ifdef _MSC_VER
-        _itoa_s((int)i, buf, 10);
-#else
-        sprintf(buf, "%d", (int)i);
-#endif
-        indexs[i] = buf;
-    }
-
-    {
-        size_t checksum = 0;
-        AlgorithmTy algorithm;
-
-        StopWatch sw;
-
-        sw.start();
-        for (size_t i = 0; i < kRepeatTimes; ++i) {
-#if 0
-            assert(algorithm.size() == 0);
-            algorithm.clear();
-            assert(algorithm.size() == 0);
-            checksum += algorithm.size();
-#endif
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.insert(crc32_str[j], indexs[j]);
-            }
-            checksum += algorithm.size();
-
-            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                algorithm.erase(crc32_str[j]);
-            }
-            assert(algorithm.size() == 0);
-            checksum += algorithm.size();
-        }
-        sw.stop();
-
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
-        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
-    }
-}
-
-void hashtable_insert_erase_benchmark()
-{
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  hashtable_insert_erase_benchmark()" << std::endl;
-    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << std::endl;
-
-    hashtable_insert_erase_benchmark_impl<test::std_map>();
-    hashtable_insert_erase_benchmark_impl<test::std_unordered_map>();
-
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
-#endif
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<std::string, std::string>>>();
-#endif
-
-#if USE_JSTD_HASH_MAP
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map<std::string, std::string>>>();
-#endif
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_HASH_MAP
-
-#if USE_JSTD_HASH_MAP_EX
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<std::string, std::string>>>();
-#endif
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
-#endif
-#endif // USE_JSTD_HASH_MAP_EX
-
-#if USE_JSTD_DICTIONARY
-#if SUPPORT_SSE42_CRC32C
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
-#endif
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
-#if SUPPORT_SMID_SHA
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
-    hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
 #endif
 #endif // USE_JSTD_DICTIONARY
 
