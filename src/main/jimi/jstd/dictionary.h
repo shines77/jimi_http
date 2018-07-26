@@ -25,7 +25,8 @@
 
 #define SUPPORT_DICTIONARY_VERSION  0
 
-#if defined(_MSC_VER) && !defined(NDEBUG) && (JIMI_ENABLE_VLD != 0)
+#if defined(_MSC_VER) && !defined(NDEBUG) && (JIMI_ENABLE_VLD != 0) && 0
+// Disable now !!
 #define USE_ENTRY_PLACEMENT_NEW     0
 #else
 #define USE_ENTRY_PLACEMENT_NEW     1
@@ -443,10 +444,15 @@ private:
                                 new_entry->hash = old_entry->hash;
 
                                 // pair_type class placement new
-                                void * pair_buf = (void *)&new_entry->pair;
+                                void * pair_buf = (void *)&(new_entry->pair);
                                 pair_type * new_pair = new (pair_buf) pair_type(std::move(old_entry->pair));
                                 assert(new_pair == &new_entry->pair);
                                 //new_entry->pair.swap(old_entry->pair);
+
+                                // pair_type class placement delete
+                                pair_type * pair_ptr = &old_entry->pair;
+                                assert(pair_ptr != nullptr);
+                                pair_ptr->~pair_type();
 #else
                                 // Swap old_entry and new_entry.
                                 //new_entry->next = old_entry->next;
@@ -686,6 +692,12 @@ public:
                     // Pop a free entry from freelist.
                     new_entry = this->freelist_.pop_front();
                     assert(new_entry != nullptr);
+#if USE_ENTRY_PLACEMENT_NEW
+                    // pair_type class placement delete
+                    pair_type * pair_ptr = &new_entry->pair;
+                    assert(pair_ptr != nullptr);
+                    pair_ptr->~pair_type();
+#endif
                 }
 
                 new_entry->next = this->buckets_[index];
@@ -693,7 +705,7 @@ public:
                 this->buckets_[index] = new_entry;
 #if USE_ENTRY_PLACEMENT_NEW
                 // pair_type class placement new
-                void * pair_buf = (void *)&new_entry->pair;
+                void * pair_buf = (void *)&(new_entry->pair);
                 pair_type * new_pair = new (pair_buf) pair_type(key, value);
                 assert(new_pair == &new_entry->pair);
                 //new ((void *)&new_entry->pair.first) key_type(key);
@@ -739,6 +751,12 @@ public:
                     // Pop a free entry from freelist.
                     new_entry = this->freelist_.pop_front();
                     assert(new_entry != nullptr);
+#if USE_ENTRY_PLACEMENT_NEW
+                    // pair_type class placement delete
+                    pair_type * pair_ptr = &new_entry->pair;
+                    assert(pair_ptr != nullptr);
+                    pair_ptr->~pair_type();
+#endif
                 }
 
                 new_entry->next = this->buckets_[index];
@@ -746,7 +764,7 @@ public:
                 this->buckets_[index] = new_entry;
 #if USE_ENTRY_PLACEMENT_NEW
                 // pair_type class placement new
-                void * pair_buf = (void *)&new_entry->pair;
+                void * pair_buf = (void *)&(new_entry->pair);
                 pair_type * new_pair = new (pair_buf) pair_type(
                             std::forward<key_type>(key), std::forward<value_type>(value));
                 assert(new_pair == &new_entry->pair);
@@ -887,7 +905,14 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
-#if (USE_ENTRY_PLACEMENT_NEW == 0)
+#if USE_ENTRY_PLACEMENT_NEW
+#if 0
+                        // pair_type class placement delete
+                        pair_type * pair_ptr = &entry->pair;
+                        assert(pair_ptr != nullptr);
+                        pair_ptr->~pair_type();
+#endif
+#else
 #ifdef _MSC_VER
                         entry->pair.first.clear();
                         entry->pair.second.clear();
@@ -942,7 +967,14 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
-#if (USE_ENTRY_PLACEMENT_NEW == 0)
+#if USE_ENTRY_PLACEMENT_NEW
+#if 0
+                        // pair_type class placement delete
+                        pair_type * pair_ptr = &entry->pair;
+                        assert(pair_ptr != nullptr);
+                        pair_ptr->~pair_type();
+#endif
+#else
 #ifdef _MSC_VER
                         entry->pair.first.clear();
                         entry->pair.second.clear();
