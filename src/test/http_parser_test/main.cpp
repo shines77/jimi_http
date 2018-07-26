@@ -918,7 +918,7 @@ void hashtable_insert_benchmark_impl()
 void hashtable_insert_benchmark()
 {
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
-    std::cout << "  hashtable_insert_benchmark_impl()" << std::endl;
+    std::cout << "  hashtable_insert_benchmark()" << std::endl;
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
