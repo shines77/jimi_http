@@ -218,13 +218,13 @@ public:
         assert(this->count_ >= this->freelist_.size());
         return (this->count_ - this->freelist_.size());
     }
-    size_type max_size() const { return std::numeric_limits<size_type>::(max)(); }
+    size_type max_size() const { return (std::numeric_limits<size_type>::max)(); }
 
     size_type bucket_mask() const { return this->mask_; }
     size_type bucket_capacity() const { return this->capacity_; }
     size_type min_bucket_capacity() const { return this_type::kDefaultInitialCapacity; }
     size_type max_bucket_capacity() const {
-        return std::(min)(this_type::kMaximumCapacity, std::numeric_limits<size_type>::(max)());
+        return (std::min)(this_type::kMaximumCapacity, (std::numeric_limits<size_type>::max)());
     }
     size_type entries_count() const { return this->capacity_; }
 
