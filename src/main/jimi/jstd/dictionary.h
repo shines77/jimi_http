@@ -460,9 +460,18 @@ private:
                                 new_entry->pair.swap(old_entry->pair);
 #endif
                                 ++new_entry;
+                                ++old_entry;
                                 ++new_count;
                             }
-                            ++old_entry;
+                            else {
+#if USE_ENTRY_PLACEMENT_NEW
+                                // pair_type class placement delete
+                                pair_type * pair_ptr = &old_entry->pair;
+                                assert(pair_ptr != nullptr);
+                                pair_ptr->~pair_type();
+#endif
+                                ++old_entry;
+                            }
                         }
                         assert(new_count == this->size());
 
