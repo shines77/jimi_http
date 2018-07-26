@@ -1049,6 +1049,18 @@ void hashtable_rehash_benchmark()
 #endif
 #endif // USE_JSTD_HASH_MAP_EX
 
+#if USE_JSTD_DICTIONARY
+#if SUPPORT_SSE42_CRC32C
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+#endif
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
+
     printf("-------------------------------------------------------------------------\n");
     printf("\n");
 }
@@ -1097,6 +1109,18 @@ void hashtable_rehash2_benchmark()
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<std::string, std::string>>>();
 #endif
 #endif // USE_JSTD_HASH_MAP_EX
+
+#if USE_JSTD_DICTIONARY
+#if SUPPORT_SSE42_CRC32C
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary<std::string, std::string>>>();
+#endif
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<std::string, std::string>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
+    hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
 
     printf("-------------------------------------------------------------------------\n");
     printf("\n");
@@ -1448,8 +1472,8 @@ void hashtable_benchmark()
     hashtable_erase_benchmark();
     hashtable_insert_erase_benchmark();
 
-    //hashtable_rehash_benchmark();
-    //hashtable_rehash2_benchmark();
+    hashtable_rehash_benchmark();
+    hashtable_rehash2_benchmark();
 }
 
 static uint32_t s_bitmap[65536 / 32 / 2 + 1];
