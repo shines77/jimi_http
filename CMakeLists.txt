@@ -68,6 +68,10 @@ if (NOT MSVC)
 
     ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
     set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} --std=gnu++11 ${CMAKE_C_FLAGS_COMMON}")
+    ##
+    ## G++ optimization beyond -O3/-Ofast
+    ## See: https://stackoverflow.com/questions/14492436/g-optimization-beyond-o3-ofast
+    ##
     ## Reserve: -O3  -flto
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEFAULT} -g -pg")

@@ -71,14 +71,22 @@ if (NOT MSVC)
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg")
 
-    ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
-    set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libstdc++ ${CMAKE_C_FLAGS_COMMON}")
+    ## --std=gnu++11 -stdlib=libc++ -stdlib=libstdc++ -Wall -Werror -Wextra -Wno-format -Wno-unused-function
+    set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ ${CMAKE_C_FLAGS_COMMON}")
+    ##
+    ## G++ optimization beyond -O3/-Ofast
+    ## See: https://stackoverflow.com/questions/14492436/g-optimization-beyond-o3-ofast
+    ##
     ## Reserve: -O3  -flto
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEFAULT} -g -pg")
 
-    ## Reserved flags: "-lc++abi"
-    set(CMAKE_EXE_LINKER_FLAGS "-lstdc++")
+    ##
+    ## libc++ 7.0 documentation
+    ## See: https://libcxx.llvm.org/docs/UsingLibcxx.html
+    ##
+    ## Reserved flags: "-lc++abi -lstdc++"
+    set(CMAKE_EXE_LINKER_FLAGS "-lc++ -lc++abi -lm -lc -lgcc_s -lgc")
 
     ## add_compile_options(-D__SSE3__=1 -D__SSE4A__=1 -D__SSE4_1__=1 -D__SSE4_2__=1)
 endif()
