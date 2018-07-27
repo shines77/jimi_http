@@ -1902,8 +1902,6 @@ void find_power_2_near_prime()
     generate_prime_65536();
     printf("\n");
 
-    uint32_t m = fast_div_coff(5, 2);
-
     uint32_t num = 1;
     for (uint32_t n = 0; n < 31; ++n) {
         uint32_t prime = find_first_prime(num);
