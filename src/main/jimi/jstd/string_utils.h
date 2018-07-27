@@ -167,7 +167,7 @@ static inline
 bool is_equals_fast(const CharTy * str1, const CharTy * str2, size_t length)
 {
 #if (STRING_COMPARE_MODE == STRING_COMPARE_STDC)
-    return (strcmp(str1.c_str(), str2.c_str()) == 0);
+    return (strcmp((const char *)str1, (const char *)str2) == 0);
 #else
     if (likely(((uintptr_t)str1 & (uintptr_t)str2) != 0)) {
         assert(str1 != nullptr && str2 != nullptr);
@@ -203,7 +203,7 @@ bool is_equals_fast(const StringType & str1, const StringType & str2)
 {
     assert(str1.size() == str2.size());
 #if (STRING_COMPARE_MODE == STRING_COMPARE_STDC)
-    return (strcmp(str1.c_str(), str2.c_str()) == 0);
+    return (strcmp((const char *)str1.c_str(), (const char *)str2.c_str()) == 0);
 #else
     return StrUtils::is_equals_fast(str1.c_str(), str2.c_str(), str1.size());   
 #endif
@@ -214,7 +214,7 @@ static inline
 bool is_equals(const StringType & str1, const StringType & str2)
 {
 #if (STRING_COMPARE_MODE == STRING_COMPARE_STDC)
-    return (strcmp(str1.c_str(), str2.c_str()) == 0);
+    return (strcmp((const char *)str1.c_str(), (const char *)str2.c_str()) == 0);
 #else
     return StrUtils::is_equals(str1.c_str(), str1.size(), str2.c_str(), str2.size());
 #endif
@@ -283,7 +283,7 @@ static inline
 int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t length2)
 {
 #if (STRING_COMPARE_MODE == STRING_COMPARE_STDC)
-    return strcmp(str1.c_str(), str2.c_str());
+    return strcmp((const char *)str1, (const char *)str2);
 #else
     if (likely(((uintptr_t)str1 & (uintptr_t)str2) != 0)) {
         assert(str1 != nullptr && str2 != nullptr);
@@ -301,7 +301,6 @@ int compare(const CharTy * str1, size_t length1, const CharTy * str2, size_t len
         assert(str1 == nullptr && str2 == nullptr);
         return StrUtils::IsEqual;
     }
-    return StrUtils::compare(str1.c_str(), str1.size(), str2.c_str(), str2.size());
 #endif // STRING_COMPARE_MODE
 }
 
@@ -310,7 +309,7 @@ static inline
 int compare(const StringType & str1, const StringType & str2)
 {
 #if (STRING_COMPARE_MODE == STRING_COMPARE_STDC)
-    return strcmp(str1.c_str(), str2.c_str());
+    return strcmp((const char *)str1.c_str(), (const char *)str2.c_str());
 #else
     return StrUtils::compare(str1.c_str(), str1.size(), str2.c_str(), str2.size());
 #endif
