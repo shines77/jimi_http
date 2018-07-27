@@ -240,7 +240,6 @@ int main(int argc, char * argv[])
 
     // help
     if (args_map.count("help") > 0) {
-        std::string app_name = get_app_name(argv[0]);
         print_usage(app_name, desc);
         exit(EXIT_FAILURE);
     }

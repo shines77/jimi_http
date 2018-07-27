@@ -1583,8 +1583,6 @@ uint32_t find_first_prime(uint32_t num)
         else
             return prime;
     } while (1);
-
-    return 0;
 }
 
 uint32_t fast_div_coff(uint32_t dividend, uint32_t k)

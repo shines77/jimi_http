@@ -59,7 +59,7 @@ if (NOT MSVC)
     set(CMAKE_CXX_COMPILER "clang++-5.0")
 
     ## Reserve: [Support Intel SMID SHA1/SHA256: -msha]
-    set(CMAKE_C_FLAGS_COMMON "-mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -mpclmul -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-macros -Wno-unused-private-field -Wno-gnu-anonymous-struct -Weverything -Wno-deprecated-declarations -Wno-disabled-macro-expansion -Wno-float-equal -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-exit-time-destructors -Wno-missing-prototypes -Wno-padded -Wno-old-style-cast -Wno-uninitialized -Wno-unused-parameter -Wno-unused-template -Wno-reserved-id-macro -Wno-header-hygiene -Wno-deprecated-register -Wno-sign-conversion -Wno-cast-qual -Wno-cast-align -fPIC -U__STRICT_ANSI__")
+    set(CMAKE_C_FLAGS_COMMON "-mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -mpclmul -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-macros -Wno-unused-private-field -Wno-unreachable-code -Wno-gnu-anonymous-struct -Weverything -Wno-deprecated-declarations -Wno-disabled-macro-expansion -Wno-float-equal -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-exit-time-destructors -Wno-missing-prototypes -Wno-padded -Wno-old-style-cast -Wno-uninitialized -Wno-unused-parameter -Wno-unused-template -Wno-reserved-id-macro -Wno-header-hygiene -Wno-deprecated-register -Wno-sign-conversion -Wno-cast-qual -Wno-cast-align -fPIC -U__STRICT_ANSI__")
 
     ## -std=c99 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
     set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS} -std=c99 ${CMAKE_C_FLAGS_COMMON}")
@@ -126,8 +126,8 @@ include_directories(../src/unittest)
 include_directories(../deps)
 
 set(SOURCE_FILES
-    ../deps/picohttpparser/picohttpparser.c
     ../src/test/http_parser_test/main.cpp
+    ../deps/picohttpparser/picohttpparser.c
     )
 
 add_custom_target(debug
