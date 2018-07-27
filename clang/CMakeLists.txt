@@ -19,7 +19,7 @@ set(Boost_USE_STATIC_LIBS        BoostOption_USE_STATIC_LIBS)      # only find s
 set(Boost_USE_MULTITHREADED      BoostOption_USE_MULTITHREADED)
 set(Boost_USE_STATIC_RUNTIME     BoostOption_USE_STATIC_RUNTIME)
 
-find_package(Boost 1.55 COMPONENTS coroutine context system thread atomic chrono program_options REQUIRED)
+find_package(Boost 1.54 COMPONENTS system thread atomic chrono program_options REQUIRED)
 
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
@@ -58,17 +58,24 @@ if (NOT MSVC)
     set(CMAKE_C_COMPILER "clang-5.0")
     set(CMAKE_CXX_COMPILER "clang++-5.0")
 
-    set(CMAKE_C_FLAGS_COMMON "-march=native -mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Weverything -Wno-deprecated-declarations -Wno-disabled-macro-expansion -Wno-float-equal -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-exit-time-destructors -Wno-missing-prototypes -Wno-padded -Wno-old-style-cast -Wno-uninitialized -Wno-unused-parameter -Wno-unused-template -Wno-reserved-id-macro -Wno-header-hygiene -Wno-deprecated-register -Wno-sign-conversion -Wno-cast-qual -Wno-cast-align -fPIC -U__STRICT_ANSI__")
+    ## Reserve: [Support Intel SMID SHA1/SHA256: -msha]
+    set(CMAKE_C_FLAGS_COMMON "-mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -mpclmul -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Weverything -Wno-deprecated-declarations -Wno-disabled-macro-expansion -Wno-float-equal -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-exit-time-destructors -Wno-missing-prototypes -Wno-padded -Wno-old-style-cast -Wno-uninitialized -Wno-unused-parameter -Wno-unused-template -Wno-reserved-id-macro -Wno-header-hygiene -Wno-deprecated-register -Wno-sign-conversion -Wno-cast-qual -Wno-cast-align -fPIC -U__STRICT_ANSI__")
 
     ## -std=c99 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
     set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS} -std=c99 ${CMAKE_C_FLAGS_COMMON}")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -O3 -DNDEBUG")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg -D_DEBUG")
+    ##
+    ## G++ optimization beyond -O3/-Ofast
+    ## See: https://stackoverflow.com/questions/14492436/g-optimization-beyond-o3-ofast
+    ##
+    ## Reserve: -O3  -flto
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg")
 
     ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
     set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libstdc++ ${CMAKE_C_FLAGS_COMMON}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -O3 -DNDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEFAULT} -g -pg -D_DEBUG")
+    ## Reserve: -O3  -flto
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEFAULT} -g -pg")
 
     ## Reserved flags: "-lc++abi"
     set(CMAKE_EXE_LINKER_FLAGS "-lstdc++")
