@@ -29,6 +29,10 @@
 
 #include <sys/types.h>
 
+#ifndef __SSE4_2__
+#define __SSE4_2__          1
+#endif // __SSE4_2__
+
 #ifdef _MSC_VER
 #define ssize_t intptr_t
 #endif
