@@ -78,19 +78,13 @@ struct hash_helper {
     }
 
     static
-    typename std::enable_if<(std::is_pod<T>::value && std::is_pointer<T>::value), HashType>::type
-    getHashCode(const Object * object) {
-        return TiStore::hash::Times31_std((const char *)object, sizeof(Object *));
-    }
-
-    static
     typename std::enable_if<(!std::is_pod<T>::value && !std::is_pointer<T>::value), HashType>::type
     getHashCode(const Object & object) {
         return TiStore::hash::Times31_std((const char *)&object, sizeof(object));
     }
 
     static
-    typename std::enable_if<(!std::is_pod<T>::value && std::is_pointer<T>::value), HashType>::type
+    typename std::enable_if<(std::is_pointer<T>::value), HashType>::type
     getHashCode(const Object * object) {
         return TiStore::hash::Times31_std((const char *)object, sizeof(Object *));
     }
