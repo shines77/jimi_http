@@ -196,26 +196,28 @@ template <typename T, typename HashType = std::uint32_t,
           std::size_t HashFunc = Hash_Default>
 struct hash {
     typedef typename std::remove_pointer<
-                typename std::remove_cv<T>::type
-            >::type         Object;
+                typename std::remove_cv<
+                    typename std::remove_reference<T>::type
+                >::type
+            >::type     key_type;
 
     hash() {}
     ~hash() {}
 
-    HashType operator() (const Object & object) const {
-        return jstd::hash_helper<Object, HashType, HashFunc>::getHashCode(object);
+    HashType operator() (const key_type & key) const {
+        return jstd::hash_helper<key_type, HashType, HashFunc>::getHashCode(key);
     }
 
-    HashType operator() (const volatile Object & object) const {
-        return jstd::hash_helper<Object, HashType, HashFunc>::getHashCode(object);
+    HashType operator() (const volatile key_type & key) const {
+        return jstd::hash_helper<key_type, HashType, HashFunc>::getHashCode(key);
     }
 
-    HashType operator() (const Object * object) const {
-        return jstd::hash_helper<Object *, HashType, HashFunc>::getHashCode(object);
+    HashType operator() (const key_type * key) const {
+        return jstd::hash_helper<key_type *, HashType, HashFunc>::getHashCode(key);
     }
 
-    HashType operator() (const volatile Object * object) const {
-        return jstd::hash_helper<Object *, HashType, HashFunc>::getHashCode(object);
+    HashType operator() (const volatile key_type * key) const {
+        return jstd::hash_helper<key_type *, HashType, HashFunc>::getHashCode(key);
     }
 };
 
