@@ -714,6 +714,11 @@ static uint32_t sha1_x86(uint32_t state[5], const char * data, size_t length)
 #endif // SUPPORT_SMID_SHA
 }
 
+static uint32_t sha1_x86(const char * data, size_t length)
+{
+    return sha1_x86(s_sha1_state, data, length);
+}
+
 } // namespace jimi
 
 #endif // JIMI_HTTP_CRC32C_H
