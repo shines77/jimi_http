@@ -18,8 +18,8 @@
 #define HASH_HELPER_CHAR(KeyType, HashType, HashFuncId, HashFunc)               \
     template <>                                                                 \
     struct hash_helper<KeyType, HashType, HashFuncId> {                         \
-        static std::uint32_t getHashCode(KeyType data, std::size_t length) {    \
-            return HashFunc((const char *)data, length);                        \
+        static HashType getHashCode(KeyType data, std::size_t length) {         \
+            return (HashType)HashFunc((const char *)data, length);              \
         }                                                                       \
     }
 
@@ -69,24 +69,24 @@ struct hash_helper {
                 typename std::remove_const<
                     typename std::remove_reference<T>::type
                 >::type
-            >::type         Object;
+            >::type     key_type;
 
     static
     typename std::enable_if<(std::is_pod<T>::value && !std::is_pointer<T>::value), HashType>::type
-    getHashCode(const Object object) {
-        return TiStore::hash::Times31_std((const char *)&object, sizeof(object));
+    getHashCode(const key_type key) {
+        return TiStore::hash::Times31_std((const char *)&key, sizeof(key));
     }
 
     static
     typename std::enable_if<(!std::is_pod<T>::value && !std::is_pointer<T>::value), HashType>::type
-    getHashCode(const Object & object) {
-        return TiStore::hash::Times31_std((const char *)&object, sizeof(object));
+    getHashCode(const key_type & key) {
+        return TiStore::hash::Times31_std((const char *)&key, sizeof(key));
     }
 
     static
-    typename std::enable_if<(std::is_pointer<T>::value), HashType>::type
-    getHashCode(const Object * object) {
-        return TiStore::hash::Times31_std((const char *)object, sizeof(Object *));
+    typename std::enable_if<std::is_pointer<T>::value, HashType>::type
+    getHashCode(const key_type * key) {
+        return TiStore::hash::Times31_std((const char *)key, sizeof(key_type *));
     }
 };
 
