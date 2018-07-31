@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <cmath>
 #include <type_traits>
 
 #include "jimi/jstd/hash_helper.h"
@@ -492,27 +493,34 @@ public:
     typedef const entry_type *                      const_iterator;
     typedef basic_hash_map_ex<Key, Value, HashFunc> this_type;
 
+#if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
+ || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) || defined(_M_ARM64)
+    typedef double  float_type;
+#else
+    typedef float   float_type;
+#endif
+
 private:
     list_type * table_;
-    size_type capacity_;
-    size_type size_;
-    size_type used_;
-    size_type threshold_;
-    float loadFactor_;
+    size_type   capacity_;
+    size_type   mask_;
+    size_type   size_;
+    size_type   threshold_;
+    float_type  loadFactor_;
 
     // Default initial capacity is 64.
     static const size_type kDefaultInitialCapacity = 64;
     // Maximum capacity is 1 << 30.
     static const size_type kMaximumCapacity = 1U << 30;
     // Default load factor is: 0.75
-    static const float kDefaultLoadFactor;
+    static const float_type kDefaultLoadFactor;
     // The threshold of treeify to red-black tree.
     static const size_type kTreeifyThreshold = 8;
 
 public:
     basic_hash_map_ex(size_type initialCapacity = kDefaultInitialCapacity,
                       float loadFactor = kDefaultLoadFactor)
-        : table_(nullptr), capacity_(0), size_(0), used_(0),
+        : table_(nullptr), capacity_(0), mask_(0), size_(0),
           threshold_(0), loadFactor_(loadFactor) {
         this->initialize(initialCapacity, loadFactor);
     }
@@ -526,7 +534,8 @@ public:
     iterator end() const { return nullptr; }
 
     size_type size() const { return this->size_; }
-    size_type bucket_used() const { return this->used_; }
+    size_type bucket_used() const { return 0; }
+    size_type bucket_mask() const { return this->mask_; }
     size_type bucket_count() const { return this->capacity_; }
     list_type * data() const { return this->table_; }
 
@@ -546,10 +555,10 @@ private:
             // Setting status
             this->table_ = new_table;
             this->capacity_ = new_capacity;
+            this->mask_ = new_capacity - 1;
             this->size_ = 0;
-            this->used_ = 0;
             assert(loadFactor > 0.0f);
-            this->threshold_ = (size_type)(new_capacity * fabsf(loadFactor));
+            this->threshold_ = (size_type)(new_capacity * std::fabs(loadFactor));
             this->loadFactor_ = loadFactor;
         }
     }
@@ -569,10 +578,10 @@ private:
                 // Setting status
                 this->table_ = new_table;
                 this->capacity_ = new_capacity;
+                this->mask_ = new_capacity - 1;
                 this->size_ = 0;
-                this->used_ = 0;
                 assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
+                this->threshold_ = (size_type)(new_capacity * std::fabs(this->loadFactor_));
             }
         }
     }
@@ -602,8 +611,8 @@ private:
         }
         // Setting status
         this->capacity_ = 0;
+        this->mask_ = 0;
         this->size_ = 0;
-        this->used_ = 0;
         this->threshold_ = 0;
 #endif
     }
@@ -638,37 +647,27 @@ private:
     }
 
     static inline
-    size_type index_for(hash_type hash, size_type capacity) {
+    size_type index_for(hash_type hash, size_type mask) {
 #if 0
-        size_type index = ((size_type)hash % capacity);
+        size_type index = ((size_type)hash % (mask + 1));
 #else
-        size_type index = ((size_type)hash & (capacity - 1));
-#endif
-        return index;
-    }
-
-    static inline
-    size_type next_index(size_type index, size_type capacity) {
-#if 0
-        index = ((index + 1) % capacity);
-#else
-        index = ((index + 1) & (capacity - 1));
+        size_type index = ((size_type)hash & mask);
 #endif
         return index;
     }
 
     JM_FORCEINLINE_DECLARE(void)
-    reinsert_list(list_type * new_table, size_type new_capacity,
+    reinsert_list(list_type * new_table, size_type new_mask,
                   list_type * old_list) {
         assert(new_table != nullptr);
         assert(old_list != nullptr);
-        assert(new_capacity > 0);
+        assert(new_mask > 0);
 
         entry_type * old_entry = old_list->head();
         assert(old_entry != nullptr);
         do {
             hash_type hash = old_entry->hash;
-            size_type index = this_type::index_for(hash, new_capacity);
+            size_type index = this_type::index_for(hash, new_mask);
 
             // Save the value of old_entry->next.
             entry_type * next_entry = old_entry->next;
@@ -687,7 +686,6 @@ private:
                 assert(new_list->head() == nullptr);
                 new_list->push_first(old_entry);
                 ++(this->size_);
-                ++(this->used_);
 
                 // Scan next entry
                 old_entry = next_entry;
@@ -711,11 +709,11 @@ private:
 
                 // Recalculate the bucket of all keys.
                 if (likely(this->table_ != nullptr)) {
-                    size_type old_used = this->used_;
                     size_type old_size = this->size_;
-
-                    this->used_ = 0;
                     this->size_ = 0;
+
+                    assert(new_capacity > 0);
+                    size_type new_mask = new_capacity - 1;
 
                     list_type * old_list = (list_type *)&this->table_[0];
                     for (size_type i = 0; i < this->capacity_; ++i) {
@@ -725,7 +723,7 @@ private:
                         }
                         else {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->reinsert_list(new_table, new_capacity, old_list);
+                            this->reinsert_list(new_table, new_mask, old_list);
 #ifndef NDEBUG
                             // Set the old_list.head to nullptr.
                             old_list->reset();
@@ -741,8 +739,9 @@ private:
                 // Setting status
                 this->table_ = new_table;
                 this->capacity_ = new_capacity;
+                this->mask_ = new_capacity - 1;
                 assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
+                this->threshold_ = (size_type)(new_capacity * std::fabs(this->loadFactor_));
             }
         }
     }
@@ -763,7 +762,6 @@ public:
         }
         // Setting status
         this->size_ = 0;
-        this->used_ = 0;
     }
 
     void reserve(size_type new_capacity) {
@@ -791,7 +789,7 @@ public:
     iterator find(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
             hash_type hash = this_type::hash(key);
-            size_type index = this_type::index_for(hash, this->capacity_);
+            size_type index = this_type::index_for(hash, this->mask_);
 
             list_type * table = this->table_;
             list_type & list = table[index];
@@ -827,7 +825,7 @@ public:
 
     inline iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
         hash = this_type::hash(key);
-        index = this_type::index_for(hash, this->capacity_);
+        index = this_type::index_for(hash, this->mask_);
 
         assert(this->table_ != nullptr);
         list_type * table = this->table_;
@@ -864,7 +862,7 @@ public:
 
     inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
         hash_type hash = this_type::hash(key);
-        index = this_type::index_for(hash, this->capacity_);
+        index = this_type::index_for(hash, this->mask_);
 
         assert(this->table_ != nullptr);
         list_type * table = this->table_;
@@ -915,7 +913,7 @@ public:
                     // Resize the table
                     this->resize_internal(this->capacity_ * 2);
                     // Recalculate the index.
-                    index = this_type::index_for(hash, this->capacity_);
+                    index = this_type::index_for(hash, this->mask_);
                 }
 
                 entry_type * new_entry = new entry_type(hash, key, value);
@@ -935,7 +933,6 @@ public:
                         list.push_first(new_entry);
 
                         ++(this->size_);
-                        ++(this->used_);
                     }
                 }
             }
@@ -958,7 +955,7 @@ public:
                     // Resize the table
                     this->resize_internal(this->capacity_ * 2);
                     // Recalculate the index.
-                    index = this_type::index_for(hash, this->capacity_);
+                    index = this_type::index_for(hash, this->mask_);
                 }
 
                 entry_type * new_entry = new entry_type(hash,
@@ -980,14 +977,13 @@ public:
                         list.push_first(new_entry);
 
                         ++(this->size_);
-                        ++(this->used_);
                     }
                 }
             }
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
-                iter->pair.second = std::forward<value_type>(value);
+                iter->pair.second.swap(value);
             }
         }
     }
@@ -1077,7 +1073,8 @@ public:
 };
 
 template <typename Key, typename Value, std::size_t HashFunc>
-const float basic_hash_map_ex<Key, Value, HashFunc>::kDefaultLoadFactor = 0.75f;
+const typename basic_hash_map_ex<Key, Value, HashFunc>::float_type
+basic_hash_map_ex<Key, Value, HashFunc>::kDefaultLoadFactor = 0.75;
 
 #if SUPPORT_SSE42_CRC32C
 template <typename Key, typename Value>
