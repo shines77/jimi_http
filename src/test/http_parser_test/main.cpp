@@ -2177,6 +2177,42 @@ void pico_http_parser_benchmark()
 
 #endif // USE_PICO_HTTP_PARSER
 
+void display_hashmap_sizeof()
+{
+    printf(" sizeof( std::map<std::string, std::string> )           = %" PRIuPTR " bytes\n",
+            sizeof(std::map<std::string, std::string>));
+
+    printf(" sizeof( std::unordered_map<std::string, std::string> ) = %" PRIuPTR " bytes\n",
+            sizeof(std::unordered_map<std::string, std::string>));
+
+#if SUPPORT_SSE42_CRC32C
+    printf(" sizeof( jstd::hash_table<std::string, std::string> )   = %" PRIuPTR " bytes\n",
+            sizeof(jstd::hash_table<std::string, std::string>));
+
+    printf(" sizeof( jstd::hash_map<std::string, std::string> )     = %" PRIuPTR " bytes\n",
+            sizeof(jstd::hash_map<std::string, std::string>));
+
+    printf(" sizeof( jstd::hash_map_ex<std::string, std::string> )  = %" PRIuPTR " bytes\n",
+            sizeof(jstd::hash_map_ex<std::string, std::string>));
+
+    printf(" sizeof( jstd::dictionary<std::string, std::string> )   = %" PRIuPTR " bytes\n",
+            sizeof(jstd::dictionary<std::string, std::string>));
+#else
+    printf(" sizeof( jstd::hash_table<std::string, std::string> )   = %" PRIuPTR " bytes\n",
+            sizeof(jstd::hash_table_v1<std::string, std::string>));
+
+    printf(" sizeof( jstd::hash_map<std::string, std::string> )     = %" PRIuPTR " bytes\n",
+            sizeof(jstd::hash_map_v1<std::string, std::string>));
+
+    printf(" sizeof( jstd::hash_map_ex<std::string, std::string> )  = %" PRIuPTR " bytes\n",
+            sizeof(jstd::hash_map_ex_v1<std::string, std::string>));
+
+    printf(" sizeof( jstd::dictionary<std::string, std::string>)    = %" PRIuPTR " bytes\n",
+            sizeof(jstd::dictionary_v1<std::string, std::string>));
+#endif
+    printf("\n");
+}
+
 int main(int argn, char * argv[])
 {
     std::cout << std::endl;
@@ -2194,18 +2230,22 @@ int main(int argn, char * argv[])
     http_parser.displayFields();
     printf("\n");
 
+    display_hashmap_sizeof();
+
 #if 0
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
 #endif
 
+#if 1
     crc32c_debug_test();
     crc32c_benchmark();
 
     hashtable_benchmark();
 
     //find_power_2_near_prime();
+#endif
 
 #if 0
     http_parser_benchmark();

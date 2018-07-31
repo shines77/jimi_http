@@ -18,8 +18,19 @@
 #define HASH_HELPER_CHAR(KeyType, HashType, HashFuncId, HashFunc)               \
     template <>                                                                 \
     struct hash_helper<KeyType, HashType, HashFuncId> {                         \
-        static HashType getHashCode(KeyType data, std::size_t length) {         \
-            return (HashType)HashFunc((const char *)data, length);              \
+        typedef typename std::remove_pointer<KeyType>::type char_type;          \
+        typedef typename std::remove_pointer<                                   \
+                    typename std::remove_cv<char_type>::type                    \
+                >::type decay_type;                                             \
+                                                                                \
+        static HashType getHashCode(char_type * data, std::size_t length) {     \
+            return (HashType)HashFunc((const char *)data,                       \
+                                      length * sizeof(char_type));              \
+        }                                                                       \
+                                                                                \
+        static HashType getHashCode(char_type * data) {                         \
+            return (HashType)HashFunc((const char *)data,                       \
+                             jstd::detail::strlen((const decay_type *)data));   \
         }                                                                       \
     }
 
