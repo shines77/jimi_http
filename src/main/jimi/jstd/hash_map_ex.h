@@ -493,7 +493,7 @@ public:
     typedef basic_hash_map_ex<Key, Value, HashFunc> this_type;
 
 private:
-    char * table_;
+    list_type * table_;
     size_type capacity_;
     size_type size_;
     size_type used_;
@@ -528,7 +528,7 @@ public:
     size_type size() const { return this->size_; }
     size_type bucket_used() const { return this->used_; }
     size_type bucket_count() const { return this->capacity_; }
-    list_type * data() const { return reinterpret_cast<list_type *>(this->table_); }
+    list_type * data() const { return this->table_; }
 
     bool is_valid() const { return (this->table_ != nullptr); }
     bool empty() const { return (this->size() == 0); }
@@ -538,7 +538,8 @@ private:
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        char * new_table = new char[sizeof(list_type) * new_capacity];
+        void * new_table_buf = operator new(sizeof(list_type) * new_capacity);
+        list_type * new_table = (list_type *)new_table_buf;
         if (likely(new_table != nullptr)) {
             // Initialize the table data.
             memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
@@ -557,12 +558,13 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         if (likely(new_capacity > this->capacity_)) {
-            char * new_table = new char[sizeof(list_type) * new_capacity];
+            void * new_table_buf = operator new(sizeof(list_type) * new_capacity);
+            list_type * new_table = (list_type *)new_table_buf;
             if (new_table != nullptr) {
                 // Initialize the table data.
                 memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
                 if (likely(this->table_ != nullptr)) {
-                    delete[] this->table_;
+                    operator delete((void *)this->table_);
                 }
                 // Setting status
                 this->table_ = new_table;
@@ -579,23 +581,23 @@ private:
 #ifdef NDEBUG
         // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
-            list_type * table = this->data();
+            list_type * table = this->table_;
             for (size_type i = 0; i < this->capacity_; ++i) {
                 list_type & list = table[i];
                 list.clear();
             }
-            delete[] this->table_;
+            operator delete((void *)this->table_);
             this->table_ = nullptr;
         }
 #else
         // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
-            list_type * table = this->data();
+            list_type * table = this->table_;
             for (size_type i = 0; i < this->capacity_; ++i) {
                 list_type & list = table[i];
                 list.clear();
             }
-            delete[] this->table_;
+            operator delete((void *)this->table_);
             this->table_ = nullptr;
         }
         // Setting status
@@ -655,9 +657,9 @@ private:
         return index;
     }
 
-    //JM_NOINLINE_DECLARE(void)
-    void reinsert_list(list_type * new_table, size_type new_capacity,
-                       list_type * old_list) {
+    JM_FORCEINLINE_DECLARE(void)
+    reinsert_list(list_type * new_table, size_type new_capacity,
+                  list_type * old_list) {
         assert(new_table != nullptr);
         assert(old_list != nullptr);
         assert(new_capacity > 0);
@@ -675,7 +677,6 @@ private:
             list_type * new_list = &new_table[index];
             assert(new_list != nullptr);
             if (likely(new_list->head() != nullptr)) {
-                assert(new_list->head() != nullptr);
                 new_list->push_front_fast(old_entry);
                 ++(this->size_);
 
@@ -694,13 +695,16 @@ private:
         } while (likely(old_entry != nullptr));
     }
 
+    template <bool force_shrink = false>
     //JM_NOINLINE_DECLARE(void)
     void rehash_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         assert(new_capacity >= this->size_ * 2);
-        if (likely(new_capacity > this->capacity_)) {
-            char * new_table = new char[sizeof(list_type) * new_capacity];
+        if (likely((force_shrink == false && new_capacity > this->capacity_) ||
+                   (force_shrink == true && new_capacity != this->capacity_))) {
+            void * new_table_buf = operator new(sizeof(list_type) * new_capacity);
+            list_type * new_table = (list_type *)new_table_buf;
             if (likely(new_table != nullptr)) {
                 // Initialize the new table data.
                 memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
@@ -714,8 +718,6 @@ private:
                     this->size_ = 0;
 
                     list_type * old_list = (list_type *)&this->table_[0];
-                    list_type * new_table_ = (list_type *)&new_table[0];
-
                     for (size_type i = 0; i < this->capacity_; ++i) {
                         assert(old_list != nullptr);
                         if (likely(old_list->head() == nullptr)) {
@@ -723,7 +725,7 @@ private:
                         }
                         else {
                             // Insert the old buckets to the new buckets in the new table.
-                            this->reinsert_list(new_table_, new_capacity, old_list);
+                            this->reinsert_list(new_table, new_capacity, old_list);
 #ifndef NDEBUG
                             // Set the old_list.head to nullptr.
                             old_list->reset();
@@ -734,58 +736,7 @@ private:
                     assert(this->size_ == old_size);
 
                     // Free old table data.
-                    delete[] this->table_;
-                }
-                // Setting status
-                this->table_ = new_table;
-                this->capacity_ = new_capacity;
-                assert(this->loadFactor_ > 0.0f);
-                this->threshold_ = (size_type)(new_capacity * fabsf(this->loadFactor_));
-            }
-        }
-    }
-
-    //JM_NOINLINE_DECLARE(void)
-    void shrink_internal(size_type new_capacity) {
-        assert(new_capacity > 0);
-        assert((new_capacity & (new_capacity - 1)) == 0);
-        assert(new_capacity >= this->size_ * 2);
-        if (likely(new_capacity != this->capacity_)) {
-            char * new_table = new char[sizeof(list_type) * new_capacity];
-            if (likely(new_table != nullptr)) {
-                // Initialize the new table data.
-                memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
-
-                // Recalculate the bucket of all keys.
-                if (likely(this->table_ != nullptr)) {
-                    size_type old_used = this->used_;
-                    size_type old_size = this->size_;
-
-                    this->used_ = 0;
-                    this->size_ = 0;
-
-                    list_type * old_list = (list_type *)&this->table_[0];
-                    list_type * new_table_ = (list_type *)&new_table[0];
-
-                    for (size_type i = 0; i < this->capacity_; ++i) {
-                        assert(old_list != nullptr);
-                        if (likely(old_list->head() == nullptr)) {
-                            old_list++;
-                        }
-                        else {
-                            // Insert the old buckets to the new buckets in the new table.
-                            this->reinsert_list(new_table_, new_capacity, old_list);
-#ifndef NDEBUG
-                            // Set the old_list.head to nullptr.
-                            old_list->reset();
-#endif
-                            old_list++;
-                        }
-                    }
-                    assert(this->size_ == old_size);
-
-                    // Free old table data.
-                    delete[] this->table_;
+                    operator delete((void *)this->table_);
                 }
                 // Setting status
                 this->table_ = new_table;
@@ -797,16 +748,14 @@ private:
     }
 
     void resize_internal(size_type new_capacity) {
-        assert(new_capacity > 0);
-        assert((new_capacity & (new_capacity - 1)) == 0);
-        this->rehash_internal(new_capacity);
+        this->rehash_internal<false>(new_capacity);
     }
 
 public:
     void clear() {
         // Clear the data only, don't free the table.
         if (likely(this->table_ != nullptr)) {
-            list_type * table = this->data();
+            list_type * table = this->table_;
             for (size_type i = 0; i < this->capacity_; ++i) {
                 list_type & list = table[i];
                 list.clear();
@@ -826,7 +775,7 @@ public:
     void rehash(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity(new_capacity);
-        this->rehash_internal(new_capacity);
+        this->rehash_internal<false>(new_capacity);
     }
 
     void resize(size_type new_capacity) {
@@ -836,7 +785,7 @@ public:
     void shrink_to_fit(size_type new_capacity) {
         // Recalculate the size of new_capacity.
         new_capacity = this->calc_capacity_fast(new_capacity);
-        this->shrink_internal(new_capacity);
+        this->rehash_internal<true>(new_capacity);
     }
 
     iterator find(const key_type & key) {
@@ -844,7 +793,7 @@ public:
             hash_type hash = this_type::hash(key);
             size_type index = this_type::index_for(hash, this->capacity_);
 
-            list_type * table = this->data();
+            list_type * table = this->table_;
             list_type & list = table[index];
             entry_type * entry = list.head();
             while (likely(entry != nullptr)) {
@@ -881,7 +830,7 @@ public:
         index = this_type::index_for(hash, this->capacity_);
 
         assert(this->table_ != nullptr);
-        list_type * table = this->data();
+        list_type * table = this->table_;
         list_type & list = table[index];
 
         entry_type * entry = list.head();
@@ -918,7 +867,7 @@ public:
         index = this_type::index_for(hash, this->capacity_);
 
         assert(this->table_ != nullptr);
-        list_type * table = this->data();
+        list_type * table = this->table_;
         list_type & list = table[index];
 
         entry_type * before = nullptr;
@@ -971,7 +920,7 @@ public:
 
                 entry_type * new_entry = new entry_type(hash, key, value);
                 if (likely(new_entry != nullptr)) {
-                    list_type * table = this->data();
+                    list_type * table = this->table_;
                     list_type & list = table[index];
                     if (likely(list.head() != nullptr)) {
                         // Push the new entry to front of list.
@@ -1016,7 +965,7 @@ public:
                                                         std::forward<key_type>(key),
                                                         std::forward<value_type>(value));
                 if (likely(new_entry != nullptr)) {
-                    list_type * table = this->data();
+                    list_type * table = this->table_;
                     list_type & list = table[index];
                     if (likely(list.head() != nullptr)) {
                         // Push the new entry to front of list.
@@ -1069,7 +1018,7 @@ public:
                 assert(entry != nullptr);
                 assert(this->size_ > 0);
 
-                list_type * table = this->data();
+                list_type * table = this->table_;
                 list_type & list = table[index];
                 assert((before != nullptr && entry != list.head()) ||
                        (before == nullptr && entry == list.head()));
@@ -1094,7 +1043,7 @@ public:
                 assert(entry != nullptr);
                 assert(this->size_ > 0);
 
-                list_type * table = this->data();
+                list_type * table = this->table_;
                 list_type & list = table[index];
                 assert((before != nullptr && entry != list.head()) ||
                        (before == nullptr && entry == list.head()));

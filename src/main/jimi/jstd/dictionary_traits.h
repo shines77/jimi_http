@@ -49,7 +49,7 @@ struct default_dictionary_hasher {
         if (likely(hash != kInvalidHash))
             return hash;
         else
-            return = kReplacedHash;
+            return kReplacedHash;
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) const {
