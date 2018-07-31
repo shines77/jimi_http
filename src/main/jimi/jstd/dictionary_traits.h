@@ -38,15 +38,18 @@ struct default_dictionary_hasher {
     ~default_dictionary_hasher() {}
 
     hash_type hash_code(const key_type & key) const {
+        // All of the following two methods can get the hash value.
 #if 0
         hash_type hash = jstd::hash_helper<key_type, hash_type, HashFunc>::getHashCode(key);
 #else
         jstd::hash<key_type, hash_type, HashFunc> hasher;
         hash_type hash = hasher(key);
 #endif
-        if (unlikely(hash == kInvalidHash))
-            hash = kReplacedHash;
-        return hash;
+        // The hash code can't equal to kInvalidHash, replacement to kReplacedHash.
+        if (likely(hash != kInvalidHash))
+            return hash;
+        else
+            return = kReplacedHash;
     }
 
     index_type index_for(hash_type hash, size_type capacity_mask) const {
