@@ -19,6 +19,7 @@
 
 #include "jimi/jstd/hash_helper.h"
 #include "jimi/jstd/string_utils.h"
+#include "jimi/jstd/nothrow_deleter.h"
 
 #include "jimi/support/Power2.h"
 
@@ -107,11 +108,11 @@ private:
         if (likely(head != nullptr)) {
             entry_type * entry = head->next;
             //delete head;
-            operator delete((void *)head, std::nothrow);
+            jstd::nothrow_deleter::destroy(head);
             while (likely(entry != nullptr)) {
                 entry_type * next = entry->next;
                 //delete entry;
-                operator delete((void *)entry, std::nothrow);
+                jstd::nothrow_deleter::destroy(entry);
                 entry = next;
             }
             this->head_ = nullptr;
@@ -188,7 +189,7 @@ public:
         if (likely(entry != nullptr)) {
             this->head_ = entry->next;
             //delete entry;
-            operator delete((void *)entry, std::nothrow);
+            jstd::nothrow_deleter::destroy(entry);
             assert(this->size_ > 0);
             --(this->size_);
         }
@@ -199,7 +200,7 @@ public:
         assert(entry != nullptr);
         this->head_ = entry->next;
         //delete entry;
-        operator delete((void *)entry, std::nothrow);
+        jstd::nothrow_deleter::destroy(entry);
         assert(this->size_ > 0);
         --(this->size_);
     }
@@ -210,7 +211,7 @@ public:
             if (likely(target != nullptr)) {
                 before->next = target->next;
                 //delete target;
-                operator delete((void *)target, std::nothrow);
+                jstd::nothrow_deleter::destroy(target);
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -221,7 +222,7 @@ public:
             if (likely(target != nullptr)) {
                 this->head_ = target->next;
                 //delete target;
-                operator delete((void *)target, std::nothrow);
+                jstd::nothrow_deleter::destroy(target);
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -235,7 +236,7 @@ public:
             assert(target != nullptr);
             before->next = target->next;
             //delete target;
-            operator delete((void *)target, std::nothrow);
+            jstd::nothrow_deleter::destroy(target);
 
             assert(this->size_ > 0);
             --(this->size_);
@@ -245,7 +246,7 @@ public:
             assert(target != nullptr);
             this->head_ = target->next;
             //delete target;
-            operator delete((void *)target, std::nothrow);
+            jstd::nothrow_deleter::destroy(target);
 
             assert(this->size_ > 0);
             --(this->size_);
@@ -269,7 +270,7 @@ public:
                         entry_type * target = entry->next;
                         entry->next = target->next;
                         //delete target;
-                        operator delete((void *)target, std::nothrow);
+                        jstd::nothrow_deleter::destroy(target);
                         --(this->size_);
                     }
                     else {
@@ -391,14 +392,14 @@ private:
                 list_type * list = (list_type *)this->table_[i];
                 if (likely(list != nullptr)) {
                     //delete list;
-                    operator delete((void *)list, std::nothrow);
+                    jstd::nothrow_deleter::destroy(list);
 #ifndef NDEBUG
                     this->table_[i] = nullptr;
 #endif
                 }
             }
             //delete[] this->table_;
-            operator delete((void *)this->table_, std::nothrow);
+            jstd::nothrow_deleter::destroy(this->table_);
             this->table_ = nullptr;
         }
 #ifndef NDEBUG
@@ -460,7 +461,7 @@ private:
                 memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
                 if (likely(this->table_ != nullptr)) {
                     //delete[] this->table_;
-                    operator delete((void *)this->table_, std::nothrow);
+                    jstd::nothrow_deleter::destroy(this->table_);
                 }
                 // Setting status
                 this->table_ = new_table;
@@ -561,7 +562,7 @@ private:
                             old_list->reset();
                             // Destory the old list.
                             //delete old_list;
-                            operator delete((void *)old_list, std::nothrow);
+                            jstd::nothrow_deleter::destroy(old_list);
 #ifndef NDEBUG
                             // Set to nullptr.
                             this->table_[i] = nullptr;
@@ -572,7 +573,7 @@ private:
 
                     // Free old table data.
                     //delete[] this->table_;
-                    operator delete((void *)this->table_, std::nothrow);
+                    jstd::nothrow_deleter::destroy(this->table_);
                 }
                 // Setting status
                 this->table_ = new_table;

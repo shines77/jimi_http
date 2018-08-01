@@ -10,8 +10,11 @@
 #include "jimi/basic/stdint.h"
 #include "jimi/basic/stdsize.h"
 
+#include <cstdint>
+#include <cstddef>
 #include <string>
 
+#include "jimi/jstd/strlen.h"
 #include "jimi/Hash.h"
 #include "jimi/crc32c.h"
 

@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "jimi/jstd/dictionary_traits.h"
+#include "jimi/jstd/nothrow_deleter.h"
 #include "jimi/support/Power2.h"
 
 #define USE_JSTD_DICTIONARY         1
@@ -313,9 +314,8 @@ private:
 
     void free_entries() {
         assert(this->entries_ != nullptr);
-        void * entries_buf = (void *)this->entries_;
-        assert(entries_buf != nullptr);
-        operator delete(entries_buf, std::nothrow);
+        //operator delete((void *)this->entries_, std::nothrow);
+        jstd::nothrow_deleter::delete_it(this->entries_);
     }
 
     void destroy_entries() {
@@ -350,12 +350,13 @@ private:
 #if USE_ENTRY_PLACEMENT_NEW
                 this->destroy_entries();
 #else
-                operator delete((void *)this->entries_, std::nothrow);
+                jstd::nothrow_deleter::destroy(this->entries_);
 #endif
                 this->entries_ = nullptr;
             }
             // Free the array of bucket's first entry.
-            operator delete((void *)this->buckets_, std::nothrow);
+            //operator delete((void *)this->buckets_, std::nothrow);
+            jstd::nothrow_deleter::destroy(this->buckets_);
             this->buckets_ = nullptr;
         }
 #ifndef NDEBUG
@@ -433,7 +434,6 @@ private:
                     // Linked all new entries to the new free list.
                     //free_list new_freelist;
                     //fill_freelist(new_freelist, new_entries, new_capacity);
-
 #if REHASH_MODE_FAST
                     // Recalculate the bucket of all keys.
                     if (likely(this->entries_ != nullptr)) {
@@ -489,7 +489,8 @@ private:
 #if USE_ENTRY_PLACEMENT_NEW
                         this->free_entries();
 #else
-                        operator delete((void *)this->entries_, std::nothrow);
+                        //operator delete((void *)this->entries_, std::nothrow);
+                        jstd::nothrow_deleter::destroy(this->entries_);
 #endif
                         // Insert and adjust the new entries to the new buckets.
                         size_type new_mask = new_capacity - 1;
@@ -508,7 +509,8 @@ private:
 
                     if (likely(this->buckets_ != nullptr)) {
                         // Free old buckets data.
-                        operator delete((void *)this->buckets_, std::nothrow);
+                        //operator delete((void *)this->buckets_, std::nothrow);
+                        jstd::nothrow_deleter::destroy(this->buckets_);
                     }
 #else
                     // Recalculate the bucket of all keys.
@@ -537,7 +539,8 @@ private:
                         assert(this->count_ == old_count);
 
                         // Free old buckets data.
-                        operator delete((void *)this->buckets_, std::nothrow);
+                        //operator delete((void *)this->buckets_, std::nothrow);
+                        jstd::nothrow_deleter::destroy(this->buckets_);
 
                     }
 #endif // REHASH_MODE_FAST

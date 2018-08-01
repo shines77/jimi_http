@@ -19,6 +19,7 @@
 
 #include "jimi/jstd/hash_helper.h"
 #include "jimi/jstd/string_utils.h"
+#include "jimi/jstd/nothrow_deleter.h"
 
 #include "jimi/support/Power2.h"
 
@@ -100,11 +101,11 @@ private:
         if (likely(head != nullptr)) {
             entry_type * entry = head->next;
             //delete head;
-            operator delete((void *)head, std::nothrow);
+            jstd::nothrow_deleter::destroy(head);
             while (likely(entry != nullptr)) {
                 entry_type * next = entry->next;
                 //delete entry;
-                operator delete((void *)entry, std::nothrow);
+                jstd::nothrow_deleter::destroy(entry);
                 entry = next;
             }
             this->head_ = nullptr;
@@ -166,7 +167,7 @@ public:
         if (likely(entry != nullptr)) {
             this->head_ = entry->next;
             //delete entry;
-            operator delete((void *)entry, std::nothrow);
+            jstd::nothrow_deleter::destroy(entry);
         }
     }
 
@@ -175,7 +176,7 @@ public:
         assert(entry != nullptr);
         this->head_ = entry->next;
         //delete entry;
-        operator delete((void *)entry, std::nothrow);
+        jstd::nothrow_deleter::destroy(entry);
     }
 
     void erase(entry_type * before) {
@@ -184,7 +185,7 @@ public:
             if (likely(target != nullptr)) {
                 before->next = target->next;
                 //delete target;
-                operator delete((void *)target, std::nothrow);
+                jstd::nothrow_deleter::destroy(target);
             }
         }
         else {
@@ -192,7 +193,7 @@ public:
             if (likely(target != nullptr)) {
                 this->head_ = target->next;
                 //delete target;
-                operator delete(target, std::nothrow);
+                jstd::nothrow_deleter::destroy(target);
             }
         }
     }
@@ -203,14 +204,14 @@ public:
             assert(target != nullptr);
             before->next = target->next;
             //delete target;
-            operator delete((void *)target, std::nothrow);
+            jstd::nothrow_deleter::destroy(target);
         }
         else {
             entry_type * target = this->head_;
             assert(target != nullptr);
             this->head_ = target->next;
             //delete target;
-            operator delete((void *)target, std::nothrow);
+            jstd::nothrow_deleter::destroy(target);
         }
     }
 
@@ -231,7 +232,7 @@ public:
                         entry_type * target = entry->next;
                         entry->next = target->next;
                         //delete target;
-                        operator delete((void *)target, std::nothrow);
+                        jstd::nothrow_deleter::destroy(target);
                     }
                     else {
                         // Error: no entry after [before]
@@ -296,11 +297,11 @@ private:
         if (likely(head != nullptr)) {
             entry_type * entry = head->next;
             //delete head;
-            operator delete((void *)head, std::nothrow);
+            jstd::nothrow_deleter::destroy(head);
             while (likely(entry != nullptr)) {
                 entry_type * next = entry->next;
                 //delete entry;
-                operator delete((void *)entry, std::nothrow);
+                jstd::nothrow_deleter::destroy(entry);
                 entry = next;
             }
             this->head_ = nullptr;
@@ -375,7 +376,7 @@ public:
         if (likely(entry != nullptr)) {
             this->head_ = entry->next;
             //delete entry;
-            operator delete((void *)entry, std::nothrow);
+            jstd::nothrow_deleter::destroy(entry);
             assert(this->size_ > 0);
             --(this->size_);
         }
@@ -386,7 +387,7 @@ public:
         assert(entry != nullptr);
         this->head_ = entry->next;
         //delete entry;
-        operator delete((void *)entry, std::nothrow);
+        jstd::nothrow_deleter::destroy(entry);
         assert(this->size_ > 0);
         --(this->size_);
     }
@@ -397,7 +398,7 @@ public:
             if (likely(target != nullptr)) {
                 before->next = target->next;
                 //delete target;
-                operator delete((void *)target, std::nothrow);
+                jstd::nothrow_deleter::destroy(target);
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -408,7 +409,7 @@ public:
             if (likely(target != nullptr)) {
                 this->head_ = target->next;
                 //delete target;
-                operator delete((void *)target, std::nothrow);
+                jstd::nothrow_deleter::destroy(target);
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -422,7 +423,7 @@ public:
             assert(target != nullptr);
             before->next = target->next;
             //delete target;
-            operator delete((void *)target, std::nothrow);
+            jstd::nothrow_deleter::destroy(target);
 
             assert(this->size_ > 0);
             --(this->size_);
@@ -432,7 +433,7 @@ public:
             assert(target != nullptr);
             this->head_ = target->next;
             //delete target;
-            operator delete((void *)target, std::nothrow);
+            jstd::nothrow_deleter::destroy(target);
 
             assert(this->size_ > 0);
             --(this->size_);
@@ -456,7 +457,7 @@ public:
                         entry_type * target = entry->next;
                         entry->next = target->next;
                         //delete target;
-                        operator delete((void *)target, std::nothrow);
+                        jstd::nothrow_deleter::destroy(target);
 
                         assert(this->size_ > 0);
                         --(this->size_);
