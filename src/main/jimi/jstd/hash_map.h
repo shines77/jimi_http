@@ -106,10 +106,12 @@ private:
         entry_type * head = this->head_;
         if (likely(head != nullptr)) {
             entry_type * entry = head->next;
-            delete head;
+            //delete head;
+            operator delete((void *)head, std::nothrow);
             while (likely(entry != nullptr)) {
                 entry_type * next = entry->next;
-                delete entry;
+                //delete entry;
+                operator delete((void *)entry, std::nothrow);
                 entry = next;
             }
             this->head_ = nullptr;
@@ -185,7 +187,8 @@ public:
         entry_type * entry = this->head_;
         if (likely(entry != nullptr)) {
             this->head_ = entry->next;
-            delete entry;
+            //delete entry;
+            operator delete((void *)entry, std::nothrow);
             assert(this->size_ > 0);
             --(this->size_);
         }
@@ -195,7 +198,8 @@ public:
         entry_type * entry = this->head_;
         assert(entry != nullptr);
         this->head_ = entry->next;
-        delete entry;
+        //delete entry;
+        operator delete((void *)entry, std::nothrow);
         assert(this->size_ > 0);
         --(this->size_);
     }
@@ -205,7 +209,8 @@ public:
             entry_type * target = before->next;
             if (likely(target != nullptr)) {
                 before->next = target->next;
-                delete target;
+                //delete target;
+                operator delete((void *)target, std::nothrow);
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -215,7 +220,8 @@ public:
             entry_type * target = this->head_;
             if (likely(target != nullptr)) {
                 this->head_ = target->next;
-                delete target;
+                //delete target;
+                operator delete((void *)target, std::nothrow);
 
                 assert(this->size_ > 0);
                 --(this->size_);
@@ -228,7 +234,8 @@ public:
             entry_type * target = before->next;
             assert(target != nullptr);
             before->next = target->next;
-            delete target;
+            //delete target;
+            operator delete((void *)target, std::nothrow);
 
             assert(this->size_ > 0);
             --(this->size_);
@@ -237,7 +244,8 @@ public:
             entry_type * target = this->head_;
             assert(target != nullptr);
             this->head_ = target->next;
-            delete target;
+            //delete target;
+            operator delete((void *)target, std::nothrow);
 
             assert(this->size_ > 0);
             --(this->size_);
@@ -260,7 +268,8 @@ public:
                     if (likely(entry->next != nullptr)) {
                         entry_type * target = entry->next;
                         entry->next = target->next;
-                        delete target;
+                        //delete target;
+                        operator delete((void *)target, std::nothrow);
                         --(this->size_);
                     }
                     else {
@@ -360,7 +369,7 @@ private:
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
-        list_type ** new_table = new list_type *[new_capacity];
+        list_type ** new_table = new (std::nothrow) list_type *[new_capacity];
         if (likely(new_table != nullptr)) {
             // Initialize the table data.
             memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
@@ -381,13 +390,15 @@ private:
             for (size_type i = 0; i < this->capacity_; ++i) {
                 list_type * list = (list_type *)this->table_[i];
                 if (likely(list != nullptr)) {
-                    delete list;
+                    //delete list;
+                    operator delete((void *)list, std::nothrow);
 #ifndef NDEBUG
                     this->table_[i] = nullptr;
 #endif
                 }
             }
-            delete[] this->table_;
+            //delete[] this->table_;
+            operator delete((void *)this->table_, std::nothrow);
             this->table_ = nullptr;
         }
 #ifndef NDEBUG
@@ -443,12 +454,13 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         if (likely(new_capacity > this->capacity_)) {
-            list_type ** new_table = new list_type *[new_capacity];
+            list_type ** new_table = new (std::nothrow) list_type *[new_capacity];
             if (new_table != nullptr) {
                 // Initialize the table data.
                 memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
                 if (likely(this->table_ != nullptr)) {
-                    delete[] this->table_;
+                    //delete[] this->table_;
+                    operator delete((void *)this->table_, std::nothrow);
                 }
                 // Setting status
                 this->table_ = new_table;
@@ -476,7 +488,7 @@ private:
             list_type * list = new_table[index];
             if (likely(list == nullptr)) {
                 // Create the new list and push the old entry to front of new list.
-                list_type * new_list = new list_type(old_entry);
+                list_type * new_list = new (std::nothrow) list_type(old_entry);
                 if (likely(new_list != nullptr)) {
                     assert(new_table[index] == nullptr);
                     new_table[index] = new_list;
@@ -529,7 +541,7 @@ private:
         assert(new_capacity >= this->size_ * 2);
         if (likely((force_shrink == false && new_capacity > this->capacity_) ||
                    (force_shrink == true && new_capacity != this->capacity_))) {
-            list_type ** new_table = new list_type *[new_capacity];
+            list_type ** new_table = new (std::nothrow) list_type *[new_capacity];
             if (likely(new_table != nullptr)) {
                 // Initialize the new table data.
                 memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
@@ -548,7 +560,8 @@ private:
                             // Set the old_list->head to nullptr.
                             old_list->reset();
                             // Destory the old list.
-                            delete old_list;
+                            //delete old_list;
+                            operator delete((void *)old_list, std::nothrow);
 #ifndef NDEBUG
                             // Set to nullptr.
                             this->table_[i] = nullptr;
@@ -558,7 +571,8 @@ private:
                     assert(this->size_ == old_size);
 
                     // Free old table data.
-                    delete[] this->table_;
+                    //delete[] this->table_;
+                    operator delete((void *)this->table_, std::nothrow);
                 }
                 // Setting status
                 this->table_ = new_table;
@@ -742,12 +756,12 @@ public:
                     index = this_type::index_for(hash, this->mask_);
                 }
 
-                entry_type * new_entry = new entry_type(hash, key, value);
+                entry_type * new_entry = new (std::nothrow) entry_type(hash, key, value);
                 if (likely(new_entry != nullptr)) {
                     list_type * list = this->table_[index];
                     if (likely(list == nullptr)) {
                         // Create new list and push the new entry to front of new list.
-                        list_type * new_list = new list_type(new_entry);
+                        list_type * new_list = new (std::nothrow) list_type(new_entry);
                         if (likely(new_list != nullptr)) {
                             assert(this->table_[index] == nullptr);
                             this->table_[index] = new_list;
@@ -796,14 +810,14 @@ public:
                     index = this_type::index_for(hash, this->mask_);
                 }
 
-                entry_type * new_entry = new entry_type(hash,
+                entry_type * new_entry = new (std::nothrow) entry_type(hash,
                                                         std::forward<key_type>(key),
                                                         std::forward<value_type>(value));
                 if (likely(new_entry != nullptr)) {
                     list_type * list = this->table_[index];
                     if (likely(list == nullptr)) {
                         // Create new list and push the new entry to front of new list.
-                        list_type * new_list = new list_type(new_entry);
+                        list_type * new_list = new (std::nothrow) list_type(new_entry);
                         if (likely(new_list != nullptr)) {
                             assert(this->table_[index] == nullptr);
                             this->table_[index] = new_list;

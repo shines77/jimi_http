@@ -283,7 +283,7 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         // The the array of bucket's first entry.
-        entry_type ** new_buckets = new entry_type *[new_capacity];
+        entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
         if (likely(new_buckets != nullptr)) {
             // Initialize the buckets's data.
             memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
@@ -291,11 +291,11 @@ private:
             this->buckets_ = new_buckets;
             // The the array of entries.
 #if USE_ENTRY_PLACEMENT_NEW
-            void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity);
+            void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity, std::nothrow);
             entry_type * new_entries = (entry_type *)(new_entries_buf);
             assert((void *)new_entries == new_entries_buf);
 #else
-            entry_type * new_entries = new entry_type[new_capacity];
+            entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
 #endif
             if (likely(new_entries != nullptr)) {
                 // Linked all new entries to the free list.
@@ -315,7 +315,7 @@ private:
         assert(this->entries_ != nullptr);
         void * entries_buf = (void *)this->entries_;
         assert(entries_buf != nullptr);
-        operator delete(entries_buf);
+        operator delete(entries_buf, std::nothrow);
     }
 
     void destroy_entries() {
@@ -350,12 +350,12 @@ private:
 #if USE_ENTRY_PLACEMENT_NEW
                 this->destroy_entries();
 #else
-                delete[] this->entries_;
+                operator delete((void *)this->entries_, std::nothrow);
 #endif
                 this->entries_ = nullptr;
             }
             // Free the array of bucket's first entry.
-            delete[] this->buckets_;
+            operator delete((void *)this->buckets_, std::nothrow);
             this->buckets_ = nullptr;
         }
 #ifndef NDEBUG
@@ -416,18 +416,18 @@ private:
         if (likely((force_shrink == false && new_capacity > this->capacity_) ||
                    (force_shrink == true && new_capacity != this->capacity_))) {
             // The the array of bucket's first entry.
-            entry_type ** new_buckets = new entry_type *[new_capacity];
+            entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
             if (likely(new_buckets != nullptr)) {
                 // Initialize the buckets's data.
                 memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
 
                 // The the array of entries.
 #if USE_ENTRY_PLACEMENT_NEW
-                void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity);
+                void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity, std::nothrow);
                 entry_type * new_entries = (entry_type *)(new_entries_buf);
                 assert((void *)new_entries == new_entries_buf);
 #else
-                entry_type * new_entries = new entry_type[new_capacity];
+                entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
 #endif
                 if (likely(new_entries != nullptr)) {
                     // Linked all new entries to the new free list.
@@ -489,7 +489,7 @@ private:
 #if USE_ENTRY_PLACEMENT_NEW
                         this->free_entries();
 #else
-                        delete[] this->entries_;
+                        operator delete((void *)this->entries_, std::nothrow);
 #endif
                         // Insert and adjust the new entries to the new buckets.
                         size_type new_mask = new_capacity - 1;
@@ -508,7 +508,7 @@ private:
 
                     if (likely(this->buckets_ != nullptr)) {
                         // Free old buckets data.
-                        delete[] this->buckets_;
+                        operator delete((void *)this->buckets_, std::nothrow);
                     }
 #else
                     // Recalculate the bucket of all keys.
@@ -537,7 +537,8 @@ private:
                         assert(this->count_ == old_count);
 
                         // Free old buckets data.
-                        delete[] this->buckets_;
+                        operator delete((void *)this->buckets_, std::nothrow);
+
                     }
 #endif // REHASH_MODE_FAST
 
