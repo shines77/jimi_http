@@ -404,7 +404,7 @@ private:
 #ifndef NDEBUG
         // Setting status
         this->size_ = 0;
-        this->mask_ = 0
+        this->mask_ = 0;
         this->capacity_ = 0;
         this->threshold_ = 0;
 #endif
