@@ -310,16 +310,16 @@ public:
 
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
  || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) || defined(_M_ARM64)
-    typedef double  float_type;
+    typedef float   float_type;
 #else
     typedef float   float_type;
 #endif
 
 private:
     list_type ** table_;
-    size_type    capacity_;
-    size_type    mask_;
     size_type    size_;
+    size_type    mask_;
+    size_type    capacity_;
     size_type    threshold_;
     float_type   loadFactor_;
 
@@ -334,8 +334,8 @@ private:
 
 public:
     basic_hash_map(size_type initialCapacity = kDefaultInitialCapacity,
-                   float loadFactor = kDefaultLoadFactor)
-        : table_(nullptr), capacity_(0), mask_(0), size_(0),
+                   float_type loadFactor = kDefaultLoadFactor)
+        : table_(nullptr), size_(0), mask_(0), capacity_(0),
           threshold_(0), loadFactor_(loadFactor) {
         this->initialize(initialCapacity, loadFactor);
     }
@@ -356,55 +356,45 @@ public:
     bool empty() const { return (this->size() == 0); }
 
 private:
-    void initialize(size_type new_capacity, float loadFactor) {
+    void initialize(size_type new_capacity, float_type loadFactor) {
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         list_type ** new_table = new list_type *[new_capacity];
         if (likely(new_table != nullptr)) {
             // Initialize the table data.
-            memset(new_table, 0, sizeof(list_type *) * new_capacity);
+            memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
             // Setting status
             this->table_ = new_table;
-            this->capacity_ = new_capacity;
-            this->mask_ = new_capacity - 1;
             this->size_ = 0;
-            assert(loadFactor > 0.0f);
+            this->mask_ = new_capacity - 1;
+            this->capacity_ = new_capacity;           
+            assert(loadFactor > 0.0);
             this->threshold_ = (size_type)(new_capacity * std::fabs(loadFactor));
             this->loadFactor_ = loadFactor;
         }
     }
 
     void destroy() {
-#ifdef NDEBUG
         // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
             for (size_type i = 0; i < this->capacity_; ++i) {
                 list_type * list = (list_type *)this->table_[i];
                 if (likely(list != nullptr)) {
                     delete list;
-                }
-            }
-            delete[] this->table_;
-            this->table_ = nullptr;
-        }
-#else
-        // Clear all data, and free the table.
-        if (likely(this->table_ != nullptr)) {
-            for (size_type i = 0; i < this->capacity_; ++i) {
-                list_type * list = (list_type *)this->table_[i];
-                if (likely(list != nullptr)) {
-                    delete list;
+#ifndef NDEBUG
                     this->table_[i] = nullptr;
+#endif
                 }
             }
             delete[] this->table_;
             this->table_ = nullptr;
         }
+#ifndef NDEBUG
         // Setting status
-        this->capacity_ = 0;
-        this->mask_ = 0
         this->size_ = 0;
+        this->mask_ = 0
+        this->capacity_ = 0;
         this->threshold_ = 0;
 #endif
     }
@@ -456,27 +446,27 @@ private:
             list_type ** new_table = new list_type *[new_capacity];
             if (new_table != nullptr) {
                 // Initialize the table data.
-                memset(new_table, 0, sizeof(list_type *) * new_capacity);
+                memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
                 if (likely(this->table_ != nullptr)) {
                     delete[] this->table_;
                 }
                 // Setting status
                 this->table_ = new_table;
-                this->capacity_ = new_capacity;
-                this->mask_ = new_capacity - 1;
                 this->size_ = 0;
-                assert(this->loadFactor_ > 0.0f);
+                this->mask_ = new_capacity - 1;
+                this->capacity_ = new_capacity;
+                assert(this->loadFactor_ > 0.0);
                 this->threshold_ = (size_type)(new_capacity * std::fabs(this->loadFactor_));
             }
         }
     }
 
-    JM_FORCEINLINE_DECLARE(void)
-    reinsert_list(list_type ** new_table, size_type new_mask,
-                  list_type * old_list) {
+    //JM_FORCEINLINE_DECLARE(void)
+    void reinsert_list(list_type ** new_table, size_type new_mask,
+                       list_type * old_list) {
         assert(new_table != nullptr);
         assert(old_list != nullptr);
-        assert(new_mask > 1);
+        assert(new_mask > 0);
 
         entry_type * old_entry = old_list->head();
         while (likely(old_entry != nullptr)) {
@@ -514,7 +504,6 @@ private:
                 // Push the old entry to front of new list.
                 entry_type * head = list->head();
                 if (likely(head != nullptr)) {
-                    assert(list->head() != nullptr);
                     list->push_front_fast(old_entry);
                     ++(this->size_);
 
@@ -543,7 +532,7 @@ private:
             list_type ** new_table = new list_type *[new_capacity];
             if (likely(new_table != nullptr)) {
                 // Initialize the new table data.
-                memset(new_table, 0, sizeof(list_type *) * new_capacity);
+                memset((void *)new_table, 0, sizeof(list_type *) * new_capacity);
 
                 // Recalculate the bucket of all keys.
                 if (likely(this->table_ != nullptr)) {
@@ -573,9 +562,9 @@ private:
                 }
                 // Setting status
                 this->table_ = new_table;
-                this->capacity_ = new_capacity;
                 this->mask_ = new_capacity - 1;
-                assert(this->loadFactor_ > 0.0f);
+                this->capacity_ = new_capacity;
+                assert(this->loadFactor_ > 0.0);
                 this->threshold_ = (size_type)(new_capacity * std::fabs(this->loadFactor_));
             }
         }

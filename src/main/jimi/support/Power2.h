@@ -23,8 +23,7 @@ std::size_t round_to_pow2(std::size_t n)
 
     unsigned long index;
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
- || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) \
- || defined(_M_ARM64)
+ || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) || defined(_M_ARM64)
     unsigned char nonZero = __BitScanReverse64(index, n);
     return (nonZero ? (std::size_t(1) << index) : 1ULL);
 #else
@@ -41,8 +40,7 @@ std::size_t round_up_pow2(std::size_t n)
 
     unsigned long index;
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
- || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) \
- || defined(_M_ARM64)
+ || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) || defined(_M_ARM64)
     unsigned char nonZero = __BitScanReverse64(index, n - 1);
     return (nonZero ? (std::size_t(1) << (index + 1)) : 2ULL);
 #else

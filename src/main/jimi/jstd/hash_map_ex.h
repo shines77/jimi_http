@@ -314,16 +314,12 @@ public:
 
     void reset() {
         this->head_ = nullptr;
-#ifndef NDEBUG
         this->size_ = 0;
-#endif
     }
 
     void clear() {
         this->destroy();
-#ifdef NDEBUG
         this->size_ = 0;
-#endif
     }
 
     void push_first(entry_type * entry) {
@@ -495,16 +491,16 @@ public:
 
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
  || defined(_M_IA64) || defined(__amd64__) || defined(__x86_64__) || defined(_M_ARM64)
-    typedef double  float_type;
+    typedef float   float_type;
 #else
     typedef float   float_type;
 #endif
 
 private:
     list_type * table_;
-    size_type   capacity_;
-    size_type   mask_;
     size_type   size_;
+    size_type   mask_;
+    size_type   capacity_;
     size_type   threshold_;
     float_type  loadFactor_;
 
@@ -519,8 +515,8 @@ private:
 
 public:
     basic_hash_map_ex(size_type initialCapacity = kDefaultInitialCapacity,
-                      float loadFactor = kDefaultLoadFactor)
-        : table_(nullptr), capacity_(0), mask_(0), size_(0),
+                      float_type loadFactor = kDefaultLoadFactor)
+        : table_(nullptr), size_(0), mask_(0), capacity_(0),
           threshold_(0), loadFactor_(loadFactor) {
         this->initialize(initialCapacity, loadFactor);
     }
@@ -543,7 +539,7 @@ public:
     bool empty() const { return (this->size() == 0); }
 
 private:
-    void initialize(size_type new_capacity, float loadFactor) {
+    void initialize(size_type new_capacity, float_type loadFactor) {
         new_capacity = jimi::detail::round_up_pow2(new_capacity);
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
@@ -554,10 +550,10 @@ private:
             memset((void *)new_table, 0, sizeof(list_type) * new_capacity);
             // Setting status
             this->table_ = new_table;
-            this->capacity_ = new_capacity;
-            this->mask_ = new_capacity - 1;
             this->size_ = 0;
-            assert(loadFactor > 0.0f);
+            this->mask_ = new_capacity - 1;
+            this->capacity_ = new_capacity;
+            assert(loadFactor > 0.0);
             this->threshold_ = (size_type)(new_capacity * std::fabs(loadFactor));
             this->loadFactor_ = loadFactor;
         }
@@ -577,17 +573,16 @@ private:
                 }
                 // Setting status
                 this->table_ = new_table;
-                this->capacity_ = new_capacity;
-                this->mask_ = new_capacity - 1;
                 this->size_ = 0;
-                assert(this->loadFactor_ > 0.0f);
+                this->mask_ = new_capacity - 1;
+                this->capacity_ = new_capacity;
+                assert(this->loadFactor_ > 0.0);
                 this->threshold_ = (size_type)(new_capacity * std::fabs(this->loadFactor_));
             }
         }
     }
 
     void destroy() {
-#ifdef NDEBUG
         // Clear all data, and free the table.
         if (likely(this->table_ != nullptr)) {
             list_type * table = this->table_;
@@ -598,21 +593,11 @@ private:
             operator delete((void *)this->table_);
             this->table_ = nullptr;
         }
-#else
-        // Clear all data, and free the table.
-        if (likely(this->table_ != nullptr)) {
-            list_type * table = this->table_;
-            for (size_type i = 0; i < this->capacity_; ++i) {
-                list_type & list = table[i];
-                list.clear();
-            }
-            operator delete((void *)this->table_);
-            this->table_ = nullptr;
-        }
+#ifndef NDEBUG
         // Setting status
-        this->capacity_ = 0;
-        this->mask_ = 0;
         this->size_ = 0;
+        this->mask_ = 0;
+        this->capacity_ = 0;
         this->threshold_ = 0;
 #endif
     }
@@ -656,9 +641,9 @@ private:
         return index;
     }
 
-    JM_FORCEINLINE_DECLARE(void)
-    reinsert_list(list_type * new_table, size_type new_mask,
-                  list_type * old_list) {
+    //JM_FORCEINLINE_DECLARE(void)
+    void reinsert_list(list_type * new_table, size_type new_mask,
+                       list_type * old_list) {
         assert(new_table != nullptr);
         assert(old_list != nullptr);
         assert(new_mask > 0);
@@ -694,7 +679,6 @@ private:
     }
 
     template <bool force_shrink = false>
-    //JM_NOINLINE_DECLARE(void)
     void rehash_internal(size_type new_capacity) {
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
@@ -738,9 +722,9 @@ private:
                 }
                 // Setting status
                 this->table_ = new_table;
-                this->capacity_ = new_capacity;
                 this->mask_ = new_capacity - 1;
-                assert(this->loadFactor_ > 0.0f);
+                this->capacity_ = new_capacity;
+                assert(this->loadFactor_ > 0.0);
                 this->threshold_ = (size_type)(new_capacity * std::fabs(this->loadFactor_));
             }
         }
@@ -924,16 +908,14 @@ public:
                         // Push the new entry to front of list.
                         assert(list.head() != nullptr);
                         list.push_front_fast(new_entry);
-
-                        ++(this->size_);
                     }
                     else {
                         // Push the new entry to first of list.
                         assert(list.head() == nullptr);
                         list.push_first(new_entry);
-
-                        ++(this->size_);
                     }
+
+                    ++(this->size_);
                 }
             }
             else {
@@ -968,16 +950,14 @@ public:
                         // Push the new entry to front of list.
                         assert(list.head() != nullptr);
                         list.push_front_fast(new_entry);
-
-                        ++(this->size_);
                     }
                     else {
                         // Push the new entry to first of list.
                         assert(list.head() == nullptr);
                         list.push_first(new_entry);
-
-                        ++(this->size_);
                     }
+
+                    ++(this->size_);
                 }
             }
             else {
