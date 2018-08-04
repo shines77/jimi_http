@@ -160,6 +160,9 @@
     <ClInclude Include="..\..\..\src\main\jimi\jstd\nothrow_deleter.h">
       <Filter>src\jstd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\main\jimi\jstd\nothrow_new.h">
+      <Filter>src\jstd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\deps\picohttpparser\picohttpparser.c">

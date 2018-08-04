@@ -18,23 +18,28 @@
 #include <limits>
 #include <type_traits>
 
+#undef  JSTD_USE_NOTHROW_NEW
+#define JSTD_USE_NOTHROW_NEW        1
+
 #include "jimi/jstd/dictionary_traits.h"
-#include "jimi/jstd/nothrow_deleter.h"
+#include "jimi/jstd/nothrow_new.h"
 #include "jimi/support/Power2.h"
 
 #define USE_JSTD_DICTIONARY         1
 
-#define SUPPORT_DICTIONARY_VERSION  0
+#define DICTIONARY_SUPPORT_VERSION  0
 
 #if defined(_MSC_VER) && !defined(NDEBUG) && (JIMI_ENABLE_VLD != 0) && 0
 // Disable now !!
-#define USE_ENTRY_PLACEMENT_NEW     0
+#define DICTIONARY_ENTRY_USE_PLACEMENT_NEW      0
 #else
-#define USE_ENTRY_PLACEMENT_NEW     1
+#define DICTIONARY_ENTRY_USE_PLACEMENT_NEW      1
 #endif // (JIMI_ENABLE_VLD != 0)
 
 // The entry's pair whether release on erase the entry.
-#define ENTRY_RELEASE_ON_ERASE      1
+#define DICTIONARY_ENTRY_RELEASE_ON_ERASE       1
+
+#define DICTIONARY_USE_REHASH_MODE_FAST         1
 
 namespace jstd {
 
@@ -182,7 +187,7 @@ private:
     size_type       mask_;
     size_type       capacity_;
     list_type       freelist_;
-#if SUPPORT_DICTIONARY_VERSION
+#if DICTIONARY_SUPPORT_VERSION
     size_type       version_;
 #endif
     hasher_type     hasher_;
@@ -190,6 +195,8 @@ private:
 
     // Default initial capacity is 64.
     static const size_type kDefaultInitialCapacity = 64;
+    // Minimum capacity is 16.
+    static const size_type kMinimumCapacity = 16;
     // Maximum capacity is 1 << 30.
     static const size_type kMaximumCapacity = 1U << 30;
     // The threshold of treeify to red-black tree.
@@ -200,7 +207,7 @@ private:
 public:
     basic_dictionary(size_type initialCapacity = kDefaultInitialCapacity)
         : buckets_(nullptr), entries_(nullptr), count_(0), mask_(0), capacity_(0)
-#if SUPPORT_DICTIONARY_VERSION
+#if DICTIONARY_SUPPORT_VERSION
           , version_(1)
 #endif
     {
@@ -235,19 +242,21 @@ public:
     size_type bucket_count() const { return this->capacity_; }
     size_type entries_count() const { return this->capacity_; }
     size_type bucket_capacity() const { return this->capacity_; }
-    size_type min_bucket_capacity() const { return this_type::kDefaultInitialCapacity; }
+
+    entry_type ** buckets() const { return this->buckets_; }
+    entry_type *  entries() const { return this->entries_; }
+
+    size_type min_bucket_capacity() const { return this_type::kMinimumCapacity; }
     size_type max_bucket_capacity() const {
         return (std::min)(this_type::kMaximumCapacity, (std::numeric_limits<size_type>::max)());
     }
-
-    entry_type ** buckets() const { return this->buckets_; }
-    entry_type * entries() const { return this->entries_; }
+    size_type default_bucket_capacity() const { return this_type::kDefaultInitialCapacity; }
 
     bool is_valid() const { return (this->buckets_ != nullptr); }
     bool is_empty() const { return (this->size() == 0); }
 
     size_type version() const {
-#if SUPPORT_DICTIONARY_VERSION
+#if DICTIONARY_SUPPORT_VERSION
         return this->version_;
 #else
         return 0;
@@ -284,19 +293,21 @@ private:
         assert(new_capacity > 0);
         assert((new_capacity & (new_capacity - 1)) == 0);
         // The the array of bucket's first entry.
-        entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
+        // entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
+        entry_type ** new_buckets = JSTD_NEW_ARRAY(entry_type *, new_capacity);
         if (likely(new_buckets != nullptr)) {
             // Initialize the buckets's data.
             memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
             // Record this->buckets_
             this->buckets_ = new_buckets;
             // The the array of entries.
-#if USE_ENTRY_PLACEMENT_NEW
-            void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity, std::nothrow);
-            entry_type * new_entries = (entry_type *)(new_entries_buf);
-            assert((void *)new_entries == new_entries_buf);
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
+            // entry_type * new_entries = (entry_type *)operator new(
+            //                             sizeof(entry_type) * new_capacity, std::nothrow);
+            entry_type * new_entries = JSTD_PLACEMENT_NEW(entry_type, new_capacity);
 #else
-            entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
+            // entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
+            entry_type * new_entries = JSTD_NEW_ARRAY(entry_type, new_capacity);
 #endif
             if (likely(new_entries != nullptr)) {
                 // Linked all new entries to the free list.
@@ -313,16 +324,20 @@ private:
     }
 
     void free_entries() {
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
         assert(this->entries_ != nullptr);
         //operator delete((void *)this->entries_, std::nothrow);
-        jstd::nothrow_deleter::delete_it(this->entries_);
+        //jstd::nothrow_deleter::delete_it(this->entries_);
+        JSTD_PLACEMENT_DELETE(this->entries_);
+#endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
     }
 
     void destroy_entries() {
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
         assert(this->entries_ != nullptr);
         entry_type * entry = this->entries_;
         for (size_type i = 0; i < this->count_; ++i) {
-#if ENTRY_RELEASE_ON_ERASE
+#if DICTIONARY_ENTRY_RELEASE_ON_ERASE
             if (likely(entry->hash != kInvalidHash)) {
                 assert(entry != nullptr);
                 pair_type * __pair = &entry->pair;
@@ -334,12 +349,13 @@ private:
             pair_type * __pair = &entry->pair;
             assert(__pair != nullptr);
             __pair->~pair_type();
-#endif // ENTRY_RELEASE_ON_ERASE
-            entry++;
+#endif // DICTIONARY_ENTRY_RELEASE_ON_ERASE
+            ++entry;
         }
 
         // Free the entries buffer.
         this->free_entries();
+#endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
     }
 
     void destroy() {
@@ -347,10 +363,11 @@ private:
         if (likely(this->buckets_ != nullptr)) {
             if (likely(this->entries_ != nullptr)) {
                 // Free all entries.
-#if USE_ENTRY_PLACEMENT_NEW
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                 this->destroy_entries();
 #else
-                jstd::nothrow_deleter::destroy(this->entries_);
+                //jstd::nothrow_deleter::destroy(this->entries_);
+                JSTD_DESTROY_ARRAY(this->entries_);
 #endif
                 this->entries_ = nullptr;
             }
@@ -408,8 +425,6 @@ private:
         } while (likely(old_entry != nullptr));
     }
 
-    #define REHASH_MODE_FAST    1
-
     template <bool force_shrink = false>
     void rehash_internal(size_type new_capacity) {
         assert(new_capacity > 0);
@@ -417,24 +432,26 @@ private:
         if (likely((force_shrink == false && new_capacity > this->capacity_) ||
                    (force_shrink == true && new_capacity != this->capacity_))) {
             // The the array of bucket's first entry.
-            entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
+            // entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
+            entry_type ** new_buckets = JSTD_NEW_ARRAY(entry_type *, new_capacity);
             if (likely(new_buckets != nullptr)) {
                 // Initialize the buckets's data.
                 memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
 
                 // The the array of entries.
-#if USE_ENTRY_PLACEMENT_NEW
-                void * new_entries_buf = operator new(sizeof(entry_type) * new_capacity, std::nothrow);
-                entry_type * new_entries = (entry_type *)(new_entries_buf);
-                assert((void *)new_entries == new_entries_buf);
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
+                // entry_type * new_entries = (entry_type *)operator new(
+                //                             sizeof(entry_type) * new_capacity, std::nothrow);
+                entry_type * new_entries = JSTD_PLACEMENT_NEW(entry_type, new_capacity);
 #else
-                entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
+                // entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
+                entry_type * new_entries = JSTD_NEW_ARRAY(entry_type, new_capacity);
 #endif
                 if (likely(new_entries != nullptr)) {
                     // Linked all new entries to the new free list.
                     //free_list new_freelist;
                     //fill_freelist(new_freelist, new_entries, new_capacity);
-#if REHASH_MODE_FAST
+#if DICTIONARY_USE_REHASH_MODE_FAST
                     // Recalculate the bucket of all keys.
                     if (likely(this->entries_ != nullptr)) {
                         entry_type * new_entry = new_entries;
@@ -446,7 +463,7 @@ private:
                             assert(new_entry != nullptr);
                             assert(old_entry != nullptr);
                             if (likely(old_entry->hash != kInvalidHash)) {
-#if USE_ENTRY_PLACEMENT_NEW
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                                 // Swap old_entry and new_entry.
                                 new_entry->next = old_entry->next;
                                 new_entry->hash = old_entry->hash;
@@ -461,32 +478,32 @@ private:
                                 pair_type * pair_ptr = &old_entry->pair;
                                 assert(pair_ptr != nullptr);
                                 pair_ptr->~pair_type();
-#else // !USE_ENTRY_PLACEMENT_NEW
+#else // !DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                                 // Swap old_entry and new_entry.
                                 //new_entry->next = old_entry->next;
                                 new_entry->hash = old_entry->hash;
                                 new_entry->pair.swap(old_entry->pair);
-#endif // USE_ENTRY_PLACEMENT_NEW
+#endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                                 ++new_entry;
                                 ++old_entry;
                                 ++new_count;
                             }
                             else {
-#if USE_ENTRY_PLACEMENT_NEW
-#if (ENTRY_RELEASE_ON_ERASE == 0)
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
+#if (DICTIONARY_ENTRY_RELEASE_ON_ERASE == 0)
                                 // pair_type class placement delete
                                 pair_type * pair_ptr = &old_entry->pair;
                                 assert(pair_ptr != nullptr);
                                 pair_ptr->~pair_type();
-#endif // ENTRY_RELEASE_ON_ERASE
-#endif // USE_ENTRY_PLACEMENT_NEW
+#endif // DICTIONARY_ENTRY_RELEASE_ON_ERASE
+#endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                                 ++old_entry;
                             }
                         }
                         assert(new_count == this->size());
 
                         // Free old entries data.
-#if USE_ENTRY_PLACEMENT_NEW
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                         this->free_entries();
 #else
                         //operator delete((void *)this->entries_, std::nothrow);
@@ -543,7 +560,7 @@ private:
                         jstd::nothrow_deleter::destroy(this->buckets_);
 
                     }
-#endif // REHASH_MODE_FAST
+#endif // DICTIONARY_USE_REHASH_MODE_FAST
 
                     // Setting status
                     this->buckets_ = new_buckets;
@@ -565,7 +582,7 @@ private:
     }
 
     void updateVersion() {
-#if SUPPORT_DICTIONARY_VERSION
+#if DICTIONARY_SUPPORT_VERSION
         ++(this->version_);
 #endif
     }
@@ -721,7 +738,7 @@ public:
                 new_entry->hash = hash;
                 this->buckets_[index] = new_entry;
 
-#if (USE_ENTRY_PLACEMENT_NEW != 0) && (ENTRY_RELEASE_ON_ERASE != 0)
+#if (DICTIONARY_ENTRY_USE_PLACEMENT_NEW != 0) && (DICTIONARY_ENTRY_RELEASE_ON_ERASE != 0)
                 // pair_type class placement new
                 void * pair_buf = (void *)&(new_entry->pair);
                 pair_type * new_pair = new (pair_buf) pair_type(key, value);
@@ -773,7 +790,7 @@ public:
                 new_entry->hash = hash;
                 this->buckets_[index] = new_entry;
 
-#if (USE_ENTRY_PLACEMENT_NEW != 0) && (ENTRY_RELEASE_ON_ERASE != 0)
+#if (DICTIONARY_ENTRY_USE_PLACEMENT_NEW != 0) && (DICTIONARY_ENTRY_RELEASE_ON_ERASE != 0)
                 // pair_type class placement new
                 void * pair_buf = (void *)&(new_entry->pair);
                 pair_type * new_pair = new (pair_buf) pair_type(
@@ -914,13 +931,13 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
-#if USE_ENTRY_PLACEMENT_NEW
-#if ENTRY_RELEASE_ON_ERASE
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
+#if DICTIONARY_ENTRY_RELEASE_ON_ERASE
                         // pair_type class placement delete
                         pair_type * pair_ptr = &entry->pair;
                         assert(pair_ptr != nullptr);
                         pair_ptr->~pair_type();
-#endif // ENTRY_RELEASE_ON_ERASE
+#endif // DICTIONARY_ENTRY_RELEASE_ON_ERASE
 #else
 #ifdef _MSC_VER
                         entry->pair.first.clear();
@@ -929,7 +946,7 @@ public:
                         entry->pair.first = key_type();
                         entry->pair.second = value_type();
 #endif
-#endif // USE_ENTRY_PLACEMENT_NEW
+#endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
@@ -976,13 +993,13 @@ public:
 
                         entry->next = this->freelist_.head();
                         entry->hash = kInvalidHash;
-#if USE_ENTRY_PLACEMENT_NEW
-#if ENTRY_RELEASE_ON_ERASE
+#if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
+#if DICTIONARY_ENTRY_RELEASE_ON_ERASE
                         // pair_type class placement delete
                         pair_type * pair_ptr = &entry->pair;
                         assert(pair_ptr != nullptr);
                         pair_ptr->~pair_type();
-#endif // ENTRY_RELEASE_ON_ERASE
+#endif // DICTIONARY_ENTRY_RELEASE_ON_ERASE
 #else
 #ifdef _MSC_VER
                         entry->pair.first.clear();
@@ -991,7 +1008,7 @@ public:
                         entry->pair.first = key_type();
                         entry->pair.second = value_type();
 #endif
-#endif // USE_ENTRY_PLACEMENT_NEW
+#endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
                         this->freelist_.set_head(entry);
                         this->freelist_.increase();
 
@@ -1052,5 +1069,7 @@ using dictionary_v4 = basic_dictionary<Key, Value, Hash_SHA1>;
 #endif
 
 } // namespace jstd
+
+#undef JSTD_USE_NOTHROW_NEW
 
 #endif // JSTD_DICTIONARY_H

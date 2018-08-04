@@ -19,7 +19,7 @@
 
 #include "jimi/jstd/hash_helper.h"
 #include "jimi/jstd/string_utils.h"
-#include "jimi/jstd/nothrow_deleter.h"
+#include "jimi/jstd/nothrow_new.h"
 
 #include "jimi/support/Power2.h"
 
