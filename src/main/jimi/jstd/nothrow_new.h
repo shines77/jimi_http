@@ -8,8 +8,6 @@
 
 #include <new>
 
-#include "jimi/jstd/nothrow_deleter.h"
-
 #if JSTD_USE_NOTHROW_NEW
 
 //
@@ -139,5 +137,7 @@
     jstd::placement_deleter::destroy(pointer)
 
 #endif // JSTD_USE_NOTHROW_NEW
+
+#include "jimi/jstd/nothrow_deleter.h"
 
 #endif // JSTD_NOTHROW_NEW_H
