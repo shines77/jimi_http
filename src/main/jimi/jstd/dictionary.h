@@ -18,6 +18,7 @@
 #include <limits>
 #include <type_traits>
 
+// This macro must define before include file "jimi/jstd/nothrow_new.h".
 #undef  JSTD_USE_NOTHROW_NEW
 #define JSTD_USE_NOTHROW_NEW        1
 
@@ -39,7 +40,7 @@
 // The entry's pair whether release on erase the entry.
 #define DICTIONARY_ENTRY_RELEASE_ON_ERASE       1
 
-#define DICTIONARY_USE_REHASH_MODE_FAST         1
+#define DICTIONARY_USE_FAST_REHASH_MODE         1
 
 namespace jstd {
 
@@ -327,8 +328,8 @@ private:
 #if DICTIONARY_ENTRY_USE_PLACEMENT_NEW
         assert(this->entries_ != nullptr);
         //operator delete((void *)this->entries_, std::nothrow);
-        //jstd::nothrow_deleter::delete_it(this->entries_);
-        JSTD_PLACEMENT_DELETE(this->entries_);
+        //jstd::nothrow_deleter::free(this->entries_);
+        JSTD_PLACEMENT_FREE(this->entries_);
 #endif // DICTIONARY_ENTRY_USE_PLACEMENT_NEW
     }
 
@@ -367,13 +368,14 @@ private:
                 this->destroy_entries();
 #else
                 //jstd::nothrow_deleter::destroy(this->entries_);
-                JSTD_DESTROY_ARRAY(this->entries_);
+                JSTD_DELETE_ARRAY(this->entries_);
 #endif
                 this->entries_ = nullptr;
             }
             // Free the array of bucket's first entry.
             //operator delete((void *)this->buckets_, std::nothrow);
-            jstd::nothrow_deleter::destroy(this->buckets_);
+            //jstd::nothrow_deleter::free(this->buckets_);
+            JSTD_FREE_ARRAY(this->buckets_);
             this->buckets_ = nullptr;
         }
 #ifndef NDEBUG
@@ -385,8 +387,8 @@ private:
     }
 
     inline size_type calc_capacity(size_type new_capacity) {
-        // The minimum bucket is kDefaultInitialCapacity = 64.
-        new_capacity = (new_capacity >= kDefaultInitialCapacity) ? new_capacity : kDefaultInitialCapacity;
+        // The minimum bucket is kMinimumCapacity = 16.
+        new_capacity = (new_capacity >= kMinimumCapacity) ? new_capacity : kMinimumCapacity;
         // The maximum bucket is kMaximumCapacity = 1 << 30.
         new_capacity = (new_capacity <= kMaximumCapacity) ? new_capacity : kMaximumCapacity;
         // Round up the new_capacity to power 2.
@@ -451,7 +453,8 @@ private:
                     // Linked all new entries to the new free list.
                     //free_list new_freelist;
                     //fill_freelist(new_freelist, new_entries, new_capacity);
-#if DICTIONARY_USE_REHASH_MODE_FAST
+
+#if DICTIONARY_USE_FAST_REHASH_MODE
                     // Recalculate the bucket of all keys.
                     if (likely(this->entries_ != nullptr)) {
                         entry_type * new_entry = new_entries;
@@ -507,7 +510,8 @@ private:
                         this->free_entries();
 #else
                         //operator delete((void *)this->entries_, std::nothrow);
-                        jstd::nothrow_deleter::destroy(this->entries_);
+                        //jstd::nothrow_deleter::destroy(this->entries_);
+                        JSTD_DELETE_ARRAY(this->entries_);
 #endif
                         // Insert and adjust the new entries to the new buckets.
                         size_type new_mask = new_capacity - 1;
@@ -527,9 +531,12 @@ private:
                     if (likely(this->buckets_ != nullptr)) {
                         // Free old buckets data.
                         //operator delete((void *)this->buckets_, std::nothrow);
-                        jstd::nothrow_deleter::destroy(this->buckets_);
+                        //jstd::nothrow_deleter::free(this->buckets_);
+                        JSTD_FREE_ARRAY(this->buckets_);
                     }
-#else
+
+#else // !DICTIONARY_USE_FAST_REHASH_MODE
+
                     // Recalculate the bucket of all keys.
                     if (likely(this->buckets_ != nullptr)) {
                         size_type old_count = this->count_;
@@ -557,10 +564,11 @@ private:
 
                         // Free old buckets data.
                         //operator delete((void *)this->buckets_, std::nothrow);
-                        jstd::nothrow_deleter::destroy(this->buckets_);
-
+                        //jstd::nothrow_deleter::free(this->buckets_);
+                        JSTD_FREE_ARRAY(this->buckets_);
                     }
-#endif // DICTIONARY_USE_REHASH_MODE_FAST
+
+#endif // DICTIONARY_USE_FAST_REHASH_MODE
 
                     // Setting status
                     this->buckets_ = new_buckets;
