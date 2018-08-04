@@ -83,7 +83,7 @@ struct nothrow_deleter {
     static typename std::enable_if<!std::is_void<T>::value, void>::type
     safe_destroy(void * p) {
         if (p != nullptr) {
-            T * pTarget = static<T *>(p);
+            T * pTarget = static_cast<T *>(p);
             assert(pTarget != nullptr);
             if (pTarget != nullptr)
                 pTarget->~T();
@@ -132,7 +132,7 @@ struct placement_deleter {
     static typename std::enable_if<!std::is_void<T>::value, void>::type
     safe_destroy(void * p) {
         if (p != nullptr) {
-            T * pTarget = static<T *>(p);
+            T * pTarget = static_cast<T *>(p);
             assert(pTarget != nullptr);
             if (pTarget != nullptr)
                 pTarget->~T();
