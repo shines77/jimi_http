@@ -49,35 +49,36 @@ ehthumbs.db
 Icon?
 
 # Ignore files build by Visual Studio
-*.obj
-*.pdb
-*.iobj
-*.ipdb
-*.dep
-*.user
-*.ncb
 *.aps
-*.pch
-*.vspscc
+*.bak
+*.dep
 *.idb
 *.ilk
+*.intermediate.manifest
+*.iobj
+*.ipdb
+*.meta
+*.manifest
+*.ncb
+*.obj
+*.opensdf
+*.pdb
+*.pch
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.sdf
+*.sln.old
+*.sln_old
+*.suo
 *.tlb
 *.tlh
 *.tli
 *.tmp
-*.sbr
-*.rsp
-*.pgc
-*.pgd
-*.suo
-*.sdf
-*.opensdf
-*.sln.old
-*.sln_old
-*.meta
-*.manifest
-*.intermediate.manifest
-*.bak
+*.user
+*.vspscc
+# *.vcxproj.user
 
 # Ignore folders create by Visual Studio 2015
 /.vs/
@@ -141,6 +142,7 @@ UpgradeLog.htm
 # Ignore CMake cache or temp files(folders)
 /CMakeFiles
 *CMakeCache.txt
+/Makefile
 
 # Ignore boost, tbb
 /deps/boost/
@@ -155,6 +157,7 @@ UpgradeLog.htm
 /temp/
 !/[Bb]uild/ReadMe.txt
 /[Bb]uild/*/
+*.save
 
 # Ignore bin and build folders
 /[Bb]in/

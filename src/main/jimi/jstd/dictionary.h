@@ -296,7 +296,7 @@ private:
         // The the array of bucket's first entry.
         // entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
         entry_type ** new_buckets = JSTD_NEW_ARRAY(entry_type *, new_capacity);
-        if (likely(new_buckets != nullptr)) {
+        IF_LIKELY(new_buckets != nullptr) {
             // Initialize the buckets's data.
             memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
             // Record this->buckets_
@@ -310,7 +310,7 @@ private:
             // entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
             entry_type * new_entries = JSTD_NEW_ARRAY(entry_type, new_capacity);
 #endif
-            if (likely(new_entries != nullptr)) {
+            IF_LIKELY(new_entries != nullptr) {
                 // Linked all new entries to the free list.
                 //fill_freelist(this->freelist_, new_entries, new_capacity);
 
@@ -436,7 +436,7 @@ private:
             // The the array of bucket's first entry.
             // entry_type ** new_buckets = new (std::nothrow) entry_type *[new_capacity];
             entry_type ** new_buckets = JSTD_NEW_ARRAY(entry_type *, new_capacity);
-            if (likely(new_buckets != nullptr)) {
+            IF_LIKELY(new_buckets != nullptr) {
                 // Initialize the buckets's data.
                 memset((void *)new_buckets, 0, sizeof(entry_type *) * new_capacity);
 
@@ -449,7 +449,7 @@ private:
                 // entry_type * new_entries = new (std::nothrow) entry_type[new_capacity];
                 entry_type * new_entries = JSTD_NEW_ARRAY(entry_type, new_capacity);
 #endif
-                if (likely(new_entries != nullptr)) {
+                IF_LIKELY(new_entries != nullptr) {
                     // Linked all new entries to the new free list.
                     //free_list new_freelist;
                     //fill_freelist(new_freelist, new_entries, new_capacity);

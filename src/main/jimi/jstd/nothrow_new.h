@@ -8,6 +8,27 @@
 
 #include <new>
 
+//
+// new_likely() & new_unlikely()
+//
+#if (defined(__GNUC__) && ((__GNUC__ == 2 && __GNUC_MINOR__ >= 96) || (__GNUC__ >= 3))) \
+ || (defined(__clang__) && ((__clang_major__ == 2 && __clang_minor__ >= 1) || (__clang_major__ >= 3)))
+// Since gcc v2.96 or clang v2.1
+#ifndef new_likely
+#define new_likely(expr)        __builtin_expect(!!(expr), 1)
+#endif
+#ifndef new_unlikely
+#define new_unlikely(expr)      __builtin_expect(!!(expr), 0)
+#endif
+#else // !new_likely() & new_unlikely()
+#ifndef new_likely
+#define new_likely(expr)        (expr)
+#endif
+#ifndef new_unlikely
+#define new_unlikely(expr)      (expr)
+#endif
+#endif // new_likely() & new_unlikely()
+
 #if JSTD_USE_NOTHROW_NEW
 
 //
@@ -72,6 +93,12 @@
 #define JSTD_PLACEMENT_DELETE_EX(pointer) \
     jstd::placement_deleter::destroy(pointer)
 
+//
+// if likely
+//
+#define IF_LIKELY(expr)         if (new_likely(expr))
+#define IF_UNLIKELY(expr)       if (new_unlikely(expr))
+
 #else // !JSTD_USE_NOTHROW_NEW
 
 //
@@ -135,6 +162,12 @@
 
 #define JSTD_PLACEMENT_DELETE_EX(pointer) \
     jstd::placement_deleter::destroy(pointer)
+
+//
+// if likely
+//
+#define IF_LIKELY(expr)
+#define IF_UNLIKELY(expr)
 
 #endif // JSTD_USE_NOTHROW_NEW
 
