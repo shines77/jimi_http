@@ -113,7 +113,7 @@ private:
     void add(const std::vector<std::string> & route, short handler) {
         Node * parent = tree_root_;
         for (const std::string & node : route) {
-            std::map<std::string, Node *>::iterator iter = parent->children.find(node);
+            typename std::map<std::string, Node *>::iterator iter = parent->children.find(node);
             if (iter == parent->children.end()) {
                 Node * new_node = new Node(node, handler);
                 parent->children[node] = new_node;

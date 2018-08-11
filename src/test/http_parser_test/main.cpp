@@ -2189,19 +2189,19 @@ void benchmark_routes()
     HttpRouter<UserData *> r;
 
     // Set up a few routes
-    r.add("GET", "/service/candy/:kind", [](UserData * user, auto & args) {
+    r.add("GET", "/service/candy/:kind", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
-    r.add("GET", "/service/shutdown", [](UserData * user, auto & args) {
+    r.add("GET", "/service/shutdown", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
-    r.add("GET", "/", [](UserData * user, auto & args) {
+    r.add("GET", "/", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
-    r.add("GET", "/:filename", [](UserData * user, auto & args) {
+    r.add("GET", "/:filename", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
@@ -2248,19 +2248,19 @@ void benchmark_routes2()
     HttpRouter2<UserData *> r;
 
     // Set up a few routes
-    r.add("GET", "/service/candy/:kind", [](UserData * user, auto & args) {
+    r.add("GET", "/service/candy/:kind", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
-    r.add("GET", "/service/shutdown", [](UserData * user, auto & args) {
+    r.add("GET", "/service/shutdown", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
-    r.add("GET", "/", [](UserData * user, auto & args) {
+    r.add("GET", "/", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
-    r.add("GET", "/:filename", [](UserData * user, auto & args) {
+    r.add("GET", "/:filename", [](UserData * user, std::vector<string_view> & args) {
         user->routed++;
     });
 
