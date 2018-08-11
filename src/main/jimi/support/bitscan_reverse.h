@@ -138,7 +138,7 @@ __builtin_BitScanReverse(unsigned long * index, unsigned long mask)
 #if defined(__has_builtin_clz) || defined(__linux__)
     leading_zeros = __builtin_clz((unsigned int)mask);
 #else
-    leading_zeros = __native_clz((unsigned int)mask);
+    leading_zeros = __internal_clz((unsigned int)mask);
 #endif
     assert(index != nullptr);
     *index = (unsigned long)(31UL ^ leading_zeros);
@@ -155,7 +155,7 @@ __builtin_BitScanReverse64(unsigned long * index, unsigned long long mask)
 #if defined(__has_builtin_clzll) || defined(__linux__)
     leading_zeros = __builtin_clzll((unsigned long long)mask);
 #else
-    leading_zeros = __native_clzll((uint64_t)mask);
+    leading_zeros = __internal_clzll((uint64_t)mask);
 #endif
     assert(index != nullptr);
     *index = (unsigned long)(63UL ^ leading_zeros);

@@ -138,7 +138,7 @@ __builtin_BitScanForward(unsigned long * index, unsigned long mask)
 #if defined(__has_builtin_ctz) || defined(__linux__)
     trailing_zeros = __builtin_ctz((unsigned int)mask);
 #else
-    trailing_zeros = __native_ctz((unsigned int)mask);
+    trailing_zeros = __internal_ctz((unsigned int)mask);
 #endif
     assert(index != nullptr);
     *index = (unsigned long)trailing_zeros;
@@ -155,7 +155,7 @@ __builtin_BitScanForward64(unsigned long * index, unsigned long long mask)
 #if defined(__has_builtin_ctzll) || defined(__linux__)
     trailing_zeros = __builtin_ctzll((unsigned long long)mask);
 #else
-    trailing_zeros = __native_ctzll((unsigned long long)mask);
+    trailing_zeros = __internal_ctzll((unsigned long long)mask);
 #endif
     assert(index != nullptr);
     *index = (unsigned long)trailing_zeros;

@@ -18,7 +18,7 @@
 //
 
 static inline
-unsigned int __native_popcnt(unsigned int x)
+unsigned int __internal_popcnt(unsigned int x)
 { 
     x -=  ((x >> 1) & 0x55555555U);
     x  = (((x >> 2) & 0x33333333U) + (x & 0x33333333U));
@@ -31,7 +31,7 @@ unsigned int __native_popcnt(unsigned int x)
 }
 
 static inline
-unsigned int __native_popcnt_slow(unsigned int x)
+unsigned int __internal_popcnt_slow(unsigned int x)
 {
     x = (x & 0x55555555UL) + ((x >>  1) & 0x55555555UL);
     x = (x & 0x33333333UL) + ((x >>  2) & 0x33333333UL);
@@ -43,7 +43,7 @@ unsigned int __native_popcnt_slow(unsigned int x)
 }
 
 static inline
-unsigned int __native_hakmem_popcnt(unsigned int x)
+unsigned int __internal_hakmem_popcnt(unsigned int x)
 {
     unsigned int tmp;
     tmp = x - ((x >> 1) & 033333333333) - ((x >> 2) & 011111111111);
@@ -51,7 +51,7 @@ unsigned int __native_hakmem_popcnt(unsigned int x)
 }
 
 static inline
-unsigned int __native_popcnt64(uint64_t x)
+unsigned int __internal_popcnt64(uint64_t x)
 {
 #if 1
     x -=  ((x >> 1) & 0x55555555U);
@@ -77,25 +77,25 @@ unsigned int __native_popcnt64(uint64_t x)
     unsigned int n1, n2;
     high = (unsigned int) (x & 0x00000000FFFFFFFFULL);
     low  = (unsigned int)((x & 0xFFFFFFFF00000000ULL) >> 32);
-    n1 = __native_popcnt(high);
-    n2 = __native_popcnt(low);
+    n1 = __internal_popcnt(high);
+    n2 = __internal_popcnt(low);
     return (n1 + n2);
 #endif
 }
 
 static inline
-unsigned int __native_clz(unsigned int x)
+unsigned int __internal_clz(unsigned int x)
 {
     x |= (x >> 1);
     x |= (x >> 2);
     x |= (x >> 4);
     x |= (x >> 8);
     x |= (x >> 16);
-    return (32 - __native_popcnt(x));
+    return (32 - __internal_popcnt(x));
 }
 
 static inline
-unsigned int __native_clzll(uint64_t x)
+unsigned int __internal_clzll(uint64_t x)
 {
     x |= (x >> 1);
     x |= (x >> 2);
@@ -103,19 +103,19 @@ unsigned int __native_clzll(uint64_t x)
     x |= (x >> 8);
     x |= (x >> 16);
     x |= (x >> 32);
-    return (64 - __native_popcnt64(x));
+    return (64 - __internal_popcnt64(x));
 }
 
 static inline
-unsigned int __native_ctz(unsigned int x)
+unsigned int __internal_ctz(unsigned int x)
 {
-    return __native_popcnt((x & -(int)x) - 1);
+    return __internal_popcnt((x & -(int)x) - 1);
 }
 
 static inline
-unsigned int __native_ctzll(uint64_t x)
+unsigned int __internal_ctzll(uint64_t x)
 {
-    return __native_popcnt64((x & -(int64_t)x) - 1);
+    return __internal_popcnt64((x & -(int64_t)x) - 1);
 }
 
 #endif // SM_BUILTIN_POPCNT_H

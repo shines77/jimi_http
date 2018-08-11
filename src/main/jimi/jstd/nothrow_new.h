@@ -35,8 +35,8 @@
 // Normal new (nothrow)
 //
 
-#define JSTD_NEW(new_type) \
-    new (std::nothrow) new_type
+#define JSTD_NEW(ElemType) \
+    new (std::nothrow) ElemType
 
 #define JSTD_FREE(pointer) \
     jstd::nothrow_deleter::free(pointer)
@@ -44,8 +44,8 @@
 #define JSTD_DELETE(pointer) \
     jstd::nothrow_deleter::destroy(pointer)
 
-#define JSTD_NEW_ARRAY(new_type, new_size) \
-    new (std::nothrow) new_type[new_size]
+#define JSTD_NEW_ARRAY(ElemType, ElemSize) \
+    new (std::nothrow) ElemType[ElemSize]
 
 #define JSTD_FREE_ARRAY(pointer) \
     jstd::nothrow_deleter::free(pointer)
@@ -57,8 +57,8 @@
 // Operator new (nothrow)
 //
 
-#define JSTD_OPERATOR_NEW(new_type, new_size) \
-    (new_type *)operator new(sizeof(new_type) * (new_size), std::nothrow)
+#define JSTD_OPERATOR_NEW(ElemType, ElemSize) \
+    (ElemType *)operator new(sizeof(ElemType) * (ElemSize), std::nothrow)
 
 #define JSTD_OPERATOR_FREE(pointer) \
     jstd::nothrow_deleter::free(pointer)
@@ -70,9 +70,9 @@
 // Placement new (nothrow)
 //
 
-#define JSTD_PLACEMENT_NEW(new_type, new_size) \
-    (new_type *)operator new(sizeof(new_type) * (new_size), \
-                            (void *)JSTD_OPERATOR_NEW(new_type, new_size))
+#define JSTD_PLACEMENT_NEW(ElemType, ElemSize) \
+    (ElemType *)operator new(sizeof(ElemType) * (ElemSize), \
+                            (void *)JSTD_OPERATOR_NEW(ElemType, ElemSize))
 
 #define JSTD_PLACEMENT_FREE(pointer) \
     JSTD_OPERATOR_FREE(pointer)
@@ -84,8 +84,8 @@
 // Placement new (purely)
 //
 
-#define JSTD_PLACEMENT_NEW_EX(new_type, new_size, memory_ptr) \
-    (new_type *)operator new(sizeof(new_type) * (new_size), (void *)(memory_ptr))
+#define JSTD_PLACEMENT_NEW_EX(ElemType, ElemSize, MemoryPtr) \
+    (ElemType *)operator new(sizeof(ElemType) * (ElemSize), (void *)(MemoryPtr))
 
 #define JSTD_PLACEMENT_FREE_EX(pointer) \
     jstd::placement_deleter::free(pointer)
@@ -105,8 +105,8 @@
 // Normal new
 //
 
-#define JSTD_NEW(new_type) \
-    new new_type
+#define JSTD_NEW(ElemType) \
+    new ElemType
 
 #define JSTD_FREE(pointer) \
     delete pointer
@@ -114,8 +114,8 @@
 #define JSTD_DELETE(pointer) \
     delete pointer
 
-#define JSTD_NEW_ARRAY(new_type, new_size) \
-    new new_type[new_size]
+#define JSTD_NEW_ARRAY(ElemType, ElemSize) \
+    new ElemType[ElemSize]
 
 #define JSTD_FREE_ARRAY(pointer) \
     delete[] pointer
@@ -127,8 +127,8 @@
 // Operator new
 //
 
-#define JSTD_OPERATOR_NEW(new_type, new_size) \
-    (new_type *)operator new(sizeof(new_type) * (new_size))
+#define JSTD_OPERATOR_NEW(ElemType, ElemSize) \
+    (ElemType *)operator new(sizeof(ElemType) * (ElemSize))
 
 #define JSTD_OPERATOR_FREE(pointer) \
     operator delete((void *)(pointer))
@@ -140,9 +140,9 @@
 // Placement new
 //
 
-#define JSTD_PLACEMENT_NEW(new_type, new_size) \
-    (new_type *)operator new(sizeof(new_type) * (new_size), \
-                            (void *)JSTD_OPERATOR_NEW(new_type, new_size))
+#define JSTD_PLACEMENT_NEW(ElemType, ElemSize) \
+    (ElemType *)operator new(sizeof(ElemType) * (ElemSize), \
+                            (void *)JSTD_OPERATOR_NEW(ElemType, ElemSize))
 
 #define JSTD_PLACEMENT_FREE(pointer) \
     JSTD_OPERATOR_FREE(pointer)
@@ -154,8 +154,8 @@
 // Placement new (purely)
 //
 
-#define JSTD_PLACEMENT_NEW_EX(new_type, new_size, memory_ptr) \
-    (new_type *)operator new(sizeof(new_type) * (new_size), (void *)(memory_ptr))
+#define JSTD_PLACEMENT_NEW_EX(ElemType, ElemSize, MemoryPtr) \
+    (ElemType *)operator new(sizeof(ElemType) * (ElemSize), (void *)(MemoryPtr))
 
 #define JSTD_PLACEMENT_FREE_EX(pointer) \
     operator delete((void *)(pointer), (void *)(pointer))
