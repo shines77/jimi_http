@@ -66,6 +66,9 @@
 #include "jimi/jstd/hash_map_ex.h"
 #include "jimi/jstd/dictionary.h"
 
+#include "HttpRouter.h"
+#include "HttpRouter2.h"
+
 using namespace jimi;
 using namespace jimi::http;
 using namespace TiStore;
@@ -2177,6 +2180,124 @@ void pico_http_parser_benchmark()
 
 #endif // USE_PICO_HTTP_PARSER
 
+void benchmark_routes()
+{
+    struct UserData {
+        int routed = 0;
+    } userData;
+
+    HttpRouter<UserData *> r;
+
+    // Set up a few routes
+    r.add("GET", "/service/candy/:kind", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    r.add("GET", "/service/shutdown", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    r.add("GET", "/", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    r.add("GET", "/:filename", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    // Run benchmark of various urls
+    std::vector<std::string> test_urls = {
+        "/service/candy/lollipop",
+        "/service/candy/gum",
+        "/service/candy/seg_ratta",
+        "/service/candy/lakrits",
+
+        "/service/shutdown",
+        "/",
+        "/some_file.html",
+        "/another_file.jpeg"
+    };
+
+#ifdef NDEBUG
+    static const size_t kMaxIterators = 20000000;
+#else
+    static const size_t kMaxIterators = 1000;
+#endif
+
+    for (std::string & test_url : test_urls) {
+        auto start = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < kMaxIterators; ++i) {
+            r.route("GET", 3, test_url.data(), test_url.length(), &userData);
+        }
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+        std::cout << "[" << size_t((double)kMaxIterators / ((double)ms / 1000.0)) << " req/sec, "
+                  << ms << " ms] for URL: " << test_url << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Checksum: " << userData.routed << std::endl << std::endl;
+}
+
+void benchmark_routes2()
+{
+    struct UserData {
+        int routed = 0;
+    } userData;
+
+    HttpRouter2<UserData *> r;
+
+    // Set up a few routes
+    r.add("GET", "/service/candy/:kind", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    r.add("GET", "/service/shutdown", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    r.add("GET", "/", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    r.add("GET", "/:filename", [](UserData * user, auto & args) {
+        user->routed++;
+    });
+
+    // Run benchmark of various urls
+    std::vector<std::string> test_urls = {
+        "/service/candy/lollipop",
+        "/service/candy/gum",
+        "/service/candy/seg_ratta",
+        "/service/candy/lakrits",
+
+        "/service/shutdown",
+        "/",
+        "/some_file.html",
+        "/another_file.jpeg"
+    };
+
+#ifdef NDEBUG
+    static const size_t kMaxIterators = 20000000;
+#else
+    static const size_t kMaxIterators = 1000;
+#endif
+
+    for (std::string & test_url : test_urls) {
+        auto start = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < kMaxIterators; ++i) {
+            r.route("GET", 3, test_url.data(), test_url.length(), &userData);
+        }
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+        std::cout << "[" << size_t((double)kMaxIterators / ((double)ms / 1000.0)) << " req/sec, "
+                  << ms << " ms] for URL: " << test_url << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Checksum: " << userData.routed << std::endl << std::endl;
+}
+
 void display_hashmap_sizeof()
 {
     printf(" sizeof( std::map<std::string, std::string> )           = %" PRIuPTR " bytes\n",
@@ -2232,13 +2353,16 @@ int main(int argn, char * argv[])
 
     display_hashmap_sizeof();
 
+    benchmark_routes();
+    benchmark_routes2();
+
 #if 0
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
 #endif
 
-#if 1
+#if 0
     crc32c_debug_test();
     crc32c_benchmark();
 
