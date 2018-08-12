@@ -13,9 +13,8 @@
 #include <map>
 #include <vector>
 #include <cstring>
-#include <functional>
 #include <iostream>
-#include <initializer_list>
+#include <functional>
 
 // placeholder
 class string_view {
@@ -110,7 +109,7 @@ private:
     Node * tree_root_;
     std::string compiled_tree_;
 
-    void add(const std::vector<std::string> & route, short handler) {
+    void add_child(const std::vector<std::string> & route, short handler) {
         Node * parent = tree_root_;
         for (const std::string & node : route) {
             typename std::map<std::string, Node *>::iterator iter = parent->children.find(node);
@@ -126,7 +125,7 @@ private:
     }
 
     unsigned short compile_tree(Node * node) {
-        // Header: nodeLength, nodeNameLength, sizeof(node->handler)
+        // Header: nodeLength, nameLength, sizeof(node->handler)
         static const size_t kHeaderLen = sizeof(NodeHeader);
 
         assert(node != nullptr);
@@ -135,36 +134,45 @@ private:
             nodeLength += compile_tree(children.second);
         }
 
-        unsigned short nodeNameLength = (unsigned short)(node->name.length());
+        unsigned short nameLength = (unsigned short)(node->name.length());
+#if 1
+        NodeHeader header;
+        header.length = nodeLength;
+        header.nameLength = nameLength;
+        header.handlerIndex = node->handler;
 
         std::string compiledNode;
+        compiledNode.append((char *)&header, sizeof(header));
+        compiledNode.append(node->name.data(), node->name.length());
+#else
+        std::string compiledNode;
         compiledNode.append((char *)&nodeLength, sizeof(nodeLength));
-        compiledNode.append((char *)&nodeNameLength, sizeof(nodeNameLength));
+        compiledNode.append((char *)&nameLength, sizeof(nameLength));
         compiledNode.append((char *)&node->handler, sizeof(node->handler));
         compiledNode.append(node->name.data(), node->name.length());
-
+#endif
         compiled_tree_ = compiledNode + compiled_tree_;
         return nodeLength;
     }
 
     inline const NodeHeader * find_node(const NodeHeader * parent_node,
                                         const char * name, std::size_t name_length) {
-        // Header: nodeLength, nodeNameLength, sizeof(node->handler)
+        // Header: nodeLength, nameLength, sizeof(node->handler)
         static const size_t kHeaderLen = sizeof(NodeHeader);
 
         assert(parent_node != nullptr);
         unsigned short nodeLength = parent_node->length;
-        unsigned short nodeNameLength = parent_node->nameLength;
+        unsigned short nameLength = parent_node->nameLength;
 
         //std::cout << "Finding node: <" << std::string(name, name_length) << ">" << std::endl;
 
         const char * stop_ptr = (const char *)parent_node + nodeLength;
-        for (const char * candidate = (const char *)parent_node + kHeaderLen + nodeNameLength; candidate < stop_ptr; ) {
-            unsigned short nodeLength = ((NodeHeader *)candidate)->length;
-            unsigned short nodeNameLength = ((NodeHeader *)candidate)->nameLength;
+        for (const char * candidate = (const char *)parent_node + kHeaderLen + nameLength; candidate < stop_ptr; ) {
+            nodeLength = ((NodeHeader *)candidate)->length;
+            nameLength = ((NodeHeader *)candidate)->nameLength;
 
             // whildcard, parameter, equal
-            if (nodeNameLength == 0) {
+            if (nameLength == 0) {
                 return (const NodeHeader *)candidate;
             }
             else if (candidate[kHeaderLen] == ':') {
@@ -175,7 +183,7 @@ private:
 
                 return (const NodeHeader *)candidate;
             }
-            else if (nodeNameLength == name_length &&
+            else if (nameLength == name_length &&
                     !memcmp(candidate + kHeaderLen, name, name_length)) {
                 return (const NodeHeader *)candidate;
             }
@@ -251,8 +259,8 @@ public:
             start = stop + 1;
         } while (stop != end_ptr);
 
-        // If pattern starts with / then move 1+ and run inline slash parser
-        add(nodes, (short)handlers_.size());
+        // If pattern starts with "/" then move 1+ and run inline slash parser
+        add_child(nodes, (short)handlers_.size());
         handlers_.push_back(handler);
 
         compile();
