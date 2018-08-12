@@ -2224,7 +2224,7 @@ void benchmark_routes()
     static const size_t kMaxIterators = 1000;
 #endif
 
-    for (std::string & test_url : test_urls) {
+    for (const std::string & test_url : test_urls) {
         auto start = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < kMaxIterators; ++i) {
             r.route("GET", 3, test_url.data(), test_url.length(), &userData);
@@ -2283,7 +2283,7 @@ void benchmark_routes2()
     static const size_t kMaxIterators = 1000;
 #endif
 
-    for (std::string & test_url : test_urls) {
+    for (const std::string & test_url : test_urls) {
         auto start = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < kMaxIterators; ++i) {
             r.route("GET", 3, test_url.data(), test_url.length(), &userData);

@@ -112,7 +112,8 @@ private:
         //std::cout << "Finding node: <" << std::string(name, name_length) << ">" << std::endl;
 
         const char * stop_ptr = (const char *)parent_node + nodeLength;
-        for (const char * candidate = (const char *)parent_node + kHeaderLen + nameLength; candidate < stop_ptr; ) {
+        const char * candidate = (const char *)parent_node + kHeaderLen + nameLength;
+        for ( ; candidate < stop_ptr; ) {
             nodeLength = ((NodeHeader *)candidate)->length;
             nameLength = ((NodeHeader *)candidate)->nameLength;
 
@@ -147,11 +148,11 @@ private:
     }
 
     // Should take method also!
-    inline int lookup(const char * url, std::size_t length) {       
+    inline int lookup(const char * url, std::size_t length) {
         const NodeHeader * treeStart = (const NodeHeader *)compiled_tree_.data();
 
         // All urls start with "/"
-        const char * stop, * start = url + sizeof(char), * end_ptr = url + length;
+        const char * stop, * start = url + sizeof('/'), * end_ptr = url + length;
 
         do {
             stop = getNextSegment(start, end_ptr);
@@ -182,18 +183,20 @@ public:
             delete tree_root_;
             tree_root_ = nullptr;
         }
-    }    
+    }
 
-    HttpRouter2 & add(const char * method, const char * pattern, callback_type handler) {
+    HttpRouter2 & add(const char * method, const char * pattern,
+                      std::size_t pattern_len, const callback_type & handler) {
         // Step over any initial slash
         if (pattern[0] == '/') {
             pattern++;
+            pattern_len--;
         }
 
         std::vector<std::string> nodes;
         //nodes.push_back(method);
 
-        const char * stop, * start = pattern, * end_ptr = pattern + strlen(pattern);
+        const char * stop, * start = pattern, * end_ptr = pattern + pattern_len;
         do {
             stop = getNextSegment(start, end_ptr);
 
@@ -210,6 +213,10 @@ public:
 
         compile();
         return *this;
+    }
+
+    HttpRouter2 & add(const char * method, const char * pattern, const callback_type & handler) {
+        return add(method, pattern, strlen(pattern), handler);
     }
 
     void compile() {
