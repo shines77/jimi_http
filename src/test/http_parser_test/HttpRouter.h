@@ -259,7 +259,7 @@ public:
 
             nodes.push_back(std::string(start, stop - start));
 
-            start = stop + 1;
+            start = stop + sizeof('/');;
         } while (stop != end_ptr);
 
         // If pattern starts with "/" then move 1+ and run inline slash parser
