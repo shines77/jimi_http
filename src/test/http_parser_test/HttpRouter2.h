@@ -149,7 +149,7 @@ private:
 
     // Should take method also!
     inline int lookup(const char * url, std::size_t length) {
-        const NodeHeader * treeStart = (const NodeHeader *)compiled_tree_.data();
+        const NodeHeader * treeInfo = (const NodeHeader *)compiled_tree_.data();
 
         // All urls start with "/"
         const char * stop, * start = url + sizeof('/'), * end_ptr = url + length;
@@ -159,14 +159,14 @@ private:
 
             //std::cout << "Matching(" << std::string(start, stop - start) << ")" << std::endl;
 
-            if ((treeStart = find_node(treeStart, start, stop - start)) == nullptr) {
+            if ((treeInfo = find_node(treeInfo, start, stop - start)) == nullptr) {
                 return -1;
             }
 
             start = stop + sizeof('/');
         } while (stop != end_ptr);
 
-        return (int)(treeStart->handlerIndex);
+        return (int)(treeInfo->handlerIndex);
     }
 
 public:
