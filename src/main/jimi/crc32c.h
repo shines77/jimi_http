@@ -16,7 +16,6 @@
 #define __SSE4_2__      1
 #endif // __SSE4_2__
 
-#ifdef __SSE4_2__
 #ifdef _MSC_VER
 #include <nmmintrin.h>  // For SSE 4.2
 #include <immintrin.h>  // For SHA1 & SHA256 instructions.
@@ -25,7 +24,6 @@
 #include <x86intrin.h>
 //#include <nmmintrin.h>  // For SSE 4.2
 #endif // _MSC_VER
-#endif // __SSE4_2__
 
 #if defined(WIN64) || defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) \
  || defined(__amd64__) || defined(__x86_64__) || defined(__LP64__)
