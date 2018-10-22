@@ -370,8 +370,6 @@ void crc32c_debug_test()
 #endif // NDEBUG, For debug only
 }
 
-namespace test {
-
 #define CRC32C_ALGORITHM_IMPL(HashType, ClassName, HashFunc)    \
     struct ClassName  {                                         \
         typedef HashType hash_type;                             \
@@ -407,6 +405,8 @@ namespace test {
                                                                 \
         static const bool isSpecial = true;                     \
     }
+
+namespace test {
 
 #if SUPPORT_SSE42_CRC32C
 
