@@ -372,12 +372,12 @@ void crc32c_debug_test()
 
 namespace test {
 
-#define CRC32C_ALGORITHM_IMPL(HashType, Name, Func)             \
-    struct Name  {                                              \
+#define CRC32C_ALGORITHM_IMPL(HashType, ClassName, HashFunc)    \
+    struct ClassName  {                                         \
         typedef HashType hash_type;                             \
                                                                 \
         hash_type crc32c(const char * data, size_t length) {    \
-            return Func(data, length);                          \
+            return HashFunc(data, length);                      \
         }                                                       \
                                                                 \
         hash_type crc32c(uint32_t state[5], const char * data,  \
@@ -385,13 +385,13 @@ namespace test {
             return 0;                                           \
         }                                                       \
                                                                 \
-        const char * name() { return "" #Func "()"; }           \
+        const char * name() { return "" #HashFunc "()"; }       \
                                                                 \
         static const bool isSpecial = false;                    \
     }
 
-#define CRC32C_ALGORITHM_IMPL_EX(HashType, Name, Func)          \
-    struct Name {                                               \
+#define CRC32C_ALGORITHM_IMPL_EX(HashType, ClassName, HashFunc) \
+    struct ClassName {                                          \
         typedef HashType hash_type;                             \
                                                                 \
         hash_type crc32c(const char * data, size_t length) {    \
@@ -400,32 +400,34 @@ namespace test {
                                                                 \
         hash_type crc32c(uint32_t state[5], const char * data,  \
                          size_t length) {                       \
-            return Func(state, data, length);                   \
+            return HashFunc(state, data, length);               \
         }                                                       \
                                                                 \
-        const char * name() { return "" #Func "()"; }           \
+        const char * name() { return "" #HashFunc "()"; }       \
                                                                 \
         static const bool isSpecial = true;                     \
     }
 
 #if SUPPORT_SSE42_CRC32C
-#if CRC32C_IS_X86_64
-CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_x64, jimi::crc32c_x64);
-#endif
-CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_x86, jimi::crc32c_x86);
 
 #if CRC32C_IS_X86_64
-CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_hw_u64, jimi::crc32c_hw_u64);
-CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_hw_u64_v2, jimi::crc32c_hw_u64_v2);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_x64,         jimi::crc32c_x64);
 #endif
-CRC32C_ALGORITHM_IMPL(uint32_t, crc32c_hw_u32, jimi::crc32c_hw_u32);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_x86,         jimi::crc32c_x86);
+
+#if CRC32C_IS_X86_64
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u64,      jimi::crc32c_hw_u64);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u64_v2,   jimi::crc32c_hw_u64_v2);
+#endif
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u32,      jimi::crc32c_hw_u32);
+
 #endif // SUPPORT_SSE42_CRC32C
 
-CRC32C_ALGORITHM_IMPL(uint32_t, sha1_msg2, jimi::sha1_msg2);
-CRC32C_ALGORITHM_IMPL_EX(uint32_t, sha1_x86, jimi::sha1_x86);
+CRC32C_ALGORITHM_IMPL(uint32_t,     sha1_msg2,          jimi::sha1_msg2);
+CRC32C_ALGORITHM_IMPL_EX(uint32_t,  sha1_x86,           jimi::sha1_x86);
 
-CRC32C_ALGORITHM_IMPL(uint32_t, Times31, TiStore::hash::Times31);
-CRC32C_ALGORITHM_IMPL(uint32_t, Times31_std, TiStore::hash::Times31_std);
+CRC32C_ALGORITHM_IMPL(uint32_t,     Times31,            TiStore::hash::Times31);
+CRC32C_ALGORITHM_IMPL(uint32_t,     Times31_std,        TiStore::hash::Times31_std);
 
 } // namespace test
 
