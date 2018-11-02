@@ -2355,8 +2355,10 @@ int main(int argn, char * argv[])
 
     display_hashmap_sizeof();
 
+#if 0
     benchmark_routes();
     benchmark_routes2();
+#endif
 
 #if 0
     //stop_watch_test();
@@ -2364,7 +2366,7 @@ int main(int argn, char * argv[])
     http_parser_ref_test();
 #endif
 
-#if 0
+#if 1
     crc32c_debug_test();
     crc32c_benchmark();
 
