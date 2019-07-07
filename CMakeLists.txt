@@ -122,12 +122,18 @@ set(SOURCE_FILES
     deps/picohttpparser/picohttpparser.c
     )
 
-add_library(picohttpparser SHARED ${SOURCE_FILES})
+add_library(picohttpparser STATIC ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 ###############################################################
 
 project(jimi_http_parser)
+
+if (UNIX)
+    set(LIBPICOHTTPPARSER "libpicohttpparser.a")
+else()
+    set(LIBPICOHTTPPARSER "")
+endif()
 
 include_directories(src)
 include_directories(src/main)
@@ -152,8 +158,10 @@ add_custom_target(release
 )
 
 add_executable(jimi_http_parser ${SOURCE_FILES})
-add_dependencies(jimi_http_parser picohttpparser)
-target_link_libraries(jimi_http_parser ${EXTRA_LIBS} picohttpparser)
+if (UNIX)
+    add_dependencies(jimi_http_parser picohttpparser)
+endif()
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
 
 ###############################################################
 
