@@ -119,7 +119,7 @@ include_directories(src)
 include_directories(src/main)
 include_directories(src/test)
 include_directories(src/unittest)
-include_directories(deps)
+## include_directories(deps)
 
 add_subdirectory(deps)
 
