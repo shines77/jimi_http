@@ -115,10 +115,10 @@ else()
     set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-include_directories(picohttpparser)
+include_directories(deps/picohttpparser)
 
 set(SOURCE_FILES
-    picohttpparser/picohttpparser.c
+    /deps/picohttpparser/picohttpparser.c
     )
 
 add_library(picohttpparser STATIC ${SOURCE_FILES})
