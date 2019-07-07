@@ -119,10 +119,10 @@ include_directories(deps)
 include_directories(deps/picohttpparser)
 
 set(SOURCE_FILES
-    deps/picohttpparser/picohttpparser.c
+    deps/picohttpparser/picohttpparser.cpp
     )
 
-add_library(picohttpparser SHARED ${SOURCE_FILES})
+add_library(picohttpparser STATIC ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 ###############################################################
@@ -142,6 +142,7 @@ include_directories(src/unittest)
 include_directories(deps)
 
 set(SOURCE_FILES
+    deps/picohttpparser/picohttpparser.cpp
     src/test/http_parser_test/main.cpp
     )
 
@@ -159,9 +160,10 @@ add_custom_target(release
 
 add_executable(jimi_http_parser ${SOURCE_FILES})
 if (UNIX)
-    add_dependencies(jimi_http_parser picohttpparser)
+    # add_dependencies(jimi_http_parser picohttpparser)
 endif()
-target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
+# target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
 
 ###############################################################
 
