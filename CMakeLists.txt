@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 ###############################################################
 
-project(jimi_http_parser)
+project(picohttpparser)
 
 # Single thread mode /ML and /MLd have be deprecated from VS 2003.
 option(BoostOption_USE_MULTITHREADED "Enable Boost's library use multithread" ON)
@@ -115,6 +115,17 @@ else()
     set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
+include_directories(picohttpparser)
+
+set(SOURCE_FILES
+    picohttpparser/picohttpparser.c
+    )
+
+add_library(picohttpparser STATIC ${SOURCE_FILES})
+target_link_libraries(picohttpparser ${EXTRA_LIBS})
+
+project(jimi_http_parser)
+
 set(EXTRA_LIBS ${EXTRA_LIBS} picohttpparser)
 
 include_directories(src)
@@ -122,8 +133,6 @@ include_directories(src/main)
 include_directories(src/test)
 include_directories(src/unittest)
 include_directories(deps)
-
-add_subdirectory(deps)
 
 set(SOURCE_FILES
     src/test/http_parser_test/main.cpp
