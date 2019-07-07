@@ -121,7 +121,7 @@ include_directories(deps/picohttpparser)
 
 set(SOURCE_FILES
     deps/picohttpparser/picohttpparser.h
-    deps/picohttpparser/picohttpparser.cpp
+    deps/picohttpparser/picohttpparser.c
     )
 
 add_library(picohttpparser STATIC ${SOURCE_FILES})
@@ -148,7 +148,6 @@ include_directories(src/unittest)
 include_directories(deps)
 
 set(SOURCE_FILES
-    deps/picohttpparser/picohttpparser.cpp
     src/test/http_parser_test/main.cpp
     )
 
