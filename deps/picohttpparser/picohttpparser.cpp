@@ -109,6 +109,16 @@
 #include <picohttpparser/picohttpparser.h>
 
 #ifdef _MSC_VER
+#ifndef EXPORT_API
+#define EXPORT_API
+#endif
+#else
+#ifndef EXPORT_API
+#define EXPORT_API  __attribute__((visibility("default")))
+#endif
+#endif
+
+#ifdef _MSC_VER
 #define ssize_t intptr_t
 #endif
 
@@ -458,6 +468,7 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
     return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
 }
 
+EXPORT_API
 int phr_parse_request(const char *buf_start, size_t len, const char **method, size_t *method_len, const char **path,
                       size_t *path_len, int *minor_version, struct phr_header *headers, size_t *num_headers, size_t last_len)
 {
@@ -518,6 +529,7 @@ static const char *parse_response(const char *buf, const char *buf_end, int *min
     return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
 }
 
+EXPORT_API
 int phr_parse_response(const char *buf_start, size_t len, int *minor_version, int *status, const char **msg, size_t *msg_len,
                        struct phr_header *headers, size_t *num_headers, size_t last_len)
 {
@@ -544,6 +556,7 @@ int phr_parse_response(const char *buf_start, size_t len, int *minor_version, in
     return (int)(buf - buf_start);
 }
 
+EXPORT_API
 int phr_parse_headers(const char *buf_start, size_t len, struct phr_header *headers, size_t *num_headers, size_t last_len)
 {
     const char *buf = buf_start, *buf_end = buf + len;
@@ -587,6 +600,7 @@ static int decode_hex(int ch)
     }
 }
 
+EXPORT_API
 ssize_t phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf, size_t *_bufsz)
 {
     size_t dst = 0, src = 0, bufsz = *_bufsz;
@@ -702,6 +716,7 @@ Exit:
     return ret;
 }
 
+EXPORT_API
 int phr_decode_chunked_is_in_data(struct phr_chunked_decoder *decoder)
 {
     return decoder->_state == CHUNKED_IN_CHUNK_DATA;
