@@ -151,10 +151,9 @@ add_custom_target(release
     COMMENT "Switch CMAKE_BUILD_TYPE to Release"
 )
 
-add_library(picohttpparser STATIC deps/picohttpparser/picohttpparser.c)
-
 add_executable(jimi_http_parser ${SOURCE_FILES})
 target_link_libraries(jimi_http_parser ${EXTRA_LIBS} picohttpparser)
+add_dependencies(jimi_http_parser picohttpparser)
 
 ###############################################################
 
