@@ -122,7 +122,7 @@ set(SOURCE_FILES
     deps/picohttpparser/picohttpparser.c
     )
 
-add_library(picohttpparser STATIC ${SOURCE_FILES})
+add_library(picohttpparser SHARED ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 ###############################################################
@@ -130,7 +130,7 @@ target_link_libraries(picohttpparser ${EXTRA_LIBS})
 project(jimi_http_parser)
 
 if (UNIX)
-    set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.a")
+    set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.so")
 else()
     set(LIBPICOHTTPPARSER "")
 endif()
