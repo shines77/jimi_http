@@ -166,10 +166,10 @@ add_custom_target(release
 
 add_executable(jimi_http_parser ${SOURCE_FILES})
 if (UNIX)
-    add_dependencies(jimi_http_parser picohttpparser)
+    # add_dependencies(jimi_http_parser picohttpparser)
 endif()
-# target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
-target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
+# target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
 
 ###############################################################
 
