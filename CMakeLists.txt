@@ -119,10 +119,11 @@ include_directories(deps)
 include_directories(deps/picohttpparser)
 
 set(SOURCE_FILES
+    deps/picohttpparser/picohttpparser.h
     deps/picohttpparser/picohttpparser.cpp
     )
 
-add_library(picohttpparser INTERFACE ${SOURCE_FILES})
+add_library(picohttpparser STATIC ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 ###############################################################
