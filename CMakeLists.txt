@@ -122,7 +122,7 @@ set(SOURCE_FILES
     deps/picohttpparser/picohttpparser.c
     )
 
-add_library(picohttpparser STATIC ${SOURCE_FILES})
+add_library(picohttpparser SHARED ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 ###############################################################
