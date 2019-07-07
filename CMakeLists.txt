@@ -55,7 +55,7 @@ endif()
 
 if (NOT MSVC)
     ## Reserve: [Support Intel SMID SHA1/SHA256: -msha]
-    set(CMAKE_C_FLAGS_COMMON "-mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -mpclmul -fvisibility=hidden -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-macros -Wno-unused-private-field -Wno-unreachable-code -Wno-gnu-anonymous-struct -fPIC -U__STRICT_ANSI__")
+    set(CMAKE_C_FLAGS_COMMON "-mmmx -msse -msse2 -msse3 -mssse3 -msse4 -msse4a -msse4.1 -msse4.2 -mpclmul -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-macros -Wno-unused-private-field -Wno-unreachable-code -Wno-gnu-anonymous-struct -fPIC -U__STRICT_ANSI__")
 
     set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS} -std=c99 ${CMAKE_C_FLAGS_COMMON}")
     ##
@@ -131,6 +131,7 @@ target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 project(jimi_http_parser)
 
+find_package(Threads)
 find_path(picohttpparser NAMES picohttpparser.h PATHS "${CMAKE_SOURCE_DIR}/deps/")
 
 if (UNIX)
