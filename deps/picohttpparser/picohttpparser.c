@@ -109,16 +109,6 @@
 #include <picohttpparser/picohttpparser.h>
 
 #ifdef _MSC_VER
-#ifndef EXPORT_API
-#define EXPORT_API
-#endif
-#else
-#ifndef EXPORT_API
-#define EXPORT_API  __attribute__((visibility("default")))
-#endif
-#endif
-
-#ifdef _MSC_VER
 #define ssize_t intptr_t
 #endif
 

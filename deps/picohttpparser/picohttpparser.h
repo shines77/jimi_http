@@ -37,6 +37,16 @@
 #define ssize_t intptr_t
 #endif
 
+#ifdef _MSC_VER
+#ifndef EXPORT_API
+#define EXPORT_API
+#endif
+#else
+#ifndef EXPORT_API
+#define EXPORT_API  __attribute__((visibility("default")))
+#endif
+#endif
+
 /* $Id: 67fd3ee74103ada60258d8a16e868f483abcca87 $ */
 
 #ifdef __cplusplus
@@ -45,6 +55,7 @@ extern "C" {
 
 /* contains name and value of a header (name == NULL if is a continuing line
  * of a multiline header */
+EXPORT_API
 struct phr_header {
     const char *name;
     size_t name_len;
@@ -54,17 +65,21 @@ struct phr_header {
 
 /* returns number of bytes consumed if successful, -2 if request is partial,
  * -1 if failed */
+EXPORT_API
 int phr_parse_request(const char *buf, size_t len, const char **method, size_t *method_len, const char **path, size_t *path_len,
                       int *minor_version, struct phr_header *headers, size_t *num_headers, size_t last_len);
 
 /* ditto */
+EXPORT_API
 int phr_parse_response(const char *_buf, size_t len, int *minor_version, int *status, const char **msg, size_t *msg_len,
                        struct phr_header *headers, size_t *num_headers, size_t last_len);
 
 /* ditto */
+EXPORT_API
 int phr_parse_headers(const char *buf, size_t len, struct phr_header *headers, size_t *num_headers, size_t last_len);
 
 /* should be zero-filled before start */
+EXPORT_API
 struct phr_chunked_decoder {
     size_t bytes_left_in_chunk; /* number of bytes left in current chunk */
     char consume_trailer;       /* if trailing headers should be consumed */
@@ -81,9 +96,11 @@ struct phr_chunked_decoder {
  * octets left undecoded at the tail of the supplied buffer.  Returns -1 on
  * error.
  */
+EXPORT_API
 ssize_t phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf, size_t *bufsz);
 
 /* returns if the chunked decoder is in middle of chunked data */
+EXPORT_API
 int phr_decode_chunked_is_in_data(struct phr_chunked_decoder *decoder);
 
 #ifdef __cplusplus
