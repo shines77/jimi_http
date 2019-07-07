@@ -55,7 +55,6 @@ extern "C" {
 
 /* contains name and value of a header (name == NULL if is a continuing line
  * of a multiline header */
-EXPORT_API
 struct phr_header {
     const char *name;
     size_t name_len;
@@ -79,7 +78,6 @@ EXPORT_API
 int phr_parse_headers(const char *buf, size_t len, struct phr_header *headers, size_t *num_headers, size_t last_len);
 
 /* should be zero-filled before start */
-EXPORT_API
 struct phr_chunked_decoder {
     size_t bytes_left_in_chunk; /* number of bytes left in current chunk */
     char consume_trailer;       /* if trailing headers should be consumed */
