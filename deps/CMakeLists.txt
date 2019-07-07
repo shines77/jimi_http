@@ -121,18 +121,6 @@ set(SOURCE_FILES
     picohttpparser/picohttpparser.c
     )
 
-add_custom_target(debug
-    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-    COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
-)
-
-add_custom_target(release
-    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-    COMMENT "Switch CMAKE_BUILD_TYPE to Release"
-)
-
 add_library(picohttpparser STATIC ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
