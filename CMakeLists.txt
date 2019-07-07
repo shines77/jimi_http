@@ -132,7 +132,7 @@ project(jimi_http_parser)
 find_path(picohttpparser NAMES picohttpparser.h PATHS "${CMAKE_SOURCE_DIR}/deps/")
 
 if (UNIX)
-    set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.so")
+    set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.a")
 else()
     set(LIBPICOHTTPPARSER "")
 endif()
