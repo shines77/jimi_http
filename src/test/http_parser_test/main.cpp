@@ -2360,13 +2360,13 @@ int main(int argn, char * argv[])
     benchmark_routes2();
 #endif
 
-#if 0
+#if 1
     //stop_watch_test();
     http_parser_test();
     http_parser_ref_test();
 #endif
 
-#if 1
+#if 0
     crc32c_debug_test();
     crc32c_benchmark();
 
@@ -2375,7 +2375,7 @@ int main(int argn, char * argv[])
     //find_power_2_near_prime();
 #endif
 
-#if 0
+#if 1
     http_parser_benchmark();
     http_parser_ref_benchmark();
 #if USE_PICO_HTTP_PARSER

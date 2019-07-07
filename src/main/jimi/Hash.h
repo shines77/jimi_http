@@ -797,7 +797,7 @@ public:
         static const std::uint32_t N = sizeof(hash_type);
         static const std::uint32_t align_mask = sizeof(hash_type) - 1;
 
-        //return hash::Times31(key, len);
+        //return hashes::Times31(key, len);
 
 #if defined(_IS_X86_64_) || defined(_IS_X86_32_)
         return primaryHash_aligned(key, len, seed);
