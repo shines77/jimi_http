@@ -106,7 +106,7 @@
 #endif // _MSC_VER
 #endif // __SSE4_2__
 
-#include "picohttpparser.h"
+#include <picohttpparser/picohttpparser.h>
 
 #ifdef _MSC_VER
 #define ssize_t intptr_t

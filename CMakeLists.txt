@@ -129,8 +129,6 @@ target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 project(jimi_http_parser)
 
-find_package(picohttpparser)
-
 if (UNIX)
     set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.a")
 else()
