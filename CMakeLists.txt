@@ -149,6 +149,7 @@ include_directories(deps)
 
 set(SOURCE_FILES
     src/test/http_parser_test/main.cpp
+    deps/picohttpparser/picohttpparser.c
     )
 
 add_custom_target(debug
