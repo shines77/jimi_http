@@ -125,9 +125,9 @@ set(SOURCE_FILES
 add_library(picohttpparser STATIC ${SOURCE_FILES})
 target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
-project(jimi_http_parser)
+###############################################################
 
-set(EXTRA_LIBS ${EXTRA_LIBS} picohttpparser)
+project(jimi_http_parser)
 
 include_directories(src)
 include_directories(src/main)
@@ -152,7 +152,7 @@ add_custom_target(release
 )
 
 add_executable(jimi_http_parser ${SOURCE_FILES})
-target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS} picohttpparser)
 
 ###############################################################
 
