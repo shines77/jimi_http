@@ -122,8 +122,8 @@ include_directories(src/unittest)
 include_directories(deps)
 
 set(SOURCE_FILES
-    src/test/http_parser_test/main.cpp
     deps/picohttpparser/picohttpparser.c
+    src/test/http_parser_test/main.cpp
     )
 
 add_custom_target(debug
