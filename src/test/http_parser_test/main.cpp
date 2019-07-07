@@ -31,6 +31,8 @@
 #include <map>
 #include <unordered_map>
 
+#include "picohttpparser/picohttpparser.h"
+
 #if __SSE4_2__
 
 // Support SSE 4.2: _mm_crc32_u32(), _mm_crc32_u64().
