@@ -130,7 +130,7 @@ target_link_libraries(picohttpparser ${EXTRA_LIBS})
 project(jimi_http_parser)
 
 if (UNIX)
-    set(LIBPICOHTTPPARSER "libpicohttpparser.a")
+    set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.a")
 else()
     set(LIBPICOHTTPPARSER "")
 endif()
@@ -159,9 +159,9 @@ add_custom_target(release
 
 add_executable(jimi_http_parser ${SOURCE_FILES})
 if (UNIX)
-    # add_dependencies(jimi_http_parser ${CMAKE_SOURCE_DIR}/${LIBPICOHTTPPARSER})
+    add_dependencies(jimi_http_parser ${LIBPICOHTTPPARSER})
 endif()
-target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${CMAKE_SOURCE_DIR}/${LIBPICOHTTPPARSER})
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
 
 ###############################################################
 
