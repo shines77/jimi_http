@@ -67,17 +67,17 @@
 namespace jstd {
 
 enum hash_mode_t {
-    Hash_Default,
-    Hash_CRC32C,
-    Hash_Time31,
-    Hash_Time31Std,
-    Hash_SHA1_MSG2,
-    Hash_SHA1,
-    Hash_Last
+    HashFunc_Default,
+    HashFunc_CRC32C,
+    HashFunc_Time31,
+    HashFunc_Time31Std,
+    HashFunc_SHA1_MSG2,
+    HashFunc_SHA1,
+    HashFunc_Last
 };
 
 template <typename T, typename HashType = std::uint32_t,
-          std::size_t HashFunc = Hash_Default>
+          std::size_t HashFunc = HashFunc_Default>
 struct hash_helper {
     typedef typename std::remove_pointer<
                 typename std::remove_const<
@@ -88,19 +88,19 @@ struct hash_helper {
     static
     typename std::enable_if<(std::is_pod<T>::value && !std::is_pointer<T>::value), HashType>::type
     getHashCode(const key_type key) {
-        return TiStore::hash::Times31_std((const char *)&key, sizeof(key));
+        return jimi::hashes::Times31_std((const char *)&key, sizeof(key));
     }
 
     static
     typename std::enable_if<(!std::is_pod<T>::value && !std::is_pointer<T>::value), HashType>::type
     getHashCode(const key_type & key) {
-        return TiStore::hash::Times31_std((const char *)&key, sizeof(key));
+        return jimi::hashes::Times31_std((const char *)&key, sizeof(key));
     }
 
     static
     typename std::enable_if<std::is_pointer<T>::value, HashType>::type
     getHashCode(const key_type * key) {
-        return TiStore::hash::Times31_std((const char *)key, sizeof(key_type *));
+        return jimi::hashes::Times31_std((const char *)key, sizeof(key_type *));
     }
 };
 
@@ -110,17 +110,17 @@ struct hash_helper {
 template <>
 struct hash_helper<const char *, std::uint32_t, Hash_CRC32C> {
     static std::uint32_t getHashCode(const char * data, size_t length) {
-        return jimi::crc32c_x64(data, length);
+        return jimi::crc32::crc32c_x64(data, length);
     }
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, Hash_CRC32C, jimi::crc32c_x64);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_CRC32C, jimi::crc32::crc32c_x64);
 
 template <>
-struct hash_helper<std::string, std::uint32_t, Hash_CRC32C> {
+struct hash_helper<std::string, std::uint32_t, HashFunc_CRC32C> {
     static std::uint32_t getHashCode(const std::string & key) {
-        return jimi::crc32c_x64(key.c_str(), key.size());
+        return jimi::crc32::crc32c_x64(key.c_str(), key.size());
     }
 };
 
@@ -130,17 +130,17 @@ struct hash_helper<std::string, std::uint32_t, Hash_CRC32C> {
 template <>
 struct hash_helper<const char *, std::uint32_t, Hash_Time31> {
     static std::uint32_t getHashCode(const char * data, size_t length) {
-        return TiStore::hash::Times31(data, length);
+        return jimi::hashes::Times31(data, length);
     }
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, Hash_Time31, TiStore::hash::Times31);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_Time31, jimi::hashes::Times31);
 
 template <>
-struct hash_helper<std::string, std::uint32_t, Hash_Time31> {
+struct hash_helper<std::string, std::uint32_t, HashFunc_Time31> {
     static std::uint32_t getHashCode(const std::string & key) {
-        return TiStore::hash::Times31(key.c_str(), key.size());
+        return jimi::hashes::Times31(key.c_str(), key.size());
     }
 };
 
@@ -148,17 +148,17 @@ struct hash_helper<std::string, std::uint32_t, Hash_Time31> {
 template <>
 struct hash_helper<const char *, std::uint32_t, Hash_Time31Std> {
     static std::uint32_t getHashCode(const char * data, size_t length) {
-        return TiStore::hash::Times31_std(data, length);
+        return jimi::hashes::Times31_std(data, length);
     }
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, Hash_Time31Std, TiStore::hash::Times31_std);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_Time31Std, jimi::hashes::Times31_std);
 
 template <>
-struct hash_helper<std::string, std::uint32_t, Hash_Time31Std> {
+struct hash_helper<std::string, std::uint32_t, HashFunc_Time31Std> {
     static std::uint32_t getHashCode(const std::string & key) {
-        return TiStore::hash::Times31_std(key.c_str(), key.size());
+        return jimi::hashes::Times31_std(key.c_str(), key.size());
     }
 };
 
@@ -168,17 +168,17 @@ struct hash_helper<std::string, std::uint32_t, Hash_Time31Std> {
 template <>
 struct hash_helper<const char *, std::uint32_t, Hash_SHA1_MSG2> {
     static std::uint32_t getHashCode(const char * data, size_t length) {
-        return jimi::sha1_msg2(data, length);
+        return jimi::sha1::sha1_msg2(data, length);
     }
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, Hash_SHA1_MSG2, jimi::sha1_msg2);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_SHA1_MSG2, jimi::sha1_msg2);
 
 template <>
-struct hash_helper<std::string, std::uint32_t, Hash_SHA1_MSG2> {
+struct hash_helper<std::string, std::uint32_t, HashFunc_SHA1_MSG2> {
     static std::uint32_t getHashCode(const std::string & key) {
-        return jimi::sha1_msg2(key.c_str(), key.size());
+        return jimi::sha1::sha1_msg2(key.c_str(), key.size());
     }
 };
 
@@ -188,26 +188,26 @@ struct hash_helper<const char *, std::uint32_t, Hash_SHA1> {
     static std::uint32_t getHashCode(const char * data, size_t length) {
         //alignas(16) uint32_t sha1_state[5];
         //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
-        return jimi::sha1_x86(jimi::s_sha1_state, data, length);
+        return jimi::sha1::sha1_x86(jimi::s_sha1_state, data, length);
     }
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, Hash_SHA1, jimi::sha1_x86);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_SHA1, jimi::sha1_x86);
 
 template <>
-struct hash_helper<std::string, std::uint32_t, Hash_SHA1> {
+struct hash_helper<std::string, std::uint32_t, HashFunc_SHA1> {
     static std::uint32_t getHashCode(const std::string & key) {
         //alignas(16) uint32_t sha1_state[5];
         //memcpy((void *)&sha1_state[0], (const void *)&jimi::s_sha1_state[0], sizeof(uint32_t) * 5);
-        return jimi::sha1_x86(jimi::s_sha1_state, key.c_str(), key.size());
+        return jimi::sha1::sha1_x86(jimi::s_sha1_state, key.c_str(), key.size());
     }
 };
 
 #endif // SUPPORT_SMID_SHA
 
 template <typename T, typename HashType = std::uint32_t,
-          std::size_t HashFunc = Hash_Default>
+          std::size_t HashFunc = HashFunc_Default>
 struct hash {
     typedef typename std::remove_pointer<
                 typename std::remove_cv<

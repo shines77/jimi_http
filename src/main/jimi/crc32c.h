@@ -41,6 +41,7 @@
 //
 
 namespace jimi {
+namespace crc32 {
 
 static uint32_t crc32c_x86(const char * data, size_t length)
 {
@@ -222,6 +223,10 @@ static uint32_t crc32c_hw_u32(const char * data, size_t length)
     return 0;
 #endif // SUPPORT_SSE42_CRC32C
 }
+
+} // namespace crc32
+
+namespace sha1 {
 
 static uint32_t sha1_msg2_x86(const char * data, size_t length)
 {
@@ -717,6 +722,7 @@ static uint32_t sha1_x86(const char * data, size_t length)
     return sha1_x86(s_sha1_state, data, length);
 }
 
+} // namespace sha1
 } // namespace jimi
 
 #endif // JIMI_HTTP_CRC32C_H

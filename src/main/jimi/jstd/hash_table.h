@@ -53,7 +53,7 @@ struct hash_table_node {
     ~hash_table_node() {}
 };
 
-template <typename Key, typename Value, std::size_t HashFunc = Hash_Default>
+template <typename Key, typename Value, std::size_t HashFunc = HashFunc_Default>
 class basic_hash_table {
 public:
     typedef Key                                     key_type;
@@ -585,15 +585,15 @@ public:
 
     static const char * name() {
         switch (HashFunc) {
-        case Hash_CRC32C:
+        case HashFunc_CRC32C:
             return "jstd::hash_table<K, V>";
-        case Hash_Time31:
+        case HashFunc_Time31:
             return "jstd::hash_table_v1<K, V>";
-        case Hash_Time31Std:
+        case HashFunc_Time31Std:
             return "jstd::hash_table_v2<K, V>";
-        case Hash_SHA1_MSG2:
+        case HashFunc_SHA1_MSG2:
             return "jstd::hash_table_v3<K, V>";
-        case Hash_SHA1:
+        case HashFunc_SHA1:
             return "jstd::hash_table_v4<K, V>";
         default:
             return "Unknown class name";
@@ -603,23 +603,23 @@ public:
 
 #if SUPPORT_SSE42_CRC32C
 template <typename Key, typename Value>
-using hash_table = basic_hash_table<Key, Value, Hash_CRC32C>;
+using hash_table = basic_hash_table<Key, Value, HashFunc_CRC32C>;
 #endif
 
 template <typename Key, typename Value>
-using hash_table_v1 = basic_hash_table<Key, Value, Hash_Time31>;
+using hash_table_v1 = basic_hash_table<Key, Value, HashFunc_Time31>;
 
 template <typename Key, typename Value>
-using hash_table_v2 = basic_hash_table<Key, Value, Hash_Time31Std>;
+using hash_table_v2 = basic_hash_table<Key, Value, HashFunc_Time31Std>;
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_table_v3 = basic_hash_table<Key, Value, Hash_SHA1_MSG2>;
+using hash_table_v3 = basic_hash_table<Key, Value, HashFunc_SHA1_MSG2>;
 #endif
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_table_v4 = basic_hash_table<Key, Value, Hash_SHA1>;
+using hash_table_v4 = basic_hash_table<Key, Value, HashFunc_SHA1>;
 #endif
 
 } // namespace jstd

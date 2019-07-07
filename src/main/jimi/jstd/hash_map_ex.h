@@ -493,7 +493,7 @@ inline void swap(hash_map_ex_list<Key, Value> & lhs,
     lhs.swap(rhs);
 }
 
-template <typename Key, typename Value, std::size_t HashFunc = Hash_Default>
+template <typename Key, typename Value, std::size_t HashFunc = HashFunc_Default>
 class basic_hash_map_ex {
 public:
     typedef Key                                     key_type;
@@ -1055,15 +1055,15 @@ public:
 
     static const char * name() {
         switch (HashFunc) {
-        case Hash_CRC32C:
+        case HashFunc_CRC32C:
             return "jstd::hash_map_ex<K, V>";
-        case Hash_Time31:
+        case HashFunc_Time31:
             return "jstd::hash_map_ex_v1<K, V>";
-        case Hash_Time31Std:
+        case HashFunc_Time31Std:
             return "jstd::hash_map_ex_v2<K, V>";
-        case Hash_SHA1_MSG2:
+        case HashFunc_SHA1_MSG2:
             return "jstd::hash_map_ex_v3<K, V>";
-        case Hash_SHA1:
+        case HashFunc_SHA1:
             return "jstd::hash_map_ex_v4<K, V>";
         default:
             return "Unknown class name";
@@ -1077,23 +1077,23 @@ basic_hash_map_ex<Key, Value, HashFunc>::kDefaultLoadFactor = 0.75;
 
 #if SUPPORT_SSE42_CRC32C
 template <typename Key, typename Value>
-using hash_map_ex = basic_hash_map_ex<Key, Value, Hash_CRC32C>;
+using hash_map_ex = basic_hash_map_ex<Key, Value, HashFunc_CRC32C>;
 #endif
 
 template <typename Key, typename Value>
-using hash_map_ex_v1 = basic_hash_map_ex<Key, Value, Hash_Time31>;
+using hash_map_ex_v1 = basic_hash_map_ex<Key, Value, HashFunc_Time31>;
 
 template <typename Key, typename Value>
-using hash_map_ex_v2 = basic_hash_map_ex<Key, Value, Hash_Time31Std>;
+using hash_map_ex_v2 = basic_hash_map_ex<Key, Value, HashFunc_Time31Std>;
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_map_ex_v3 = basic_hash_map_ex<Key, Value, Hash_SHA1_MSG2>;
+using hash_map_ex_v3 = basic_hash_map_ex<Key, Value, HashFunc_SHA1_MSG2>;
 #endif
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_map_ex_v4 = basic_hash_map_ex<Key, Value, Hash_SHA1>;
+using hash_map_ex_v4 = basic_hash_map_ex<Key, Value, HashFunc_SHA1>;
 #endif
 
 } // namespace jstd

@@ -21,7 +21,7 @@ namespace jstd {
 //
 // Default jstd::dictionary<K, V> hash traits
 //
-template <typename Key, typename Value, std::size_t HashFunc = Hash_Default>
+template <typename Key, typename Value, std::size_t HashFunc = HashFunc_Default>
 struct default_dictionary_hasher {
     typedef Key             key_type;
     typedef Value           value_type;
@@ -115,7 +115,7 @@ struct default_dictionary_comparer {
 //
 // Default jstd::dictionary<K, V> traits
 //
-template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
+template <typename Key, typename Value, std::size_t HashFunc = HashFunc_Default,
           typename Hasher = default_dictionary_hasher<Key, Value, HashFunc>,
           typename Comparer = default_dictionary_comparer<Key, Value>>
 struct default_dictionary_traits {

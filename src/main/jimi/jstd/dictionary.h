@@ -44,7 +44,7 @@
 
 namespace jstd {
 
-template <typename Key, typename Value, std::size_t HashFunc = Hash_Default,
+template <typename Key, typename Value, std::size_t HashFunc = HashFunc_Default,
           typename Hasher = default_dictionary_hasher<Key, Value, HashFunc>,
           typename Comparer = default_dictionary_comparer<Key, Value>>
 class basic_dictionary {
@@ -649,14 +649,11 @@ public:
             return this->unsafe_end();
         }
 
-        // Not found
+        // Not found (this->buckets() == nullptr)
         return nullptr;
     }
 
-    inline iterator find_internal(const key_type & key, hash_type & hash, index_type & index) {
-        hash = this->hasher_.hash_code(key);
-        index = this->hasher_.index_for(hash, this->mask_);
-
+    inline iterator find_internal(const key_type & key, hash_type hash, index_type index) {
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
         entry_type * entry = this->buckets_[index];
@@ -717,8 +714,8 @@ public:
 
     void insert(const key_type & key, const value_type & value) {
         if (likely(this->buckets_ != nullptr)) {
-            hash_type hash;
-            index_type index;
+            hash_type hash = this->hasher_.hash_code(key);
+            index_type index = this->hasher_.index_for(hash, this->mask_);
             iterator iter = this->find_internal(key, hash, index);
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
@@ -769,8 +766,8 @@ public:
 
     void insert(key_type && key, value_type && value) {
         if (likely(this->buckets_ != nullptr)) {
-            hash_type hash;
-            index_type index;
+            hash_type hash = this->hasher_.hash_code(key);
+            index_type index = this->hasher_.index_for(hash, this->mask_);
             iterator iter = this->find_internal(std::forward<key_type>(key), hash, index);
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
@@ -1039,15 +1036,15 @@ public:
 
     static const char * name() {
         switch (HashFunc) {
-        case Hash_CRC32C:
+        case HashFunc_CRC32C:
             return "jstd::dictionary<K, V>";
-        case Hash_Time31:
+        case HashFunc_Time31:
             return "jstd::dictionary_v1<K, V>";
-        case Hash_Time31Std:
+        case HashFunc_Time31Std:
             return "jstd::dictionary_v2<K, V>";
-        case Hash_SHA1_MSG2:
+        case HashFunc_SHA1_MSG2:
             return "jstd::dictionary_v3<K, V>";
-        case Hash_SHA1:
+        case HashFunc_SHA1:
             return "jstd::dictionary_v4<K, V>";
         default:
             return "Unknown class name";
@@ -1057,23 +1054,23 @@ public:
 
 #if SUPPORT_SSE42_CRC32C
 template <typename Key, typename Value>
-using dictionary = basic_dictionary<Key, Value, Hash_CRC32C>;
+using dictionary = basic_dictionary<Key, Value, HashFunc_CRC32C>;
 #endif
 
 template <typename Key, typename Value>
-using dictionary_v1 = basic_dictionary<Key, Value, Hash_Time31>;
+using dictionary_v1 = basic_dictionary<Key, Value, HashFunc_Time31>;
 
 template <typename Key, typename Value>
-using dictionary_v2 = basic_dictionary<Key, Value, Hash_Time31Std>;
+using dictionary_v2 = basic_dictionary<Key, Value, HashFunc_Time31Std>;
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using dictionary_v3 = basic_dictionary<Key, Value, Hash_SHA1_MSG2>;
+using dictionary_v3 = basic_dictionary<Key, Value, HashFunc_SHA1_MSG2>;
 #endif
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using dictionary_v4 = basic_dictionary<Key, Value, Hash_SHA1>;
+using dictionary_v4 = basic_dictionary<Key, Value, HashFunc_SHA1>;
 #endif
 
 } // namespace jstd

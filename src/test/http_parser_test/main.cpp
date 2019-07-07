@@ -411,23 +411,23 @@ namespace test {
 #if SUPPORT_SSE42_CRC32C
 
 #if CRC32C_IS_X86_64
-CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_x64,         jimi::crc32c_x64);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_x64,         jimi::crc32::crc32c_x64);
 #endif
-CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_x86,         jimi::crc32c_x86);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_x86,         jimi::crc32::crc32c_x86);
 
 #if CRC32C_IS_X86_64
-CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u64,      jimi::crc32c_hw_u64);
-CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u64_v2,   jimi::crc32c_hw_u64_v2);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u64,      jimi::crc32::crc32c_hw_u64);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u64_v2,   jimi::crc32::crc32c_hw_u64_v2);
 #endif
-CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u32,      jimi::crc32c_hw_u32);
+CRC32C_ALGORITHM_IMPL(uint32_t,     crc32c_hw_u32,      jimi::crc32::crc32c_hw_u32);
 
 #endif // SUPPORT_SSE42_CRC32C
 
-CRC32C_ALGORITHM_IMPL(uint32_t,     sha1_msg2,          jimi::sha1_msg2);
-CRC32C_ALGORITHM_IMPL_EX(uint32_t,  sha1_x86,           jimi::sha1_x86);
+CRC32C_ALGORITHM_IMPL(uint32_t,     sha1_msg2,          jimi::sha1::sha1_msg2);
+CRC32C_ALGORITHM_IMPL_EX(uint32_t,  sha1_x86,           jimi::sha1::sha1_x86);
 
-CRC32C_ALGORITHM_IMPL(uint32_t,     Times31,            TiStore::hash::Times31);
-CRC32C_ALGORITHM_IMPL(uint32_t,     Times31_std,        TiStore::hash::Times31_std);
+CRC32C_ALGORITHM_IMPL(uint32_t,     Times31,            jimi::hashes::Times31);
+CRC32C_ALGORITHM_IMPL(uint32_t,     Times31_std,        jimi::hashes::Times31_std);
 
 } // namespace test
 
@@ -454,7 +454,7 @@ void crc32c_benchmark_impl()
         sw.start();
         for (size_t i = 0; i < kRepeatTimes; ++i) {
             for (size_t j = 0; j < kHeaderFieldSize; ++j) {
-                crc32_sum += algorithm.crc32c(s_sha1_state, crc32_data[j].c_str(), crc32_data[j].size());
+                crc32_sum += algorithm.crc32c(sha1::s_sha1_state, crc32_data[j].c_str(), crc32_data[j].size());
             }
         }
         sw.stop();
@@ -478,7 +478,7 @@ void crc32c_benchmark_impl()
     std::cout << std::right << std::setw(8) << std::setfill('0') << std::hex;
     std::cout << std::setiosflags(std::ios::uppercase);
     if (AlgorithmTy::isSpecial)
-        std::cout << algorithm.crc32c(s_sha1_state, crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
+        std::cout << algorithm.crc32c(sha1::s_sha1_state, crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
     else
         std::cout << algorithm.crc32c(crc32_data[0].c_str(), crc32_data[0].size()) << std::endl;
     std::cout << "crc32c_sum   : ";

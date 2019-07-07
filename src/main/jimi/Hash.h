@@ -106,7 +106,7 @@ static bool kLittleEndian = true;
 
 } // namespace port
 
-namespace hash {
+namespace hashes {
 
 template <typename CharTy>
 static inline
@@ -191,10 +191,10 @@ static uint32_t Hash(const CharTy * data, size_t n, uint32_t seed) {
     return h;
 }
 
-} // namespace hash
+} // namespace hashes
 } // namespace rocksdb
 
-namespace TiStore {
+namespace jimi {
 
 static const std::uint32_t kDefaultHashSeed32 = 0xBC9F1D34UL;
 static const std::uint64_t kDefaultHashSeed64 = (std::uint64_t)0x43D1F9CBBC9F1D34ULL;
@@ -223,7 +223,7 @@ See:
 
  **************************************************************************/
 
-namespace hash {
+namespace hashes {
 
 // This string hash function is from OpenSSL.
 template <typename CharTy>
@@ -428,7 +428,7 @@ static std::uint32_t DJBHash(const CharTy * key, std::size_t len)
     return hash;
 }
 
-} // namespace hash
+} // namespace hashes
 
 //
 // class PrimaryHash
@@ -954,8 +954,8 @@ public:
 #endif
     }
 
-    /*
-    hash_type primaryHash(const Slice & key, std::size_t seed) {
+    ///*
+    hash_type primaryHash(const TiStore::Slice & key, std::size_t seed) {
         return primaryHash(key.data(), key.size(), seed);
     }
 
@@ -966,12 +966,12 @@ public:
     //*/
 
     hash_type secondaryHash(const char * key, std::size_t len) const {
-        //return static_cast<hash_type>(hash::OpenSSL_Hash(key, len));
-        return static_cast<hash_type>(hash::Times31(key, len));
+        //return static_cast<hash_type>(jimi::hashes::OpenSSL_Hash(key, len));
+        return static_cast<hash_type>(jimi::hashes::Times31(key, len));
     }
 
     ///*
-    hash_type secondaryHash(const Slice & key) const {
+    hash_type secondaryHash(const TiStore::Slice & key) const {
         return secondaryHash(key.data(), key.size());
     }
 
@@ -982,7 +982,7 @@ public:
     //*/
 
     hash_type OpenSSLHash(const char * key, std::size_t len) const {
-        return static_cast<hash_type>(hash::OpenSSL_Hash(key, len));
+        return static_cast<hash_type>(jimi::hashes::OpenSSL_Hash(key, len));
     }
 };
 
@@ -1057,4 +1057,4 @@ HashUtils<std::uint64_t>::decodeValue<8U>(const char * data, std::uint32_t missa
     return value;
 }
 
-} // namespace TiStore
+} // namespace jimi
