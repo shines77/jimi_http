@@ -42,10 +42,10 @@
 
 #endif
 
-#ifdef _MSC_VER
+//#ifdef _MSC_VER
 // Enable pico http parser
 #define USE_PICO_HTTP_PARSER    1
-#endif
+//#endif
 
 // String compare mode
 #define STRING_COMPARE_STDC     0
