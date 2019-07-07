@@ -31,8 +31,6 @@
 #include <map>
 #include <unordered_map>
 
-#include "picohttpparser/picohttpparser.h"
-
 #if __SSE4_2__
 
 // Support SSE 4.2: _mm_crc32_u32(), _mm_crc32_u64().
@@ -2155,8 +2153,8 @@ void pico_http_parser_benchmark()
     do {
         /* Parse the request */
         num_headers = sizeof(headers) / sizeof(headers[0]);
-        pret = phr_parse_request(http_header, buflen, (const char **)&method, &method_len, (const char **)&path, &path_len,
-                                 &minor_version, headers, &num_headers, prevbuflen);
+        pret = ::phr_parse_request(http_header, buflen, (const char **)&method, &method_len, (const char **)&path, &path_len,
+                                   &minor_version, headers, &num_headers, prevbuflen);
         if (pret > 0) {
             /* successfully parsed the request */
             std::atomic_thread_fence(std::memory_order_acquire);
