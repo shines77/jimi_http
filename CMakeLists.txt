@@ -121,6 +121,8 @@ include_directories(src/test)
 include_directories(src/unittest)
 include_directories(deps)
 
+add_subdirectory(deps)
+
 set(SOURCE_FILES
     deps/picohttpparser/picohttpparser.c
     src/test/http_parser_test/main.cpp
