@@ -2,7 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 ###############################################################
 
-project(picohttpparser)
+# project(picohttpparser)
+project(jimi_http_parser)
 
 # Single thread mode /ML and /MLd have be deprecated from VS 2003.
 option(BoostOption_USE_MULTITHREADED "Enable Boost's library use multithread" ON)
@@ -109,35 +110,33 @@ if (WIN32)
     endif()
 endif()
 
-if (UNIX)
-    set(EXTRA_LIBS ${EXTRA_LIBS} pthread)
-    set(EXTRA_LIBS ${EXTRA_LIBS} atomic)
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-else()
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-endif()
-
-include_directories(deps)
-include_directories(deps/picohttpparser)
-
-set(SOURCE_FILES
-    deps/picohttpparser/picohttpparser.h
-    deps/picohttpparser/picohttpparser.c
-    )
-
-add_library(picohttpparser STATIC ${SOURCE_FILES})
-target_link_libraries(picohttpparser ${EXTRA_LIBS})
+# if (UNIX)
+#     set(EXTRA_LIBS ${EXTRA_LIBS} pthread)
+#     set(EXTRA_LIBS ${EXTRA_LIBS} atomic)
+# else()
+#     set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+# endif()
+# 
+# include_directories(deps)
+# include_directories(deps/picohttpparser)
+# 
+# set(SOURCE_FILES
+#     deps/picohttpparser/picohttpparser.h
+#     deps/picohttpparser/picohttpparser.c
+#     )
+# 
+# add_library(picohttpparser STATIC ${SOURCE_FILES})
+# target_link_libraries(picohttpparser ${EXTRA_LIBS})
 
 ###############################################################
 
-project(jimi_http_parser)
+# project(jimi_http_parser)
 
-find_package(Threads)
-find_path(picohttpparser NAMES picohttpparser.h PATHS "${CMAKE_SOURCE_DIR}/deps/")
+# find_package(Threads)
+# find_path(picohttpparser NAMES picohttpparser.h PATHS "${CMAKE_SOURCE_DIR}/deps/")
 
 if (UNIX)
     set(LIBPICOHTTPPARSER "${CMAKE_SOURCE_DIR}/libpicohttpparser.a")
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 else()
     set(LIBPICOHTTPPARSER "")
 endif()
@@ -149,6 +148,7 @@ include_directories(src/unittest)
 include_directories(deps)
 
 link_directories(deps)
+add_subdirectory(deps)
 
 set(SOURCE_FILES
     src/test/http_parser_test/main.cpp
@@ -171,7 +171,7 @@ if (UNIX)
     add_dependencies(jimi_http_parser picohttpparser)
 endif()
 # target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
-target_link_libraries(jimi_http_parser ${EXTRA_LIBS} ${LIBPICOHTTPPARSER})
+target_link_libraries(jimi_http_parser ${EXTRA_LIBS} picohttpparser)
 
 ###############################################################
 
