@@ -150,6 +150,12 @@ include_directories(deps)
 link_directories(${CMAKE_SOURCE_DIR}/deps/)
 add_subdirectory(deps)
 
+set(LIB_SOURCE_FILES
+    deps/picohttpparser/picohttpparser.c
+    )
+
+add_library(picohttpparser STATIC ${LIB_SOURCE_FILES})
+
 set(SOURCE_FILES
     deps/picohttpparser/picohttpparser.c
     src/test/http_parser_test/main.cpp
