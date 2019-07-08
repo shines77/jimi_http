@@ -61,10 +61,7 @@
 // [CMake] undefined reference to error when use "c" extension
 // See: https://cmake.org/pipermail/cmake/2015-June/060798.html
 //
-extern "C"
-{
 #include <picohttpparser/picohttpparser.h>
-}
 #endif
 
 #include "jimi/http_all.h"
