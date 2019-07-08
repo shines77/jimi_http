@@ -156,19 +156,19 @@ target_link_libraries(jimi_http_parser ${EXTRA_LIBS})
 
 ###############################################################
 
-project(jimi_http_serv)
-
-include_directories(../src)
-include_directories(../src/main)
-include_directories(../src/test)
-include_directories(../src/unittest)
-include_directories(../deps)
-
-set(SOURCE_FILES
-    ../src/main/jimi_http_serv/main.cpp
-    )
-
-add_executable(jimi_http_serv ${SOURCE_FILES})
-target_link_libraries(jimi_http_serv ${EXTRA_LIBS})
+# project(jimi_http_serv)
+# 
+# include_directories(../src)
+# include_directories(../src/main)
+# include_directories(../src/test)
+# include_directories(../src/unittest)
+# include_directories(../deps)
+# 
+# set(SOURCE_FILES
+#     ../src/main/jimi_http_serv/main.cpp
+#     )
+# 
+# add_executable(jimi_http_serv ${SOURCE_FILES})
+# target_link_libraries(jimi_http_serv ${EXTRA_LIBS})
 
 ###############################################################
