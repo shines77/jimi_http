@@ -66,9 +66,10 @@ if (NOT MSVC)
     ##
     ## Reserve: -O3 -Ofast  -flto
     ##
-    ## BUG: "-fwhole-program" option may cause functions that are not used by the static/dynamic link library to be optimized.
+    ## BUG: GCC's "-fwhole-program" option may cause functions that are not used by the static/dynamic link library to be optimized,
+    ##      resulting in the exported function or symbol table not being exported.
     ##
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -O2 -march=native -mtune=native -funroll-loops -frename-registers")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg")
 
     ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
