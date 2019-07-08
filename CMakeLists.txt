@@ -64,8 +64,8 @@ if (NOT MSVC)
     ## G++ optimization beyond -O3/-Ofast
     ## See: https://stackoverflow.com/questions/14492436/g-optimization-beyond-o3-ofast
     ##
-    ## Reserve: -O3  -flto
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
+    ## Reserve: -O3 -Ofast  -flto
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -O3 -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg")
 
     ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
@@ -74,11 +74,11 @@ if (NOT MSVC)
     ## G++ optimization beyond -O3/-Ofast
     ## See: https://stackoverflow.com/questions/14492436/g-optimization-beyond-o3-ofast
     ##
-    ## Reserve: -O3  -flto
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
+    ## Reserve: -O3 -Ofast -flto
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEFAULT} -O3 -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEFAULT} -g -pg")
 
-    ## add_compile_options(-D__SSE3__=1 -D__SSE4A__=1 -D__SSE4_1__=1 -D__SSE4_2__=1)
+    add_compile_options(-D__SSE3__=1 -D__SSE4A__=1 -D__SSE4_1__=1 -D__SSE4_2__=1)
 endif()
 
 if (WIN32)
