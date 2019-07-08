@@ -147,7 +147,9 @@ include_directories(src/test)
 include_directories(src/unittest)
 include_directories(deps)
 
+link_directories(${CMAKE_SOURCE_DIR})
 link_directories(${CMAKE_SOURCE_DIR}/deps/)
+
 # add_subdirectory(deps)
 
 set(LIB_SOURCE_FILES
