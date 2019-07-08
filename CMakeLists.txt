@@ -65,7 +65,7 @@ if (NOT MSVC)
     ## See: https://stackoverflow.com/questions/14492436/g-optimization-beyond-o3-ofast
     ##
     ## Reserve: -O3 -Ofast  -flto
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -Ofast -march=native -mtune=native -funroll-loops -frename-registers -fwhole-program")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_DEFAULT} -O2 -march=native -mtune=native")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEFAULT} -g -pg")
 
     ## --std=gnu++11 -Wall -Werror -Wextra -Wno-format -Wno-unused-function
