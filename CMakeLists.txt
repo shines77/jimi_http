@@ -157,7 +157,6 @@ set(LIB_SOURCE_FILES
 add_library(picohttpparser STATIC ${LIB_SOURCE_FILES})
 
 set(SOURCE_FILES
-    deps/picohttpparser/picohttpparser.c
     src/test/http_parser_test/main.cpp
     )
 
