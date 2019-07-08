@@ -27,6 +27,10 @@
 #ifndef picohttpparser_h
 #define picohttpparser_h
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
+
 #include <sys/types.h>
 
 #ifndef __SSE4_2__
