@@ -52,7 +52,7 @@ struct default_dictionary_hasher {
             return kReplacedHash;
     }
 
-    index_type index_for(hash_type hash, size_type capacity_mask) const {
+    index_type index_of(hash_type hash, size_type capacity_mask) const {
         return (index_type)((size_type)hash & capacity_mask);
     }
 
@@ -138,8 +138,8 @@ struct default_dictionary_traits {
         return this->hasher_.hash_code(key);
     }
 
-    index_type index_for(hash_type hash, size_type capacity_mask) const {
-        return this->hasher_.index_for(hash, capacity_mask);
+    index_type index_of(hash_type hash, size_type capacity_mask) const {
+        return this->hasher_.index_of(hash, capacity_mask);
     }
 
     index_type next_index(index_type index, size_type capacity_mask) const {

@@ -651,7 +651,7 @@ private:
     }
 
     static inline
-    size_type index_for(hash_type hash, size_type mask) {
+    size_type index_of(hash_type hash, size_type mask) {
 #if 0
         size_type index = ((size_type)hash % (mask + 1));
 #else
@@ -671,7 +671,7 @@ private:
         assert(old_entry != nullptr);
         do {
             hash_type hash = old_entry->hash;
-            size_type index = this_type::index_for(hash, new_mask);
+            size_type index = this_type::index_of(hash, new_mask);
 
             // Save the value of old_entry->next.
             entry_type * next_entry = old_entry->next;
@@ -792,7 +792,7 @@ public:
     iterator find(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
             hash_type hash = this_type::hash(key);
-            size_type index = this_type::index_for(hash, this->mask_);
+            size_type index = this_type::index_of(hash, this->mask_);
 
             list_type * table = this->table_;
             list_type & list = table[index];
@@ -828,7 +828,7 @@ public:
 
     inline iterator find_internal(const key_type & key, hash_type & hash, size_type & index) {
         hash = this_type::hash(key);
-        index = this_type::index_for(hash, this->mask_);
+        index = this_type::index_of(hash, this->mask_);
 
         assert(this->table_ != nullptr);
         list_type * table = this->table_;
@@ -865,7 +865,7 @@ public:
 
     inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
         hash_type hash = this_type::hash(key);
-        index = this_type::index_for(hash, this->mask_);
+        index = this_type::index_of(hash, this->mask_);
 
         assert(this->table_ != nullptr);
         list_type * table = this->table_;
@@ -916,7 +916,7 @@ public:
                     // Resize the table
                     this->resize_internal(this->capacity_ * 2);
                     // Recalculate the index.
-                    index = this_type::index_for(hash, this->mask_);
+                    index = this_type::index_of(hash, this->mask_);
                 }
 
                 entry_type * new_entry = new (std::nothrow) entry_type(hash, key, value);
@@ -956,7 +956,7 @@ public:
                     // Resize the table
                     this->resize_internal(this->capacity_ * 2);
                     // Recalculate the index.
-                    index = this_type::index_for(hash, this->mask_);
+                    index = this_type::index_of(hash, this->mask_);
                 }
 
                 entry_type * new_entry = new (std::nothrow) entry_type(hash,

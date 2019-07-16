@@ -194,7 +194,7 @@ private:
     }
 
     static inline
-    size_type index_for(hash_type hash, size_type mask) {
+    size_type index_of(hash_type hash, size_type mask) {
         size_type index = ((size_type)hash & mask);
         return index;
     }
@@ -232,7 +232,7 @@ private:
         assert(new_mask >= 0);
 
         hash_type hash = old_data->hash;
-        size_type index = this_type::index_for(hash, new_mask);
+        size_type index = this_type::index_of(hash, new_mask);
 
         if (likely(new_table[index] == nullptr)) {
             new_table[index] = old_data;
@@ -350,7 +350,7 @@ public:
     iterator find(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
             hash_type hash = this_type::hash(key);
-            size_type index = this_type::index_for(hash, this->mask_);
+            size_type index = this_type::index_of(hash, this->mask_);
 
             node_type * node = this->table_[index];
             if (likely(node != nullptr)) {
@@ -401,7 +401,7 @@ public:
 
     iterator find_internal(const key_type & key, hash_type & hash) {
         hash = this_type::hash(key);
-        size_type index = this_type::index_for(hash, this->mask_);
+        size_type index = this_type::index_of(hash, this->mask_);
 
         assert(this->table_ != nullptr);
         node_type * node = this->table_[index];
@@ -462,7 +462,7 @@ public:
 
                 node_type * new_data = new node_type(hash, key, value);
                 if (likely(new_data != nullptr)) {
-                    size_type index = this_type::index_for(hash, this->mask_);
+                    size_type index = this_type::index_of(hash, this->mask_);
                     if (likely(this->table_[index] == nullptr)) {
                         this->table_[index] = (data_type)new_data;
                         ++(this->size_);
@@ -500,7 +500,7 @@ public:
                 node_type * new_data = new node_type(hash, std::forward<key_type>(key),
                                                      std::forward<value_type>(value));
                 if (likely(new_data != nullptr)) {
-                    size_type index = this_type::index_for(hash, this->mask_);
+                    size_type index = this_type::index_of(hash, this->mask_);
                     if (likely(this->table_[index] == nullptr)) {
                         this->table_[index] = (data_type)new_data;
                         ++(this->size_);

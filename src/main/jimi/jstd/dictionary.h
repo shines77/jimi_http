@@ -412,7 +412,7 @@ private:
 
         do {
             hash_type hash = old_entry->hash;
-            size_type index = this->hasher_.index_for(hash, new_mask);
+            size_type index = this->hasher_.index_of(hash, new_mask);
 
             // Save the value of old_entry->next.
             entry_type * next_entry = old_entry->next;
@@ -521,7 +521,7 @@ private:
                             hash_type hash = new_entry->hash;
                             assert(hash != kInvalidHash);
                             // Insert the new entries to the new buckets.
-                            size_type index = this->hasher_.index_for(hash, new_mask);
+                            size_type index = this->hasher_.index_of(hash, new_mask);
                             new_entry->next = new_buckets[index];
                             new_buckets[index] = new_entry;
                             ++new_entry;
@@ -625,7 +625,7 @@ public:
     iterator find(const key_type & key) {
         if (likely(this->buckets() != nullptr)) {
             hash_type hash = this->hasher_.hash_code(key);
-            index_type index = this->hasher_.index_for(hash, this->mask_);
+            index_type index = this->hasher_.index_of(hash, this->mask_);
 
             assert(this->entries() != nullptr);
             entry_type * entry = this->buckets_[index];
@@ -679,7 +679,7 @@ public:
 
     inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
         hash_type hash = this->hasher_.hash_code(key);
-        index = this->hasher_.index_for(hash, this->mask_);
+        index = this->hasher_.index_of(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
@@ -715,7 +715,7 @@ public:
     void insert(const key_type & key, const value_type & value) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->hasher_.hash_code(key);
-            index_type index = this->hasher_.index_for(hash, this->mask_);
+            index_type index = this->hasher_.index_of(hash, this->mask_);
             iterator iter = this->find_internal(key, hash, index);
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
@@ -724,8 +724,8 @@ public:
                     if (likely(this->count_ >= this->capacity_)) {
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
-                        // Recalculate the index.
-                        index = this->hasher_.index_for(hash, this->mask_);
+                        // Recalculate the bucket index.
+                        index = this->hasher_.index_of(hash, this->mask_);
                     }
 
                     // Get a unused entry.
@@ -767,7 +767,7 @@ public:
     void insert(key_type && key, value_type && value) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->hasher_.hash_code(key);
-            index_type index = this->hasher_.index_for(hash, this->mask_);
+            index_type index = this->hasher_.index_of(hash, this->mask_);
             iterator iter = this->find_internal(std::forward<key_type>(key), hash, index);
             if (likely(iter == this->unsafe_end())) {
                 // Insert the new key.
@@ -777,7 +777,7 @@ public:
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = this->hasher_.index_for(hash, this->mask_);
+                        index = this->hasher_.index_of(hash, this->mask_);
                     }
 
                     // Get a unused entry.
@@ -913,7 +913,7 @@ public:
     bool erase(const key_type & key) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->hasher_.hash_code(key);
-            size_type index = this->hasher_.index_for(hash, this->mask_);
+            size_type index = this->hasher_.index_of(hash, this->mask_);
 
             assert(this->buckets() != nullptr);
             assert(this->entries() != nullptr);
@@ -974,7 +974,7 @@ public:
     bool erase(key_type && key) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->hasher_.hash_code(std::forward<key_type>(key));
-            size_type index = this->hasher_.index_for(hash, this->mask_);
+            size_type index = this->hasher_.index_of(hash, this->mask_);
 
             assert(this->buckets() != nullptr);
             assert(this->entries() != nullptr);

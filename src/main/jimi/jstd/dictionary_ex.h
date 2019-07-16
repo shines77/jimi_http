@@ -348,7 +348,7 @@ private:
 
         do {
             hash_type hash = old_entry->hash;
-            size_type index = this->traits_.index_for(hash, new_mask);
+            size_type index = this->traits_.index_of(hash, new_mask);
 
             // Save the value of old_entry->next.
             entry_type * next_entry = old_entry->next;
@@ -527,7 +527,7 @@ public:
     iterator find(const key_type & key) {
         if (likely(this->buckets() != nullptr)) {
             hash_type hash = this->traits_.hash_code(key);
-            index_type index = this->traits_.index_for(hash, this->mask_);
+            index_type index = this->traits_.index_of(hash, this->mask_);
 
             assert(this->entries() != nullptr);
             entry_type * entry = this->buckets_[index];
@@ -555,7 +555,7 @@ public:
 
     inline iterator find_internal(const key_type & key, hash_type & hash, index_type & index) {
         hash = this->traits_.hash_code(key);
-        index = this->traits_.index_for(hash, this->mask_);
+        index = this->traits_.index_of(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
@@ -580,7 +580,7 @@ public:
 
     inline iterator find_before(const key_type & key, entry_type *& before_out, size_type & index) {
         hash_type hash = this->traits_.hash_code(key);
-        index = this->traits_.index_for(hash, this->mask_);
+        index = this->traits_.index_of(hash, this->mask_);
 
         assert(this->buckets() != nullptr);
         assert(this->entries() != nullptr);
@@ -625,7 +625,7 @@ public:
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = this->traits_.index_for(hash, this->mask_);
+                        index = this->traits_.index_of(hash, this->mask_);
                     }
 
                     // Get a unused entry.
@@ -673,7 +673,7 @@ public:
                         // Resize the buckets
                         this->resize_internal(this->capacity_ * 2);
                         // Recalculate the index.
-                        index = this->traits_.index_for(hash, this->mask_);
+                        index = this->traits_.index_of(hash, this->mask_);
                     }
 
                     // Get a unused entry.
@@ -801,7 +801,7 @@ public:
     bool erase(const key_type & key) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->traits_.hash_code(key);
-            size_type index = this->traits_.index_for(hash, this->mask_);
+            size_type index = this->traits_.index_of(hash, this->mask_);
 
             assert(this->buckets() != nullptr);
             assert(this->entries() != nullptr);
@@ -853,7 +853,7 @@ public:
     bool erase(key_type && key) {
         if (likely(this->buckets_ != nullptr)) {
             hash_type hash = this->traits_.hash_code(std::forward<key_type>(key));
-            size_type index = this->traits_.index_for(hash, this->mask_);
+            size_type index = this->traits_.index_of(hash, this->mask_);
 
             assert(this->buckets() != nullptr);
             assert(this->entries() != nullptr);
