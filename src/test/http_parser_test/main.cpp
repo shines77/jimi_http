@@ -539,12 +539,15 @@ void crc32c_benchmark()
 
 namespace test {
 
+template <typename Key = std::string, typename Value = std::string>
 class std_map {
 public:
-    typedef std::map<std::string, std::string> map_type;
-    typedef typename map_type::size_type size_type;
-    typedef typename map_type::iterator iterator;
-    typedef typename map_type::const_iterator const_iterator;
+    typedef std::map<Key, Value>                map_type;
+    typedef Key                                 key_type;
+    typedef Value                               value_type;
+    typedef typename map_type::size_type        size_type;
+    typedef typename map_type::iterator         iterator;
+    typedef typename map_type::const_iterator   const_iterator;
 
 private:
     map_type map_;
@@ -553,21 +556,41 @@ public:
     std_map() {}
     ~std_map() {}
 
-    const char * name() { return "std::map<K, V>"; }
-    bool is_hashtable() { return false; }
+    const char * name() {
+        return "std::map<K, V>";
+    }
+    bool is_hashtable() {
+        return false;
+    }
 
-    iterator begin() { return this->map_.begin(); }
-    iterator end() { return this->map_.end(); }
+    iterator begin() {
+        return this->map_.begin();
+    }
+    iterator end() {
+        return this->map_.end();
+    }
 
-    const_iterator begin() const { return this->map_.begin(); }
-    const_iterator end() const { return this->map_.end(); }
+    const_iterator begin() const {
+        return this->map_.begin();
+    }
+    const_iterator end() const {
+        return this->map_.end();
+    }
 
-    size_type size() const { return this->map_.size(); }
-    bool empty() const { return this->map_.empty(); }
+    size_type size() const {
+        return this->map_.size();
+    }
+    bool empty() const {
+        return this->map_.empty();
+    }
 
-    size_type count(const std::string & key) const { return this->map_.count(key); }
+    size_type count(const key_type & key) const {
+        return this->map_.count(key);
+    }
 
-    void clear() { this->map_.clear(); }
+    void clear() {
+        this->map_.clear();
+    }
 
     void reserve(size_type new_capacity) {
         // Not implemented
@@ -585,43 +608,46 @@ public:
         // Not implemented
     }
 
-    iterator find(const std::string & key) {
+    iterator find(const key_type & key) {
         return this->map_.find(key);
     }
 
-    void insert(const std::string & key, const std::string & value) {
+    void insert(const key_type & key, const value_type & value) {
         this->map_.insert(std::make_pair(key, value));
     }
 
-    void insert(std::string && key, std::string && value) {
-        this->map_.insert(std::make_pair(std::forward<std::string>(key),
-                                         std::forward<std::string>(value)));
+    void insert(key_type && key, value_type && value) {
+        this->map_.insert(std::make_pair(std::forward<key_type>(key),
+            std::forward<value_type>(value)));
     }
 
-    void emplace(const std::string & key, const std::string & value) {
+    void emplace(const key_type & key, const value_type & value) {
         this->map_.emplace(std::make_pair(key, value));
     }
 
-    void emplace(std::string && key, std::string && value) {
-        this->map_.emplace(std::make_pair(std::forward<std::string>(key),
-                                          std::forward<std::string>(value)));
+    void emplace(key_type && key, value_type && value) {
+        this->map_.emplace(std::make_pair(std::forward<key_type>(key),
+            std::forward<value_type>(value)));
     }
 
-    void erase(const std::string & key) {
+    void erase(const key_type & key) {
         this->map_.erase(key);
     }
 
-    void erase(std::string && key) {
-        this->map_.erase(std::forward<std::string>(key));
+    void erase(key_type && key) {
+        this->map_.erase(std::forward<key_type>(key));
     }
 };
 
+template <typename Key = std::string, typename Value = std::string>
 class std_unordered_map {
 public:
-    typedef std::unordered_map<std::string, std::string> map_type;
-    typedef typename map_type::size_type size_type;
-    typedef typename map_type::iterator iterator;
-    typedef typename map_type::const_iterator const_iterator;
+    typedef std::unordered_map<Key, Value>      map_type;
+    typedef Key                                 key_type;
+    typedef Value                               value_type;
+    typedef typename map_type::size_type        size_type;
+    typedef typename map_type::iterator         iterator;
+    typedef typename map_type::const_iterator   const_iterator;
 
 private:
     map_type map_;
@@ -630,23 +656,45 @@ public:
     std_unordered_map() {}
     ~std_unordered_map() {}
 
-    const char * name() { return "std::unordered_map<K, V>"; }
-    bool is_hashtable() { return true; }
+    const char * name() {
+        return "std::unordered_map<K, V>";
+    }
+    bool is_hashtable() {
+        return true;
+    }
 
-    iterator begin() { return this->map_.begin(); }
-    iterator end() { return this->map_.end(); }
+    iterator begin() {
+        return this->map_.begin();
+    }
+    iterator end() {
+        return this->map_.end();
+    }
 
-    const_iterator begin() const { return this->map_.begin(); }
-    const_iterator end() const { return this->map_.end(); }
+    const_iterator begin() const {
+        return this->map_.begin();
+    }
+    const_iterator end() const {
+        return this->map_.end();
+    }
 
-    size_type size() const { return this->map_.size(); }
-    bool empty() const { return this->map_.empty(); }
+    size_type size() const {
+        return this->map_.size();
+    }
+    bool empty() const {
+        return this->map_.empty();
+    }
 
-    size_type bucket_count() const { return this->map_.bucket_count(); }
+    size_type bucket_count() const {
+        return this->map_.bucket_count();
+    }
 
-    size_type count(const std::string & key) const { return this->map_.count(key); }
+    size_type count(const key_type & key) const {
+        return this->map_.count(key);
+    }
 
-    void clear() { this->map_.clear(); }
+    void clear() {
+        this->map_.clear();
+    }
 
     void reserve(size_type max_count) {
         this->map_.reserve(max_count);
@@ -664,46 +712,46 @@ public:
         this->map_.rehash(new_buckets);
     }
 
-    iterator find(const std::string & key) {
+    iterator find(const key_type & key) {
         return this->map_.find(key);
     }
 
-    void insert(const std::string & key, const std::string & value) {
+    void insert(const key_type & key, const value_type & value) {
         this->map_.insert(std::make_pair(key, value));
     }
 
-    void insert(std::string && key, std::string && value) {
-        this->map_.insert(std::make_pair(std::forward<std::string>(key),
-                                         std::forward<std::string>(value)));
+    void insert(key_type && key, value_type && value) {
+        this->map_.insert(std::make_pair(std::forward<key_type>(key),
+                          std::forward<value_type>(value)));
     }
 
-    void emplace(const std::string & key, const std::string & value) {
+    void emplace(const key_type & key, const value_type & value) {
         this->map_.emplace(std::make_pair(key, value));
     }
 
-    void emplace(std::string && key, std::string && value) {
-        this->map_.emplace(std::make_pair(std::forward<std::string>(key),
-                                          std::forward<std::string>(value)));
+    void emplace(key_type && key, value_type && value) {
+        this->map_.emplace(std::make_pair(std::forward<key_type>(key),
+                           std::forward<value_type>(value)));
     }
 
-    void erase(const std::string & key) {
+    void erase(const key_type & key) {
         this->map_.erase(key);
     }
 
-    void erase(std::string && key) {
-        this->map_.erase(std::forward<std::string>(key));
+    void erase(key_type && key) {
+        this->map_.erase(std::forward<key_type>(key));
     }
 };
 
 template <typename T>
 class hash_table_impl {
 public:
-    typedef T map_type;
-    typedef typename map_type::key_type key_type;
-    typedef typename map_type::value_type value_type;
-    typedef typename map_type::size_type size_type;
-    typedef typename map_type::iterator iterator;
-    typedef typename map_type::const_iterator const_iterator;
+    typedef T                                   map_type;
+    typedef typename map_type::key_type         key_type;
+    typedef typename map_type::value_type       value_type;
+    typedef typename map_type::size_type        size_type;
+    typedef typename map_type::iterator         iterator;
+    typedef typename map_type::const_iterator   const_iterator;
 
 private:
     map_type map_;
@@ -712,22 +760,44 @@ public:
     hash_table_impl() {}
     ~hash_table_impl() {}
 
-    const char * name() { return map_type::name(); }
-    bool is_hashtable() { return true; }
+    const char * name() {
+        return map_type::name();
+    }
+    bool is_hashtable() {
+        return true;
+    }
 
-    iterator begin() { return this->map_.begin(); }
-    iterator end() { return this->map_.end(); }
+    iterator begin() {
+        return this->map_.begin();
+    }
+    iterator end() {
+        return this->map_.end();
+    }
 
-    const_iterator begin() const { return this->map_.begin(); }
-    const_iterator end() const { return this->map_.end(); }
+    const_iterator begin() const {
+        return this->map_.begin();
+    }
+    const_iterator end() const {
+        return this->map_.end();
+    }
 
-    size_type size() const { return this->map_.size(); }
-    bool empty() const { return this->map_.empty(); }
+    size_type size() const {
+        return this->map_.size();
+    }
+    bool empty() const {
+        return this->map_.empty();
+    }
 
-    size_type bucket_mask() const { return this->map_.bucket_mask(); }
-    size_type bucket_count() const { return this->map_.bucket_count(); }
+    size_type bucket_mask() const {
+        return this->map_.bucket_mask();
+    }
+    size_type bucket_count() const {
+        return this->map_.bucket_count();
+    }
 
-    void clear() { this->map_.clear(); }
+    void clear() {
+        this->map_.clear();
+    }
 
     void reserve(size_type new_buckets) {
         this->map_.reserve(new_buckets);
@@ -755,24 +825,24 @@ public:
 
     void insert(key_type && key, value_type && value) {
         this->map_.insert(std::make_pair(std::forward<key_type>(key),
-                                         std::forward<value_type>(value)));
+                          std::forward<value_type>(value)));
     }
 
-    void emplace(const std::string & key, const std::string & value) {
+    void emplace(const key_type & key, const value_type & value) {
         this->map_.emplace(std::make_pair(key, value));
     }
 
     void emplace(key_type && key, value_type && value) {
         this->map_.emplace(std::make_pair(std::forward<key_type>(key),
-                                          std::forward<value_type>(value)));
+                           std::forward<value_type>(value)));
     }
 
-    void erase(const std::string & key) {
+    void erase(const key_type & key) {
         this->map_.erase(key);
     }
 
-    void erase(std::string && key) {
-        this->map_.erase(std::forward<std::string>(key));
+    void erase(key_type && key) {
+        this->map_.erase(std::forward<key_type>(key));
     }
 };
 
@@ -831,8 +901,8 @@ void hashtable_find_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    hashtable_find_benchmark_impl<test::std_map>();
-    hashtable_find_benchmark_impl<test::std_unordered_map>();
+    hashtable_find_benchmark_impl<test::std_map<std::string, std::string>>();
+    hashtable_find_benchmark_impl<test::std_unordered_map<std::string, std::string>>();
 
 #if SUPPORT_SSE42_CRC32C
     hashtable_find_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
@@ -938,8 +1008,8 @@ void hashtable_insert_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    hashtable_insert_benchmark_impl<test::std_map>();
-    hashtable_insert_benchmark_impl<test::std_unordered_map>();
+    hashtable_insert_benchmark_impl<test::std_map<std::string, std::string>>();
+    hashtable_insert_benchmark_impl<test::std_unordered_map<std::string, std::string>>();
 
 #if SUPPORT_SSE42_CRC32C
     hashtable_insert_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
@@ -1053,8 +1123,8 @@ void hashtable_erase_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    hashtable_erase_benchmark_impl<test::std_map>();
-    hashtable_erase_benchmark_impl<test::std_unordered_map>();
+    hashtable_erase_benchmark_impl<test::std_map<std::string, std::string>>();
+    hashtable_erase_benchmark_impl<test::std_unordered_map<std::string, std::string>>();
 
 #if SUPPORT_SSE42_CRC32C
     hashtable_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
@@ -1169,8 +1239,8 @@ void hashtable_insert_erase_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    hashtable_insert_erase_benchmark_impl<test::std_map>();
-    hashtable_insert_erase_benchmark_impl<test::std_unordered_map>();
+    hashtable_insert_erase_benchmark_impl<test::std_map<std::string, std::string>>();
+    hashtable_insert_erase_benchmark_impl<test::std_unordered_map<std::string, std::string>>();
 
 #if SUPPORT_SSE42_CRC32C
     hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
@@ -1215,6 +1285,130 @@ void hashtable_insert_erase_benchmark()
 #if SUPPORT_SMID_SHA
     hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<std::string, std::string>>>();
     hashtable_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<std::string, std::string>>>();
+#endif
+#endif // USE_JSTD_DICTIONARY
+
+    printf("-------------------------------------------------------------------------\n");
+    printf("\n");
+}
+
+template <typename AlgorithmTy>
+void hashtable_ref_insert_erase_benchmark_impl()
+{
+    static const size_t kHeaderFieldSize = sizeof(header_fields) / sizeof(char *);
+#ifndef NDEBUG
+    static const size_t kRepeatTimes = 100;
+#else
+    static const size_t kRepeatTimes = (kIterations / kHeaderFieldSize);
+#endif
+
+    StringRef field_str[kHeaderFieldSize];
+    size_t index_str[kHeaderFieldSize];
+    for (size_t i = 0; i < kHeaderFieldSize; ++i) {
+        field_str[i].assign(header_fields[i]);
+        index_str[i] = i;
+    }
+
+    {
+        size_t checksum = 0;
+        AlgorithmTy algorithm;
+
+        StopWatch sw;
+
+        sw.start();
+        for (size_t i = 0; i < kRepeatTimes; ++i) {
+#if 0
+            assert(algorithm.size() == 0);
+            algorithm.clear();
+            assert(algorithm.size() == 0);
+            checksum += algorithm.size();
+#endif
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.emplace(field_str[j], index_str[j]);
+            }
+            checksum += algorithm.size();
+
+            for (size_t j = 0; j < kHeaderFieldSize; ++j) {
+                algorithm.erase(field_str[j]);
+            }
+            assert(algorithm.size() == 0);
+            checksum += algorithm.size();
+        }
+        sw.stop();
+
+        printf("-------------------------------------------------------------------------\n");
+        printf(" %-28s  ", algorithm.name());
+        printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
+    }
+}
+
+namespace std {
+
+template <>
+struct hash<StringRef> {
+    typedef StringRef   argument_type;
+    typedef std::size_t result_type;
+
+    result_type operator()(argument_type const & key) const
+    {
+        return (std::hash<std::string>{}(key.c_str()));
+    }
+};
+}
+
+void hashtable_ref_insert_erase_benchmark()
+{
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << "  hashtable_ref_insert_erase_benchmark()" << std::endl;
+    std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
+    std::cout << std::endl;
+
+    hashtable_ref_insert_erase_benchmark_impl<test::std_map<StringRef, size_t>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::std_unordered_map<StringRef, size_t>>();
+
+#if SUPPORT_SSE42_CRC32C
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table<StringRef, size_t>>>();
+#endif
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v1<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v2<StringRef, size_t>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v3<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_table_v4<StringRef, size_t>>>();
+#endif
+
+#if USE_JSTD_HASH_MAP
+#if SUPPORT_SSE42_CRC32C
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map<StringRef, size_t>>>();
+#endif
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v1<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v2<StringRef, size_t>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v3<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_v4<StringRef, size_t>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP
+
+#if USE_JSTD_HASH_MAP_EX
+#if SUPPORT_SSE42_CRC32C
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex<StringRef, size_t>>>();
+#endif
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v1<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v2<StringRef, size_t>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v3<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::hash_map_ex_v4<StringRef, size_t>>>();
+#endif
+#endif // USE_JSTD_HASH_MAP_EX
+
+#if USE_JSTD_DICTIONARY
+#if SUPPORT_SSE42_CRC32C
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary<StringRef, size_t>>>();
+#endif
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v1<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v2<StringRef, size_t>>>();
+#if SUPPORT_SMID_SHA
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v3<StringRef, size_t>>>();
+    hashtable_ref_insert_erase_benchmark_impl<test::hash_table_impl<jstd::dictionary_v4<StringRef, size_t>>>();
 #endif
 #endif // USE_JSTD_DICTIONARY
 
@@ -1300,7 +1494,7 @@ void hashtable_rehash_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    hashtable_rehash_benchmark_impl<test::std_unordered_map>();
+    hashtable_rehash_benchmark_impl<test::std_unordered_map<std::string, std::string>>();
 
 #if SUPPORT_SSE42_CRC32C
     hashtable_rehash_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
@@ -1433,7 +1627,7 @@ void hashtable_rehash2_benchmark()
     std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" << std::endl;
     std::cout << std::endl;
 
-    hashtable_rehash2_benchmark_impl<test::std_unordered_map>();
+    hashtable_rehash2_benchmark_impl<test::std_unordered_map<std::string, std::string>>();
 
 #if SUPPORT_SSE42_CRC32C
     hashtable_rehash2_benchmark_impl<test::hash_table_impl<jstd::hash_table<std::string, std::string>>>();
@@ -1494,6 +1688,7 @@ void hashtable_benchmark()
     hashtable_insert_benchmark();
     hashtable_erase_benchmark();
     hashtable_insert_erase_benchmark();
+    hashtable_ref_insert_erase_benchmark();
 
     hashtable_rehash_benchmark();
     hashtable_rehash2_benchmark();
@@ -2153,7 +2348,7 @@ void pico_http_parser_benchmark()
         } while (1);
     });
 
-    char * method, * path;
+    char * method, *path;
     int pret, minor_version;
     struct phr_header headers[128];
     size_t buflen = request_len + 1, prevbuflen = 0, method_len, path_len, num_headers;
@@ -2374,7 +2569,7 @@ int main(int argn, char * argv[])
     http_parser_ref_test();
 #endif
 
-#if 0
+#if 1
     crc32c_debug_test();
     crc32c_benchmark();
 
@@ -2383,7 +2578,7 @@ int main(int argn, char * argv[])
     //find_power_2_near_prime();
 #endif
 
-#if 1
+#if 0
     http_parser_benchmark();
     http_parser_ref_benchmark();
 #if USE_PICO_HTTP_PARSER

@@ -982,7 +982,8 @@ public:
             else {
                 // Update the existed key's value.
                 assert(iter != nullptr);
-                iter->pair.second.swap(value);
+                //iter->pair.second.swap(value);
+                std::swap(iter->pair.second, value);
             }
         }
     }
