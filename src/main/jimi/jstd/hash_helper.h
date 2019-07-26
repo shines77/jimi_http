@@ -17,6 +17,8 @@
 #include "jimi/jstd/strlen.h"
 #include "jimi/Hash.h"
 #include "jimi/crc32c.h"
+#include "jimi/StringRef.h"
+#include "jimi/jstd/string_utils.h"
 
 #define HASH_HELPER_CHAR(KeyType, HashType, HashFuncId, HashFunc)               \
     template <>                                                                 \
@@ -101,6 +103,48 @@ struct hash_helper {
     typename std::enable_if<std::is_pointer<T>::value, HashType>::type
     getHashCode(const key_type * key) {
         return jimi::hashes::Times31_std((const char *)key, sizeof(key_type *));
+    }
+};
+
+template <>
+struct hash_helper<jimi::StringRef, std::uint32_t, HashFunc_Default> {
+    static std::uint32_t getHashCode(const jimi::StringRef & key) {
+        return jimi::hashes::Times31_std((const char *)key.c_str(), key.size());
+    }
+};
+
+template <>
+struct hash_helper<jimi::StringRef, std::uint32_t, HashFunc_CRC32C> {
+    static std::uint32_t getHashCode(const jimi::StringRef & key) {
+        return jimi::hashes::Times31_std((const char *)key.c_str(), key.size());
+    }
+};
+
+template <>
+struct hash_helper<jimi::StringRef, std::uint32_t, HashFunc_Time31> {
+    static std::uint32_t getHashCode(const jimi::StringRef & key) {
+        return jimi::hashes::Times31_std((const char *)key.c_str(), key.size());
+    }
+};
+
+template <>
+struct hash_helper<jimi::StringRef, std::uint32_t, HashFunc_Time31Std> {
+    static std::uint32_t getHashCode(const jimi::StringRef & key) {
+        return jimi::hashes::Times31_std((const char *)key.c_str(), key.size());
+    }
+};
+
+template <>
+struct hash_helper<jimi::StringRef, std::uint32_t, HashFunc_SHA1_MSG2> {
+    static std::uint32_t getHashCode(const jimi::StringRef & key) {
+        return jimi::hashes::Times31_std((const char *)key.c_str(), key.size());
+    }
+};
+
+template <>
+struct hash_helper<jimi::StringRef, std::uint32_t, HashFunc_SHA1> {
+    static std::uint32_t getHashCode(const jimi::StringRef & key) {
+        return jimi::hashes::Times31_std((const char *)key.c_str(), key.size());
     }
 };
 
