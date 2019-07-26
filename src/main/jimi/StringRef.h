@@ -260,6 +260,18 @@ bool operator == (const BasicStringRef<CharTy> & lhs, const BasicStringRef<CharT
     return jstd::StrUtils::is_equals_fast(lhs, rhs);
 }
 
+template <typename CharTy>
+inline
+bool operator < (const BasicStringRef<CharTy> & lhs, const BasicStringRef<CharTy> & rhs) {
+    return (jstd::StrUtils::compare(lhs, rhs) == jstd::StrUtils::IsSmaller);
+}
+
+template <typename CharTy>
+inline
+bool operator > (const BasicStringRef<CharTy> & lhs, const BasicStringRef<CharTy> & rhs) {
+    return (jstd::StrUtils::compare(lhs, rhs) == jstd::StrUtils::IsBigger);
+}
+
 typedef BasicStringRef<char>    StringRef;
 typedef BasicStringRef<wchar_t> StringRefW;
 
