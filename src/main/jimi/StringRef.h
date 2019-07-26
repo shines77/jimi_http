@@ -15,6 +15,7 @@
 
 #include "jimi/basic/stddef.h"
 #include "jstd/string_iterator.h"
+#include "jstd/string_utils.h"
 
 namespace jimi {
 
@@ -252,6 +253,11 @@ public:
         }
     }
 };
+
+inline
+bool operator == (const StringRef & lhs, const StringRef & rhs) {
+    return jstd::StrUtils::is_equals_fast(lhs, rhs);
+}
 
 typedef BasicStringRef<char>    StringRef;
 typedef BasicStringRef<wchar_t> StringRefW;
