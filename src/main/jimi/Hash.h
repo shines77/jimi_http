@@ -271,14 +271,13 @@ static std::uint32_t BKDRHash(const CharTy * key, std::size_t len)
     const UCharTy * end = src + len;
     std::uint32_t hash = 0;
 
-#if 1
     const UCharTy * limit = src + (len & std::size_t(~(std::size_t)3U));
     while (src != limit) {
         hash = hash * seed_4 + (std::uint32_t)src[0] * seed_3 + (std::uint32_t)src[1] * seed_2
                 + (std::uint32_t)src[2] * seed + (std::uint32_t)src[3];
         src += 4;
     }
-#endif
+
     while (src != end) {
         hash = hash * seed + (std::uint32_t)(*src);
         src++;
@@ -296,6 +295,7 @@ template <typename CharTy>
 static std::uint32_t BKDRHash_31(const CharTy * key, std::size_t len)
 {
     static const std::uint32_t seed = 31U;   // 31, 33, 131, 1313, 13131, 131313, etc ...
+    static const std::uint32_t seed_1 = seed;
     static const std::uint32_t seed_2 = seed * seed;
     static const std::uint32_t seed_3 = seed_2 * seed;
     static const std::uint32_t seed_4 = seed_2 * seed_2;
@@ -306,18 +306,88 @@ static std::uint32_t BKDRHash_31(const CharTy * key, std::size_t len)
     const UCharTy * end = src + len;
     std::uint32_t hash = 0;
 
-#if 1
     const UCharTy * limit = src + (len & std::size_t(~(std::size_t)3U));
     while (src < limit) {
         hash = hash * seed_4 + (std::uint32_t)src[0] * seed_3 + (std::uint32_t)src[1] * seed_2
-                + (std::uint32_t)src[2] * seed + (std::uint32_t)src[3];
+                + (std::uint32_t)src[2] * seed_1 + (std::uint32_t)src[3];
         src += 4;
     }
-#endif
+
+    switch (len & 3U) {
+        case 0:
+            break;
+        case 1:
+            hash = hash * seed_1 + (std::uint32_t)src[1];
+            break;
+        case 2:
+            hash = hash * seed_2 + (std::uint32_t)src[0] * seed_1 + (std::uint32_t)src[1];
+            break;
+        case 3:
+            hash = hash * seed_3 + (std::uint32_t)src[0] * seed_2
+                    + (std::uint32_t)src[1] * seed_1 + (std::uint32_t)src[2];
+            break;
+        default:
+            break;
+    }
+
+    return hash;
+}
+
+template <typename CharTy>
+static std::uint32_t BKDRHash_31_u64(const CharTy * key, std::size_t len)
+{
+    static const std::uint32_t seed = 31U;   // 31, 33, 131, 1313, 13131, 131313, etc ...
+    static const std::uint32_t seed_1 = seed;
+    static const std::uint32_t seed_2 = seed * seed;
+    static const std::uint32_t seed_3 = seed_2 * seed;
+    static const std::uint32_t seed_4 = seed_2 * seed_2;
+
+    union U64 {
+        std::uint64_t value;
+        struct {
+            std::uint32_t low;
+            std::uint32_t high;
+        } U32;
+    };
+
+    typedef typename jstd::uchar_traits<CharTy>::type UCharTy;
+
+    const UCharTy * src = (const UCharTy *)key;
+    const UCharTy * end = src + len;
+    U64 hash64 = { 0ULL };
+
+    const UCharTy * limit = src + (len & std::size_t(~(std::size_t)3U));
+    while (src < limit) {
+        hash64.value = hash64.U32.low * seed_4 + (std::uint32_t)src[0] * seed_3 + (std::uint32_t)src[1] * seed_2
+            + (std::uint32_t)src[2] * seed_1 + (std::uint32_t)src[3];
+        src += 4;
+    }
+
+#if 1
+    switch (len & 3U) {
+        case 0:
+            break;
+        case 1:
+            hash64.value = hash64.U32.low * seed_1 + (std::uint32_t)src[1];
+            break;
+        case 2:
+            hash64.value = hash64.U32.low * seed_2 + (std::uint32_t)src[0] * seed_1 + (std::uint32_t)src[1];
+            break;
+        case 3:
+            hash64.value = hash64.U32.low * seed_3 + (std::uint32_t)src[0] * seed_2
+                         + (std::uint32_t)src[1] * seed_1 + (std::uint32_t)src[2];
+            break;
+        default:
+            break;
+    }
+    std::uint32_t hash = hash64.U32.low;
+#else
+    std::uint32_t hash = hash64.U32.low;
     while (src != end) {
         hash = hash * seed + (std::uint32_t)(*src);
         src++;
     }
+#endif
 
     return hash;
 }

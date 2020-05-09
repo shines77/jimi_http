@@ -1004,6 +1004,15 @@ public:
         this->insert(std::forward<key_type>(pair.first), std::forward<value_type>(pair.second));
     }
 
+    void emplace(const key_type & key, const value_type & value) {
+        this->emplace(std::make_pair(key, value));
+    }
+
+    void emplace(key_type && key, value_type && value) {
+        this->emplace(std::make_pair(std::forward<key_type>(key),
+                                     std::forward<value_type>(value)));
+    }
+
     void erase(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
             entry_type * before;
@@ -1057,15 +1066,15 @@ public:
     static const char * name() {
         switch (HashFunc) {
         case HashFunc_CRC32C:
-            return "jstd::hash_map_ex<K, V>";
+            return "jstd::hash_map_ex<K, V> (CRC32c)";
         case HashFunc_Time31:
-            return "jstd::hash_map_ex_v1<K, V>";
+            return "jstd::hash_map_ex<K, V> (Time31)";
         case HashFunc_Time31Std:
-            return "jstd::hash_map_ex_v2<K, V>";
+            return "jstd::hash_map_ex<K, V> (Time31Std)";
         case HashFunc_SHA1_MSG2:
-            return "jstd::hash_map_ex_v3<K, V>";
+            return "jstd::hash_map_ex<K, V> (SHA1_Msg2)";
         case HashFunc_SHA1:
-            return "jstd::hash_map_ex_v4<K, V>";
+            return "jstd::hash_map_ex<K, V> (SHA1)";
         default:
             return "Unknown class name";
         }
@@ -1082,19 +1091,19 @@ using hash_map_ex = basic_hash_map_ex<Key, Value, HashFunc_CRC32C>;
 #endif
 
 template <typename Key, typename Value>
-using hash_map_ex_v1 = basic_hash_map_ex<Key, Value, HashFunc_Time31>;
+using hash_map_ex_time31 = basic_hash_map_ex<Key, Value, HashFunc_Time31>;
 
 template <typename Key, typename Value>
-using hash_map_ex_v2 = basic_hash_map_ex<Key, Value, HashFunc_Time31Std>;
+using hash_map_ex_time31_std = basic_hash_map_ex<Key, Value, HashFunc_Time31Std>;
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_map_ex_v3 = basic_hash_map_ex<Key, Value, HashFunc_SHA1_MSG2>;
+using hash_map_ex_sha1_msg2 = basic_hash_map_ex<Key, Value, HashFunc_SHA1_MSG2>;
 #endif
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_map_ex_v4 = basic_hash_map_ex<Key, Value, HashFunc_SHA1>;
+using hash_map_ex_sha1 = basic_hash_map_ex<Key, Value, HashFunc_SHA1>;
 #endif
 
 } // namespace jstd

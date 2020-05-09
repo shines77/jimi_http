@@ -95,8 +95,13 @@ namespace DictionaryTest
             "Last"
         };
 
-        static void hashtable_find_benchmark_impl()
+        static void dictionary_find_benchmark()
         {
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("  dictionary_find_benchmark()\n");
+            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+            Console.Write("\n");
+
             int kHeaderFieldSize = header_fields.Length;
             int kRepeatTimes = (kIterations / kHeaderFieldSize);
 
@@ -144,18 +149,13 @@ namespace DictionaryTest
             }
         }
 
-        static void dictionary_find_benchmark()
+        static void dictionary_insert_benchmark()
         {
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("  dictionary_find_benchmark()\n");
+            Console.Write("  dictionary_insert_benchmark()\n");
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
             Console.Write("\n");
 
-            hashtable_find_benchmark_impl();
-        }
-
-        static void hashtable_insert_benchmark_impl()
-        {
             int kHeaderFieldSize = header_fields.Length;
 #if DEBUG
             int kRepeatTimes = 100;
@@ -200,18 +200,13 @@ namespace DictionaryTest
             }
         }
 
-        static void dictionary_insert_benchmark()
+        static void dictionary_erase_benchmark()
         {
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("  dictionary_insert_benchmark()\n");
+            Console.Write("  dictionary_erase_benchmark()\n");
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
             Console.Write("\n");
 
-            hashtable_insert_benchmark_impl();
-        }
-
-        static void hashtable_erase_benchmark_impl()
-        {
             int kHeaderFieldSize = header_fields.Length;
 #if DEBUG
             int kRepeatTimes = 100;
@@ -262,18 +257,13 @@ namespace DictionaryTest
             }
         }
 
-        static void dictionary_erase_benchmark()
+        static void dictionary_insert_erase_benchmark()
         {
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("  dictionary_erase_benchmark()\n");
+            Console.Write("  dictionary_insert_erase_benchmark()\n");
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
             Console.Write("\n");
 
-            hashtable_erase_benchmark_impl();
-        }
-
-        static void hashtable_insert_erase_benchmark_impl()
-        {
             int kHeaderFieldSize = header_fields.Length;
 #if DEBUG
             int kRepeatTimes = 100;
@@ -324,18 +314,13 @@ namespace DictionaryTest
             }
         }
 
-        static void dictionary_insert_erase_benchmark()
+        static void dictionary_rehash_benchmark()
         {
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("  dictionary_insert_erase_benchmark()\n");
+            Console.Write("  dictionary_rehash_benchmark()\n");
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
             Console.Write("\n");
 
-            hashtable_insert_erase_benchmark_impl();
-        }
-
-        static void hashtable_rehash_benchmark_impl()
-        {
             int kHeaderFieldSize = header_fields.Length;
 #if DEBUG
             int kRepeatTimes = 200;
@@ -392,18 +377,13 @@ namespace DictionaryTest
             }
         }
 
-        static void dictionary_rehash_benchmark()
+        static void dictionary_rehash2_benchmark()
         {
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("  dictionary_rehash_benchmark()\n");
+            Console.Write("  dictionary_rehash2_benchmark()\n");
             Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
             Console.Write("\n");
 
-            hashtable_rehash_benchmark_impl();
-        }
-
-        static void hashtable_rehash2_benchmark_impl()
-        {
             int kHeaderFieldSize = header_fields.Length;
 #if DEBUG
             int kRepeatTimes = 200;
@@ -458,16 +438,6 @@ namespace DictionaryTest
                 Console.Write("-------------------------------------------------------------------------\n");
                 Console.Write("\n");
             }
-        }
-
-        static void dictionary_rehash2_benchmark()
-        {
-            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("  dictionary_rehash2_benchmark()\n");
-            Console.Write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-            Console.Write("\n");
-
-            hashtable_rehash2_benchmark_impl();
         }
 
         static void dictionary_benchmark()

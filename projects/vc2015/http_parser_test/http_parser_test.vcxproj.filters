@@ -18,5 +18,8 @@
     <ClInclude Include="..\..\..\src\test\http_parser_test\HttpRouter2.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\HashTableBenchmark.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

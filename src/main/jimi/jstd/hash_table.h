@@ -543,6 +543,15 @@ public:
                      std::forward<value_type>(pair.second));
     }
 
+    void emplace(const key_type & key, const value_type & value) {
+        this->emplace(std::make_pair(key, value));
+    }
+
+    void emplace(key_type && key, value_type && value) {
+        this->emplace(std::make_pair(std::forward<key_type>(key),
+                                     std::forward<value_type>(value)));
+    }
+
     void erase(const key_type & key) {
         if (likely(this->table_ != nullptr)) {
             iterator iter = this->find(key);
@@ -585,18 +594,18 @@ public:
 
     static const char * name() {
         switch (HashFunc) {
-        case HashFunc_CRC32C:
-            return "jstd::hash_table<K, V>";
-        case HashFunc_Time31:
-            return "jstd::hash_table_v1<K, V>";
-        case HashFunc_Time31Std:
-            return "jstd::hash_table_v2<K, V>";
-        case HashFunc_SHA1_MSG2:
-            return "jstd::hash_table_v3<K, V>";
-        case HashFunc_SHA1:
-            return "jstd::hash_table_v4<K, V>";
-        default:
-            return "Unknown class name";
+            case HashFunc_CRC32C:
+                return "jstd::hash_table<K, V> (CRC32c)";
+            case HashFunc_Time31:
+                return "jstd::hash_table<K, V> (Time31)";
+            case HashFunc_Time31Std:
+                return "jstd::hash_table<K, V> (Time31Std)";
+            case HashFunc_SHA1_MSG2:
+                return "jstd::hash_table<K, V> (SHA1_Msg2)";
+            case HashFunc_SHA1:
+                return "jstd::hash_table<K, V> (SHA1)";
+            default:
+                return "Unknown class name";
         }
     }
 };
@@ -607,19 +616,19 @@ using hash_table = basic_hash_table<Key, Value, HashFunc_CRC32C>;
 #endif
 
 template <typename Key, typename Value>
-using hash_table_v1 = basic_hash_table<Key, Value, HashFunc_Time31>;
+using hash_table_time31 = basic_hash_table<Key, Value, HashFunc_Time31>;
 
 template <typename Key, typename Value>
-using hash_table_v2 = basic_hash_table<Key, Value, HashFunc_Time31Std>;
+using hash_table_time31_std = basic_hash_table<Key, Value, HashFunc_Time31Std>;
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_table_v3 = basic_hash_table<Key, Value, HashFunc_SHA1_MSG2>;
+using hash_table_sha1_msg2 = basic_hash_table<Key, Value, HashFunc_SHA1_MSG2>;
 #endif
 
 #if SUPPORT_SMID_SHA
 template <typename Key, typename Value>
-using hash_table_v4 = basic_hash_table<Key, Value, HashFunc_SHA1>;
+using hash_table_sha1 = basic_hash_table<Key, Value, HashFunc_SHA1>;
 #endif
 
 } // namespace jstd
