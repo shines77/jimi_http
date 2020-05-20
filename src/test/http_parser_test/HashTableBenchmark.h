@@ -35,6 +35,8 @@
 #include "jimi/jstd/hash_map_ex.h"
 #include "jimi/jstd/dictionary.h"
 
+using namespace jimi;
+
 namespace testing {
 
 //
