@@ -8,9 +8,9 @@
 
 #include <stdint.h>
 
-#include "LRUCache/LRUNode.h"
-#include "LRUCache/LRUHashTable.h"
-#include "LRUCache/LinkedList.h"
+#include "LRUNode.h"
+#include "LRUHashTable.h"
+#include "LinkedList.h"
 
 #include <unordered_map>
 

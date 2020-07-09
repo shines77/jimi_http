@@ -8,9 +8,9 @@
 
 #include <stdint.h>
 
-#include "LRUCache/LRUNode.h"
-#include "LRUCache/LRUHashTable.h"
-#include "LRUCache/LinkedList.h"
+#include "LRUNode.h"
+#include "LRUHashTable.h"
+#include "LinkedList.h"
 
 #include "jimi/jstd/hash_table.h"
 #include "jimi/jstd/hash_map.h"
@@ -38,7 +38,8 @@ public:
     typedef std::size_t                             size_type;
     typedef LRUNode<key_type, value_type>           node_type;
 #if SUPPORT_SSE42_CRC32C
-    typedef jstd::dictionary<key_type, node_type *> hash_table_type;
+    typedef jstd::dictionary<key_type, node_type *>
+                                                    hash_table_type;
 #else
     typedef jstd::dictionary_time31<key_type, node_type *>
                                                     hash_table_type;
@@ -68,7 +69,7 @@ public:
     size_type capacity() const { return list_.capacity(); }
 
 protected:
-    void add(const key_type & key, const value_type & value) {
+    void add_new(const key_type & key, const value_type & value) {
         node_type * new_node = list_.push_front_fast(key, value);
         if (new_node) {
             cache_.insert(key, new_node);
@@ -122,7 +123,7 @@ public:
                 touch(key, value);
             }
             else {
-                add(key, value);
+                add_new(key, value);
             }
         }
     }
