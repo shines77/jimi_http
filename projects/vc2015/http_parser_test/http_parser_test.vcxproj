@@ -170,6 +170,13 @@
     <ClInclude Include="..\..\..\src\test\http_parser_test\HashTableBenchmark.h" />
     <ClInclude Include="..\..\..\src\test\http_parser_test\HttpRouter.h" />
     <ClInclude Include="..\..\..\src\test\http_parser_test\HttpRouter2.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LinkedList.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache_v1.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache_v2.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache_v3.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUHashTable.h" />
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUNode.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

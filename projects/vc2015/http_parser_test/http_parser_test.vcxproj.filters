@@ -5,6 +5,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd;cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="src\LRUCache">
+      <UniqueIdentifier>{1496628e-8279-45be-a9eb-a969a27584c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\test\http_parser_test\main.cpp">
@@ -20,6 +23,27 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\test\http_parser_test\HashTableBenchmark.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LinkedList.h">
+      <Filter>src\LRUCache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache.h">
+      <Filter>src\LRUCache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache_v1.h">
+      <Filter>src\LRUCache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache_v2.h">
+      <Filter>src\LRUCache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUHashTable.h">
+      <Filter>src\LRUCache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUNode.h">
+      <Filter>src\LRUCache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\test\http_parser_test\LRUCache\LRUCache_v3.h">
+      <Filter>src\LRUCache</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

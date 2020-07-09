@@ -112,6 +112,62 @@ struct default_dictionary_comparer {
 #endif // STRING_COMPARE_MODE
 }; // struct default_dictionary_comparer<K, V>
 
+template <typename T>
+inline static
+int comparer(const T & v1, const T & v2) {
+    return ((v1 > v2) ? 1 : ((v1 < v2) ? -1 : 0));
+}
+
+template <>
+struct default_dictionary_comparer<int, int> {
+    typedef int key_type;
+    typedef int value_type;
+
+    default_dictionary_comparer() {}
+    ~default_dictionary_comparer() {}
+
+    bool key_is_equals(const key_type & key1, const key_type & key2) const {
+        return (key1 == key2);
+    }
+
+    bool value_is_equals(const value_type & value1, const value_type & value2) const {
+        return (value1 == value2);
+    }
+
+    int key_compare(const key_type & key1, const key_type & key2) const {
+        return comparer(key1, key2);
+    }
+
+    int value_compare(const value_type & value1, const value_type & value2) const {
+        return comparer(value1, value2);
+    }
+};
+
+template <typename Value>
+struct default_dictionary_comparer<int, Value> {
+    typedef int     key_type;
+    typedef Value   value_type;
+
+    default_dictionary_comparer() {}
+    ~default_dictionary_comparer() {}
+
+    bool key_is_equals(const key_type & key1, const key_type & key2) const {
+        return (key1 == key2);
+    }
+
+    bool value_is_equals(const value_type & value1, const value_type & value2) const {
+        return (value1 == value2);
+    }
+
+    int key_compare(const key_type & key1, const key_type & key2) const {
+        return comparer(key1, key2);
+    }
+
+    int value_compare(const value_type & value1, const value_type & value2) const {
+        return comparer(value1, value2);
+    }
+};
+
 //
 // Default jstd::dictionary<K, V> traits
 //
