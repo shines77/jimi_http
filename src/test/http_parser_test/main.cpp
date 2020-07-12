@@ -3177,16 +3177,16 @@ void LeetCode_LRUCache_PrefTest()
     printf("---------------------------------------------------------------------\n\n");
 
     LRUCache_PrefTest();
+    LRUCache_V3_PrefTest();
     LRUCache_V2_PrefTest();
     LRUCache_V1_PrefTest();
-    LRUCache_V3_PrefTest();
 
     printf("---------------------------------------------------------------------\n\n");
 
     LRUCache_PrefTest2();
+    LRUCache_V3_PrefTest2();
     LRUCache_V2_PrefTest2();
     LRUCache_V1_PrefTest2();
-    LRUCache_V3_PrefTest2();
 
     printf("---------------------------------------------------------------------\n\n");
 }

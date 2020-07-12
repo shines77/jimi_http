@@ -37,36 +37,36 @@ public:
     typedef basic_dictionary_ex<Key, Value, HashFunc, Traits>
                                             this_type;
 
-    struct entry {
-        entry *     next;
-        hash_type   hash;
-        pair_type   pair;
+    struct hash_entry {
+        hash_entry * next;
+        hash_type    hash;
+        pair_type    pair;
 
-        entry() : next(nullptr), hash(0) {}
-        entry(hash_type hash_code) : next(nullptr), hash(hash_code) {}
+        hash_entry() : next(nullptr), hash(0) {}
+        hash_entry(hash_type hash_code) : next(nullptr), hash(hash_code) {}
 
-        entry(hash_type hash_code, const key_type & key,
-              const value_type & value, this_type * next_entry = nullptr)
+        hash_entry(hash_type hash_code, const key_type & key,
+              const value_type & value, hash_entry * next_entry = nullptr)
             : next(next_entry), hash(hash_code), pair(key, value) {}
-        entry(hash_type hash_code, key_type && key,
-              value_type && value, this_type * next_entry = nullptr)
+        hash_entry(hash_type hash_code, key_type && key,
+              value_type && value, hash_entry * next_entry = nullptr)
             : next(next_entry), hash(hash_code),
               pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
 
-        entry(const key_type & key, const value_type & value)
+        hash_entry(const key_type & key, const value_type & value)
             : next(nullptr), hash(0), pair(key, value) {}
-        entry(key_type && key, value_type && value)
+        hash_entry(key_type && key, value_type && value)
             : next(nullptr), hash(0),
               pair(std::forward<key_type>(key), std::forward<value_type>(value)) {}
 
-        ~entry() {
+        ~hash_entry() {
 #ifndef NDEBUG
             this->next = nullptr;
 #endif
         }
     };
 
-    typedef entry               entry_type;
+    typedef hash_entry          entry_type;
     typedef entry_type *        iterator;
     typedef const entry_type *  const_iterator;
 
@@ -77,7 +77,7 @@ public:
 
     public:
         free_list() : head_(nullptr), size_(0) {}
-        free_list(entry * head) : head_(head), size_(0) {}
+        free_list(hash_entry * head) : head_(head), size_(0) {}
         ~free_list() {
 #ifndef NDEBUG
             this->clear();
@@ -105,7 +105,7 @@ public:
             this->size_ = 0;
         }
 
-        void reset(entry * head) {
+        void reset(hash_entry * head) {
             this->head_ = head;
             this->size_ = 0;
         }
