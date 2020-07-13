@@ -265,7 +265,7 @@ struct hash_helper<const char *, std::uint32_t, Hash_SHA1_MSG2> {
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_SHA1_MSG2, jimi::sha1_msg2);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_SHA1_MSG2, jimi::sha1::sha1_msg2);
 
 template <>
 struct hash_helper<std::string, std::uint32_t, HashFunc_SHA1_MSG2> {
@@ -285,7 +285,7 @@ struct hash_helper<const char *, std::uint32_t, Hash_SHA1> {
 };
 ****************************************************************************/
 
-HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_SHA1, jimi::sha1_x86);
+HASH_HELPER_CHAR_ALL(HASH_HELPER_CHAR, std::uint32_t, HashFunc_SHA1, jimi::sha1::sha1_x86);
 
 template <>
 struct hash_helper<std::string, std::uint32_t, HashFunc_SHA1> {
