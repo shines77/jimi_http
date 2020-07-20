@@ -635,7 +635,7 @@ void crc32c_benchmark()
 
 namespace test {
 
-template <typename Key = std::string, typename Value = std::string>
+template <typename Key, typename Value>
 class std_map {
 public:
     typedef std::map<Key, Value>                map_type;
@@ -731,7 +731,7 @@ public:
     }
 };
 
-template <typename Key = std::string, typename Value = std::string>
+template <typename Key, typename Value>
 class std_unordered_map {
 public:
     typedef std::unordered_map<Key, Value>      map_type;
