@@ -21,14 +21,14 @@
 #include <string.h>
 #include <math.h>
 
-#include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 #include <atomic>
 #include <thread>
 #include <ratio>
 #include <chrono>
-#include <string>
 #include <map>
 #include <unordered_map>
 
@@ -984,8 +984,8 @@ void hashtable_find_benchmark()
         }
         sw.stop();
 
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
     }
 }
@@ -1046,7 +1046,7 @@ void run_hashtable_find_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -1091,8 +1091,8 @@ void hashtable_insert_benchmark_impl()
         }
 
         AlgorithmTy algorithm;
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, totalTime);
     }
 }
@@ -1153,7 +1153,7 @@ void run_hashtable_insert_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -1206,8 +1206,8 @@ void hashtable_erase_benchmark_impl()
         }
 
         AlgorithmTy algorithm;
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, totalTime);
     }
 }
@@ -1268,7 +1268,7 @@ void run_hashtable_erase_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -1322,8 +1322,8 @@ void hashtable_insert_erase_benchmark_impl()
         }
         sw.stop();
 
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
     }
 }
@@ -1384,7 +1384,7 @@ void run_hashtable_insert_erase_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -1432,8 +1432,8 @@ void hashtable_ref_insert_erase_benchmark_impl()
         }
         sw.stop();
 
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
     }
 }
@@ -1450,7 +1450,8 @@ struct hash<StringRef> {
         return (std::hash<std::string>{}(key.c_str()));
     }
 };
-}
+
+} // namespace std
 
 void run_hashtable_ref_insert_erase_benchmark()
 {
@@ -1508,7 +1509,7 @@ void run_hashtable_ref_insert_erase_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -1577,8 +1578,8 @@ void hashtable_rehash_benchmark_impl()
         }
         sw.stop();
 
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
     }
 }
@@ -1640,7 +1641,7 @@ void run_hashtable_rehash_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -1710,8 +1711,8 @@ void hashtable_rehash2_benchmark_impl()
         sw.stop();
 
         AlgorithmTy algorithm;
-        printf("-------------------------------------------------------------------------\n");
-        printf(" %-28s  ", algorithm.name());
+        printf("---------------------------------------------------------------------------\n");
+        printf(" %-36s  ", algorithm.name());
         printf("sum = %-10" PRIuPTR "  time: %8.3f ms\n", checksum, sw.getMillisec());
     }
 }
@@ -1773,7 +1774,7 @@ void run_hashtable_rehash2_benchmark()
 #endif
 #endif // USE_JSTD_DICTIONARY
 
-    printf("-------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
     printf("\n");
 }
 
@@ -3221,7 +3222,7 @@ int main(int argn, char * argv[])
     http_parser_ref_test();
 #endif
 
-#if 0
+#if 1
     crc32c_debug_test();
     crc32c_benchmark();
 
@@ -3235,7 +3236,9 @@ int main(int argn, char * argv[])
     hashTableBenchmark.run();
 #endif
 
+#if 0
     LeetCode_LRUCache_PrefTest();
+#endif
 
 #if 0
     http_parser_benchmark();
